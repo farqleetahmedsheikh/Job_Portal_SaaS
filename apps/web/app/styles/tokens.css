@@ -1,0 +1,31 @@
+:root {
+    /* Brand */
+    --color-primary: #1E3A8A;
+    --color-secondary: #4338CA;
+    --color-accent: #10B981;
+
+    /* Status */
+    --status-applied: #9CA3AF;
+    --status-shortlisted: #2563EB;
+    --status-interview: #F59E0B;
+    --status-rejected: #EF4444;
+    --status-hired: #22C55E;
+
+    /* Background */
+    --bg-app: #F8FAFC;
+    --bg-card: #FFFFFF;
+    --border: #E5E7EB;
+    --divider: #CBD5E1;
+
+    /* Text */
+    --text-primary: #111827;
+    --text-secondary: #6B7280;
+    --text-muted: #9CA3AF;
+    --text-link: #2563EB;
+
+    /* Radius */
+    --radius: 6px;
+
+    /* Shadow */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
