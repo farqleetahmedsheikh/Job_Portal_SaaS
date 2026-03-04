@@ -3,6 +3,8 @@
 import "./globals.css";
 import "./styles/tokens.css";
 
+import { ThemeProvider } from "./components/theme/ThemeProvider";
+
 export default function RootLayout({
   children,
 }: {
@@ -10,7 +12,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

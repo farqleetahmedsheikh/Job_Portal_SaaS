@@ -1,28 +1,58 @@
 /** @format */
 
-type Props = { role: "employer" | "applicant" };
+"use client";
 
-export default function Sidebar({ role }: Props) {
+import { UserRole } from "../../types/user";
+import { Icon } from "../ui/Icon";
+import Link from "next/link";
+
+interface SidebarProps {
+  role: UserRole;
+  collapsed: boolean;
+  onToggle: () => void;
+}
+
+interface NavItem {
+  label: string;
+  icon: string;
+  href: string;
+}
+
+const NAVIGATION: Record<UserRole, NavItem[]> = {
+  APPLICANT: [
+    { label: "Dashboard", icon: "dashboard", href: "/applicant" },
+    { label: "Applications", icon: "briefcase", href: "/applications" },
+    { label: "Saved Jobs", icon: "bookmark", href: "/saved" },
+    { label: "Profile", icon: "user", href: "/profile" },
+  ],
+  EMPLOYER: [
+    { label: "Dashboard", icon: "dashboard", href: "/employer" },
+    { label: "Post Job", icon: "plus", href: "/post-job" },
+    { label: "Candidates", icon: "users", href: "/candidates" },
+    { label: "Company", icon: "building", href: "/company" },
+  ],
+};
+
+export const Sidebar = ({ role, collapsed, onToggle }: SidebarProps) => {
+  const navItems = NAVIGATION[role];
+
   return (
     <aside className="sidebar">
-      <h3>HireFlow</h3>
+      <div className="sidebar-header">
+        <span className="logo">HireSphere</span>
+        <button onClick={onToggle} className="collapse-btn">
+          ☰
+        </button>
+      </div>
 
-      {role === "employer" && (
-        <>
-          <a href="/dashboard">Dashboard</a>
-          <a href="/jobs">Jobs</a>
-          <a href="/applications">Applications</a>
-          <a href="/company">Company</a>
-        </>
-      )}
-
-      {role === "applicant" && (
-        <>
-          <a href="/jobs">Find Jobs</a>
-          <a href="/applications">My Applications</a>
-          <a href="/profile">Profile</a>
-        </>
-      )}
+      <nav>
+        {navItems.map((item) => (
+          <Link key={item.label} href={item.href} className="nav-item">
+            <Icon name={item.icon} />
+            {!collapsed && <span>{item.label}</span>}
+          </Link>
+        ))}
+      </nav>
     </aside>
   );
-}
+};
