@@ -1,135 +1,106 @@
-# Turborepo starter
+# HireSphere Monorepo
 
-This Turborepo starter is maintained by the Turborepo core team.
+**HireSphere** is a modern, all-in-one hiring platform connecting companies with top talent.  
+This monorepo uses [Turborepo](https://turborepo.dev/) to manage multiple apps and shared packages, enabling rapid development and consistent tooling.
 
-## Using this example
+---
 
-Run the following command:
+## Table of Contents
 
-```sh
-npx create-turbo@latest
-```
+- [About](#about)  
+- [Monorepo Structure](#monorepo-structure)  
+- [Getting Started](#getting-started)  
+- [Running Apps](#running-apps)  
+- [Building](#building)  
+- [Remote Caching](#remote-caching)  
+- [Contributing](#contributing)  
+- [License](#license)  
 
-## What's inside?
+---
 
-This Turborepo includes the following packages/apps:
+## About
 
-### Apps and Packages
+HireSphere is a **premium SaaS platform** for:
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+- Job posting and applicant tracking  
+- Messaging and interview management  
+- Coding tests and assessments  
+- End-to-end hiring workflows  
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+The platform combines **all recruitment tools in one app** — no external emails, scheduling apps, or assessment tools required.
 
-### Utilities
+---
 
-This Turborepo has some additional tools already setup for you:
+## Monorepo Structure
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+This Turborepo includes the following **apps** and **packages**:
 
-### Build
+### Apps
 
-To build all apps and packages, run the following command:
+- `web` – The main [Next.js](https://nextjs.org/) app for candidates and companies  
+- `docs` – Documentation site built with [Next.js](https://nextjs.org/)  
 
-```
-cd my-turborepo
+### Packages
 
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
+- `@hireSphere/ui` – Shared React components library  
+- `@hireSphere/eslint-config` – ESLint configuration with `eslint-config-next` & `prettier`  
+- `@hireSphere/ts-config` – TypeScript configuration used across all apps  
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
-```
+---
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+## Getting Started
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+Clone the repository and install dependencies:
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+```bash
+git clone <repo-url>
+cd hireSphere-monorepo
+pnpm install
 
-### Develop
+Running Apps
+Develop All Apps
+pnpm turbo dev
+Develop a Specific App
+pnpm turbo dev --filter=web
+Build All Apps
+pnpm turbo build
+Build a Specific App
+pnpm turbo build --filter=web
 
-To develop all apps and packages, run the following command:
+🔹 You can also use npx turbo or yarn dlx turbo if turbo is not installed globally.
 
-```
-cd my-turborepo
+Remote Caching
 
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
+Turborepo supports remote caching to speed up builds and share cache artifacts between team members and CI/CD pipelines.
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
+Login to Vercel:
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+pnpm turbo login
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
+Link your repository to enable Remote Cache:
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
+pnpm turbo link
 
-### Remote Caching
+Remote caching is optional but highly recommended for larger teams.
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+Contributing
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+We welcome contributions!
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+Follow commit conventions for clarity
 
-```
-cd my-turborepo
+Run pnpm turbo lint before submitting PRs
 
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
+Ensure TypeScript checks pass with pnpm turbo typecheck
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
+Useful Commands
+Command	Description
+pnpm turbo dev	Run all apps in development mode
+pnpm turbo dev --filter=web	Run a single app
+pnpm turbo build	Build all apps and packages
+pnpm turbo build --filter=web	Build a single app
+pnpm turbo lint	Run ESLint across all packages
+pnpm turbo typecheck	Run TypeScript type checking
+License
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+This repository is MIT licensed.

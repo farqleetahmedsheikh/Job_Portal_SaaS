@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   IsArray,
   IsEmail,
@@ -9,13 +8,13 @@ import {
 
 export class CreateApplicantProfileDto {
   @IsEmail()
-  location: string;
+  location!: string;
 
   @MinLength(8)
-  password: string;
+  password!: string;
 
   @IsNumber()
-  experienceYears: number;
+  experienceYears!: number;
 
   @IsString()
   linkedinUrl?: string;
