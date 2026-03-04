@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { IsOptional, IsString } from 'class-validator';
 
 export class CreateCompanyDto {
   @IsString()
-  companyName: string;
+  companyName!: string;
 
   @IsOptional()
   @IsString()
@@ -14,8 +13,8 @@ export class CreateCompanyDto {
   employees?: string;
 
   @IsString()
-  location: string;
+  location!: string;
 
   @IsString()
-  industry: string;
+  industry!: string;
 }

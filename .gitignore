@@ -5,7 +5,7 @@ node_modules
 .pnp
 .pnp.js
 
-# .vs code
+# VS Code
 .vscode
 
 # Local env files

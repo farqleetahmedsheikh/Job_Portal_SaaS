@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -14,16 +13,16 @@ import { User } from '../../users/entities/user.entity';
 @Index(['user'])
 export class Resume {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @ManyToOne(() => User, (user: User) => user.resumes, { onDelete: 'CASCADE' })
-  user: User;
+  user!: User;
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column()
-  fileUrl: string;
+  fileUrl!: string;
 
   @Column({ nullable: true })
   yearsOfExperience?: number;
@@ -38,14 +37,14 @@ export class Resume {
   certifications?: string[];
 
   @Column({ type: 'float', default: 0 })
-  aiScore: number;
+  aiScore!: number;
 
   @Column({ default: true })
-  isActive: boolean;
+  isActive!: boolean;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

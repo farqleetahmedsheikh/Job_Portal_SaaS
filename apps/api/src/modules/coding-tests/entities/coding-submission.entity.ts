@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -15,7 +14,7 @@ import { User } from '../../users/entities/user.entity';
 @Index(['score'])
 export class CodingSubmission {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   /**
    * Test being attempted
@@ -23,7 +22,7 @@ export class CodingSubmission {
   @ManyToOne(() => CodingTest, (test: CodingTest) => test.submissions, {
     onDelete: 'CASCADE',
   })
-  test: CodingTest;
+  test!: CodingTest;
 
   /**
    * Applicant who submitted
@@ -31,25 +30,25 @@ export class CodingSubmission {
   @ManyToOne(() => User, {
     onDelete: 'CASCADE',
   })
-  applicant: User;
+  applicant!: User;
 
   /**
    * Submitted code
    */
   @Column({ type: 'text' })
-  code: string;
+  code!: string;
 
   /**
    * Programming language
    */
   @Column()
-  language: string;
+  language!: string;
 
   /**
    * Score after evaluation
    */
   @Column({ type: 'float', default: 0 })
-  score: number;
+  score!: number;
 
   /**
    * AI or human feedback
@@ -64,5 +63,5 @@ export class CodingSubmission {
   aiEvaluation?: Record<string, any>;
 
   @CreateDateColumn()
-  submittedAt: Date;
+  submittedAt!: Date;
 }

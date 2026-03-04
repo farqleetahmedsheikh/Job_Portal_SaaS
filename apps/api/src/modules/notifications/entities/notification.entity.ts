@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -14,12 +13,12 @@ import { User } from '../../users/entities/user.entity';
 @Index(['type'])
 export class Notification {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @ManyToOne(() => User, (user: User) => user.notifications, {
     onDelete: 'CASCADE',
   })
-  user: User;
+  user!: User;
 
   /**
    * Notification type
@@ -29,25 +28,25 @@ export class Notification {
    * - new_message
    */
   @Column()
-  type: string;
+  type!: string;
 
   /**
    * Short title for UI
    */
   @Column()
-  title: string;
+  title!: string;
 
   /**
    * Detailed message
    */
   @Column({ type: 'text' })
-  message: string;
+  message!: string;
 
   /**
    * Read / Unread
    */
   @Column({ default: false })
-  read: boolean;
+  read!: boolean;
 
   /**
    * Extra payload (IDs, deep links, AI scores, etc.)
@@ -59,6 +58,5 @@ export class Notification {
    * Timestamp
    */
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }
-/* eslint-enable @typescript-eslint/no-unsafe-call */

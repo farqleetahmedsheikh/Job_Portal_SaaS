@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -18,18 +17,18 @@ import { CodingTest } from '../../coding-tests/entities/coding-test.entity';
 @Index(['title', 'location'])
 export class Job {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @ManyToOne(() => Company, (company: Company) => company.jobs, {
     onDelete: 'CASCADE',
   })
-  company: Company;
+  company!: Company;
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column({ type: 'text' })
-  description: string;
+  description!: string;
 
   @Column({ nullable: true })
   location?: string;
@@ -44,17 +43,17 @@ export class Job {
   salaryMax?: number;
 
   @Column({ default: 'open' })
-  status: string;
+  status!: string;
 
   @OneToMany(() => Application, (app) => app.job)
-  applications: Application[];
+  applications!: Application[];
 
   @OneToMany(() => CodingTest, (test) => test.job)
-  codingTests: CodingTest[];
+  codingTests!: CodingTest[];
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

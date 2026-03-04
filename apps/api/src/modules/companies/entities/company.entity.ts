@@ -12,16 +12,16 @@ import { User } from '../../users/entities/user.entity';
 import { Job } from '../../jobs/entities/job.entity';
 
 @Entity('companies')
-@Index(['owner', 'name'], { unique: true })
+@Index(['owner', 'companyName'], { unique: true })
 export class Company {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @ManyToOne(() => User, (user) => user.companies, { onDelete: 'CASCADE' })
-  owner: User;
+  owner!: User;
 
   @Column()
-  companyName: string;
+  companyName!: string;
 
   @Column({ nullable: true })
   website?: string;
@@ -36,11 +36,11 @@ export class Company {
   industry!: string;
 
   @OneToMany(() => Job, (job) => job.company)
-  jobs: Job[];
+  jobs!: Job[];
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

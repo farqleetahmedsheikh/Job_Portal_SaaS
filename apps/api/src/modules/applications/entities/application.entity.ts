@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -22,33 +19,33 @@ import { ApplicationHistory } from './application-history.entity';
 @Index(['status'])
 export class Application {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @ManyToOne(() => Job, (job) => job.applications, { onDelete: 'CASCADE' })
-  job: Job;
+  job!: Job;
 
   @ManyToOne(() => User, (user) => user.applications, { onDelete: 'CASCADE' })
-  applicant: User;
+  applicant!: User;
 
   @ManyToOne(() => Resume, { onDelete: 'SET NULL' })
-  resume: Resume;
+  resume!: Resume;
 
   @Column({
     type: 'enum',
     enum: ApplicationStatus,
     default: ApplicationStatus.APPLIED,
   })
-  status: ApplicationStatus;
+  status!: ApplicationStatus;
 
   @Column({ type: 'float', default: 0 })
-  aiScore: number;
+  aiScore!: number;
 
   @OneToMany(() => ApplicationHistory, (history) => history.application)
-  history: ApplicationHistory[];
+  history!: ApplicationHistory[];
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

@@ -10,18 +10,18 @@ import { User } from '../../users/entities/user.entity';
 @Entity('application_history')
 export class ApplicationHistory {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @ManyToOne(() => Application, (app: Application) => app.history, {
     onDelete: 'CASCADE',
   })
-  application: Application;
+  application!: Application;
 
   @Column()
-  previousStatus: string;
+  previousStatus!: string;
 
   @Column()
-  newStatus: string;
+  newStatus!: string;
 
   @ManyToOne(() => User, { nullable: true })
   changedBy?: User;
@@ -30,5 +30,5 @@ export class ApplicationHistory {
   note?: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

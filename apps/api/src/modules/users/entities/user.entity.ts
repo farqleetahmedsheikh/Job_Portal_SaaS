@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -23,7 +20,7 @@ import { Notification } from '../../notifications/entities/notification.entity';
 @Index(['role'])
 export class User {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ length: 255 })
   email!: string;
@@ -51,25 +48,25 @@ export class User {
 
   /* Relations */
   @OneToMany(() => Resume, (resume) => resume.user)
-  resumes: Resume[];
+  resumes?: Resume[];
 
   @OneToMany(() => Application, (app) => app.applicant)
-  applications: Application[];
+  applications?: Application[];
 
   @OneToMany(() => Company, (company) => company.owner)
-  companies: Company[];
+  companies?: Company[];
 
   @OneToMany(() => Message, (message) => message.sender)
-  sentMessages: Message[];
+  sentMessages!: Message[];
 
   @OneToMany(() => Notification, (notification) => notification.user)
-  notifications: Notification[];
+  notifications!: Notification[];
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @DeleteDateColumn()
   deletedAt?: Date;

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -16,7 +15,7 @@ import { CodingSubmission } from './coding-submission.entity';
 @Index(['job'])
 export class CodingTest {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   /**
    * Job this test belongs to
@@ -24,28 +23,28 @@ export class CodingTest {
   @ManyToOne(() => Job, (job: Job) => job.codingTests, {
     onDelete: 'CASCADE',
   })
-  job: Job;
+  job!: Job;
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column({ type: 'text', nullable: true })
   description?: string;
 
   @Column({ type: 'text' })
-  instructions: string;
+  instructions!: string;
 
   /**
    * Time limit
    */
   @Column({ type: 'int' })
-  durationMinutes: number;
+  durationMinutes!: number;
 
   /**
    * Maximum achievable score
    */
   @Column({ type: 'int' })
-  maxScore: number;
+  maxScore!: number;
 
   /**
    * Optional language restrictions
@@ -55,11 +54,11 @@ export class CodingTest {
   allowedLanguages?: string[];
 
   @OneToMany(() => CodingSubmission, (submission) => submission.test)
-  submissions: CodingSubmission[];
+  submissions!: CodingSubmission[];
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

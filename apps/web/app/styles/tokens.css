@@ -1,31 +1,56 @@
 :root {
-    /* Brand */
-    --color-primary: #1E3A8A;
-    --color-secondary: #4338CA;
-    --color-accent: #10B981;
+    /* =========================
+     BRAND (Luxury Indigo/Navy)
+  ========================== */
+    --color-primary: #1B2559;
+    /* Deep Sapphire */
+    --color-secondary: #4F46E5;
+    /* Royal Indigo */
+    --color-accent: #0EA5A4;
+    /* Elegant Teal */
 
-    /* Status */
-    --status-applied: #9CA3AF;
-    --status-shortlisted: #2563EB;
-    --status-interview: #F59E0B;
-    --status-rejected: #EF4444;
-    --status-hired: #22C55E;
+    /* =========================
+     STATUS (Premium Tones)
+  ========================== */
+    --status-applied: #94A3B8;
+    /* Slate */
+    --status-shortlisted: #3B82F6;
+    /* Refined Blue */
+    --status-interview: #D97706;
+    /* Warm Amber */
+    --status-rejected: #DC2626;
+    /* Soft Crimson */
+    --status-hired: #059669;
+    /* Deep Emerald */
 
-    /* Background */
-    --bg-app: #F8FAFC;
+    /* =========================
+     BACKGROUND (Soft Luxury)
+  ========================== */
+    --bg-app: #F1F5F9;
+    /* Soft Cool Gray */
     --bg-card: #FFFFFF;
-    --border: #E5E7EB;
+    --border: #E2E8F0;
     --divider: #CBD5E1;
 
-    /* Text */
-    --text-primary: #111827;
-    --text-secondary: #6B7280;
-    --text-muted: #9CA3AF;
-    --text-link: #2563EB;
+    /* =========================
+     TEXT (High-End Contrast)
+  ========================== */
+    --text-primary: #0F172A;
+    /* Almost Black Navy */
+    --text-secondary: #475569;
+    --text-muted: #94A3B8;
+    --text-link: #4F46E5;
+    --white: #FFFFFF;
 
-    /* Radius */
-    --radius: 6px;
+    /* =========================
+     RADIUS (Modern SaaS)
+  ========================== */
+    --radius: 10px;
 
-    /* Shadow */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    /* =========================
+     SHADOWS (Soft Depth)
+  ========================== */
+    --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 20px 40px rgba(15, 23, 42, 0.12);
 }

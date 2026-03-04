@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -15,37 +14,37 @@ import { User } from '../../users/entities/user.entity';
 @Index(['sender'])
 export class Message {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   /**
    * User who sends the message
    */
   @ManyToOne(() => User, { onDelete: 'CASCADE', nullable: false })
   @JoinColumn({ name: 'senderId' })
-  sender: User;
+  sender!: User;
 
   /**
    * User who receives the message
    */
   @ManyToOne(() => User, { onDelete: 'CASCADE', nullable: false })
   @JoinColumn({ name: 'receiverId' })
-  receiver: User;
+  receiver!: User;
 
   /**
    * Message body
    */
   @Column({ type: 'text' })
-  content: string;
+  content!: string;
 
   /**
    * Read / Unread status
    */
   @Column({ default: false })
-  read: boolean;
+  read!: boolean;
 
   /**
    * Timestamp
    */
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

@@ -4,11 +4,11 @@ import { User } from '../../users/entities/user.entity';
 @Entity('applicant_profiles')
 export class ApplicantProfile {
   @PrimaryColumn('uuid')
-  profileId: string;
+  profileId!: string;
 
   @OneToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id' })
-  user: User;
+  user!: User;
 
   @Column({ nullable: true })
   location?: string;
