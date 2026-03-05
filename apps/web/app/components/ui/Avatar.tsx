@@ -4,6 +4,7 @@
 
 import Image from "next/image";
 import { useMemo } from "react";
+import styles from "../../styles/avatar.module.css";
 
 interface AvatarProps {
   name: string;
@@ -22,7 +23,7 @@ export const Avatar = ({ name, src, size = 40 }: AvatarProps) => {
 
   return (
     <div
-      className="avatar"
+      className={styles.avatar}
       style={{
         width: size,
         height: size,
@@ -34,10 +35,10 @@ export const Avatar = ({ name, src, size = 40 }: AvatarProps) => {
           alt={name}
           width={size}
           height={size}
-          className="avatar-img"
+          className={styles["avatar-img"]}
         />
       ) : (
-        <span className="avatar-fallback">{initials}</span>
+        <span className={styles["avatar-fallback"]}>{initials}</span>
       )}
     </div>
   );

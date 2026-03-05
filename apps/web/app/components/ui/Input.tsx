@@ -7,10 +7,10 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 
 export function Input({ label, error, ...props }: InputProps) {
   return (
-    <div className="form-group">
+    <div>
       <label>{label}</label>
       <input {...props} />
-      {error && <span className="error">{error}</span>}
+      {error && <span>{error}</span>}
     </div>
   );
 }

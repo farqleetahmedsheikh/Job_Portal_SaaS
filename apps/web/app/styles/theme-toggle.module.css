@@ -1,0 +1,46 @@
+/* ===============================
+   THEME TOGGLE (Luxury Minimal)
+================================ */
+
+.theme-toggle {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-app);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+/* Hover State */
+
+.theme-toggle:hover {
+    background: var(--color-secondary);
+    color: var(--white);
+    border-color: var(--color-secondary);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-2px);
+}
+
+/* Active Click */
+
+.theme-toggle:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* Icon smooth transition */
+
+.theme-toggle svg {
+    transition: transform 0.3s ease;
+}
+
+/* Subtle rotate effect on hover */
+
+.theme-toggle:hover svg {
+    transform: rotate(20deg);
+}

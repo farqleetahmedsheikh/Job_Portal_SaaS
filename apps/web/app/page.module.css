@@ -203,8 +203,7 @@
 .cta {
     background: linear-gradient(180deg,
             var(--color-primary) 0%,
-            var(--color-secondary) 50%,
-            var(--bg-app) 100%);
+            var(--color-secondary) 50%);
     color: white;
     text-align: center;
     padding: 100px 20px;

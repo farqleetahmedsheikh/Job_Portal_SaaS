@@ -1,0 +1,55 @@
+/* ===============================
+   NAVBAR (Floating Glass Feel)
+================================ */
+
+.navbar {
+    height: 75px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Search */
+
+.search {
+    background: var(--bg-app);
+    border: 1px solid var(--border);
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 14px;
+    width: 320px;
+    color: var(--text-primary);
+    transition: 0.25s ease;
+}
+
+.search:focus {
+    outline: none;
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+/* ===============================
+   NAVBAR RIGHT SECTION
+================================ */
+
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Role badge */
+
+.role-badge {
+    background: var(--color-secondary);
+    color: var(--white);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.4px;
+}

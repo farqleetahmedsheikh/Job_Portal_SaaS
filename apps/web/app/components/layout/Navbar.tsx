@@ -5,6 +5,7 @@
 import { User } from "../../types/user";
 import { Avatar } from "../ui/Avatar";
 import { ThemeToggle } from "../theme/ThemeToggler";
+import styles from "../../styles/navbar.module.css";
 
 
 interface Props {
@@ -13,17 +14,17 @@ interface Props {
 
 export const Navbar = ({ user }: Props) => {
   return (
-    <header className="navbar">
+    <header className={styles.navbar}>
       <input
-        className="search"
+        className={styles.search}
         placeholder={
           user.role === "APPLICANT" ? "Search jobs..." : "Search candidates..."
         }
       />
 
-      <div className="navbar-right">
+      <div className={styles["navbar-right"]}>
         <ThemeToggle />
-        <span className="role-badge">{user.role}</span>
+        <span className={styles["role-badge"]}>{user.role}</span>
         <Avatar name={user.fullName} src={user.avatar} />
       </div>
     </header>

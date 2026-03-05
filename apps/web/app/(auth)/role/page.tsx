@@ -4,7 +4,7 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import "../../styles/auth.css";
+import styles from "../../styles/auth.module.css";
 
 export default function RoleSelectionPage() {
   const router = useRouter();
@@ -15,14 +15,14 @@ export default function RoleSelectionPage() {
   };
 
   return (
-    <div className="auth-wrapper">
-      <div className="auth-card">
+    <div className={styles["auth-wrapper"]}>
+      <div className={styles["auth-card"]}>
         <h1>Select Your Role</h1>
-        <p className="auth-subtitle">You can’t change this later</p>
+        <p className={styles["auth-subtitle"]}>You can’t change this later</p>
 
-        <div className="role-grid">
+        <div className={styles["role-grid"]}>
           <div
-            className="role-card"
+            className={styles["role-card"]}
             onClick={() => handleRoleSelect("APPLICANT")}
             style={{ cursor: "pointer" }}
           >
@@ -31,7 +31,7 @@ export default function RoleSelectionPage() {
           </div>
 
           <div
-            className="role-card"
+            className={styles["role-card"]}
             onClick={() => handleRoleSelect("EMPLOYER")}
             style={{ cursor: "pointer" }}
           >

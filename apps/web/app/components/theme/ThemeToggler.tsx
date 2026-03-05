@@ -4,13 +4,14 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
+import styles from "../../styles/theme-toggle.module.css";
 
 export const ThemeToggle = () => {
   const { theme, toggleTheme } = useTheme();
 
   return (
     <button
-      className="theme-toggle"
+      className={styles["theme-toggle"]}
       onClick={toggleTheme}
       aria-label="Toggle theme"
     >
