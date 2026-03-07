@@ -10,13 +10,15 @@ export class UsersService {
     private readonly userRepo: Repository<User>,
   ) {}
 
-  findByEmail(email: string) {
+  /** Find user by email */
+  async findByEmail(email: string): Promise<User | null> {
     return this.userRepo.findOne({
       where: { email },
     });
   }
 
-  async findById(id: string) {
+  /** Find user by ID */
+  async findById(id: string): Promise<User> {
     const user = await this.userRepo.findOne({
       where: { id },
       select: [
@@ -27,22 +29,30 @@ export class UsersService {
         'phoneNumber',
         'profilePicture',
         'bio',
+        'profileCompleted',
         'createdAt',
+        'updatedAt',
       ],
     });
 
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
+    if (!user) throw new NotFoundException('User not found');
     return user;
   }
 
-  create(user: Partial<User>) {
-    return this.userRepo.save(user);
+  /** Create a new user */
+  async create(user: Partial<User>): Promise<User> {
+    const newUser = this.userRepo.create(user); // use create() for entity instantiation
+    return this.userRepo.save(newUser);
   }
 
-  async markProfileCompleted(userId: string) {
+  /** Update user fields (for complete profile or password reset) */
+  async update(userId: string, updates: Partial<User>): Promise<User> {
+    await this.userRepo.update(userId, updates);
+    return this.findById(userId); // return updated user
+  }
+
+  /** Mark profile as completed */
+  async markProfileCompleted(userId: string): Promise<void> {
     await this.userRepo.update(userId, { profileCompleted: true });
   }
 }

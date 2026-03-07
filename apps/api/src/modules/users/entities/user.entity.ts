@@ -34,17 +34,17 @@ export class User {
   @Column({ nullable: false })
   fullName!: string;
 
-  @Column({ nullable: false })
-  phoneNumber!: string;
+  @Column({ nullable: true })
+  phoneNumber?: string;
 
-  @Column({ nullable: false })
-  profilePicture!: string;
+  @Column({ nullable: true })
+  profilePicture?: string;
 
   @Column({ nullable: false, default: false })
-  profileCompleted?: boolean;
+  profileCompleted!: boolean;
 
-  @Column({ type: 'text', nullable: false })
-  bio!: string;
+  @Column({ type: 'text', nullable: true })
+  bio?: string;
 
   /* Relations */
   @OneToMany(() => Resume, (resume) => resume.user)

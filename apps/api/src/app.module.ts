@@ -18,7 +18,6 @@ import { CompaniesModule } from './modules/companies/companies.module';
     /* ENV CONFIG */
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '../.env',
     }),
 
     /* DATABASE */
@@ -30,7 +29,7 @@ import { CompaniesModule } from './modules/companies/companies.module';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       autoLoadEntities: true,
-      synchronize: false, // NEVER true in prod
+      synchronize: true, // NEVER true in prod
     }),
 
     /* FEATURE MODULES */

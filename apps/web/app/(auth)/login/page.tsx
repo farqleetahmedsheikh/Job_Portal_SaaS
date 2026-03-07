@@ -11,11 +11,13 @@ import { AuthForm } from "../../components/Auth/AuthForm";
 import { api } from "../../lib/api";
 import { z } from "zod";
 import { AuthLinks } from "../../components/Auth/AuthLinks";
+import { useRouter } from "next/navigation";
 
 type FormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const {
     register,
@@ -28,12 +30,26 @@ export default function LoginPage() {
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
-      const response = await api("/api/auth/login", "POST", data);
+      const response: { accessToken: string; user: { role: string } } = await api(
+        "http://localhost:9000/api/auth/login",
+        "POST",
+        data,
+      );
+      const user = response.user;
+      console.log("Login response:", response);
+      localStorage.setItem("token", response.accessToken);
+      localStorage.setItem("user", JSON.stringify(user));
       alert("Logged in successfully!");
       console.log("Login response:", response);
-      // Optionally redirect to dashboard
-      // router.push("/dashboard");
+      if (response.accessToken) {
+        if (user.role === "applicant") {
+          router.push("/applicant/dashboard");
+        } else {
+          router.push("/employer/dashboard");
+        }
+      }
     } catch (err: unknown) {
+      console.log("Login error:", err);
       alert(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
