@@ -7,10 +7,18 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthService } from './auth.service';
 import { UsersModule } from '../users/user.module';
 import { AuthController } from './auth.controller';
+import { ApplicantProfilesModule } from '../applicants/applicants.module';
+import { CompaniesModule } from '../companies/companies.module';
+import { MailModule } from '../mail/mail.module';
+import { CacheModule } from '../cache/cache.modules';
 
 @Module({
   imports: [
     UsersModule,
+    ApplicantProfilesModule,
+    CompaniesModule,
+    MailModule,
+    CacheModule,
     PassportModule,
     ConfigModule,
     JwtModule.registerAsync({

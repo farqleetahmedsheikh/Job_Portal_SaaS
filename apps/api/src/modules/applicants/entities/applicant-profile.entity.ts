@@ -27,10 +27,10 @@ export class ApplicantProfile {
   user!: User;
 
   // ── Profile fields ─────────────────────────────────────
-  @Column({ nullable: true, default: null })
+  @Column({ type: 'varchar', nullable: true, default: null })
   jobTitle!: string | null;
 
-  @Column({ nullable: true, default: null })
+  @Column({ type: 'varchar', nullable: true, default: null })
   location!: string | null;
 
   @Column({ type: 'smallint', nullable: true, default: null })
@@ -40,13 +40,13 @@ export class ApplicantProfile {
   @Column({ type: 'text', array: true, nullable: true, default: null })
   skills!: string[] | null;
 
-  @Column({ nullable: true, default: null })
+  @Column({ type: 'varchar', nullable: true, default: null })
   linkedinUrl!: string | null;
 
-  @Column({ nullable: true, default: null })
+  @Column({ type: 'varchar', nullable: true, default: null })
   githubUrl!: string | null;
 
-  @Column({ nullable: true, default: null })
+  @Column({ type: 'varchar', nullable: true, default: null })
   portfolioUrl!: string | null;
 
   @Column({ type: 'text', nullable: true, default: null })

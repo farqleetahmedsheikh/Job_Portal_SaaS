@@ -45,23 +45,23 @@ export class User {
   @Column({ length: 100 })
   fullName!: string;
 
-  @Column({ length: 20, nullable: true, default: null })
+  @Column({ length: 20, type: 'varchar', nullable: true, default: null })
   phoneNumber!: string | null;
 
-  @Column({ nullable: true, default: null })
+  @Column({ type: 'varchar', nullable: true, default: null })
   profilePicture!: string | null;
 
   @Column({ type: 'text', nullable: true, default: null })
   bio!: string | null;
 
   // ── Status flags ──────────────────────────────────────
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
   isProfileComplete!: boolean;
 
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
   isEmailVerified!: boolean;
 
-  @Column({ default: true })
+  @Column({ type: 'boolean', default: true })
   isActive!: boolean;
 
   // ── Hooks ─────────────────────────────────────────────

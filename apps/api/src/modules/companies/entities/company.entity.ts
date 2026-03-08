@@ -42,17 +42,17 @@ export class Company {
   @Column({ length: 200 })
   location!: string;
 
-  @Column({ nullable: true, default: null })
+  @Column({ type: 'varchar', nullable: true, default: null })
   website!: string | null;
 
-  @Column({ nullable: true, default: null })
+  @Column({ type: 'varchar', nullable: true, default: null })
   logoUrl!: string | null;
 
   @Column({ type: 'text', nullable: true, default: null })
   description!: string | null;
 
   // Range stored as string e.g. "50-100", "1000+"
-  @Column({ length: 20, nullable: true, default: null })
+  @Column({ length: 20, type: 'varchar', nullable: true, default: null })
   employeeCount!: string | null;
 
   @Column({ default: false })

@@ -8,7 +8,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Company } from './entities/company.entity';
-import { CreateCompanyDto } from './dto/company.dto';
 
 interface CreateCompanyPayload {
   companyName: string;
@@ -21,9 +20,6 @@ interface CreateCompanyPayload {
 
 @Injectable()
 export class CompaniesService {
-  createCompany(userId: any, dto: CreateCompanyDto) {
-    throw new Error('Method not implemented.');
-  }
   private readonly logger = new Logger(CompaniesService.name);
 
   constructor(
