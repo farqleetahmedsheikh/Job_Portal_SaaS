@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -7,67 +8,100 @@ import {
   DeleteDateColumn,
   Index,
   OneToMany,
+  OneToOne,
+  BeforeInsert,
+  BeforeUpdate,
 } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { UserRole } from '../../../common/enums/user-role.enum';
 import { Resume } from '../../resumes/entities/resume.entity';
 import { Application } from '../../applications/entities/application.entity';
 import { Company } from '../../companies/entities/company.entity';
 import { Message } from '../../messages/entities/message.entity';
 import { Notification } from '../../notifications/entities/notification.entity';
+import { ApplicantProfile } from '../../applicants/entities/applicant-profile.entity';
 
 @Entity('users')
 @Index(['email'], { unique: true })
 @Index(['role'])
+@Index(['createdAt'])
+@Index(['deletedAt'])
 export class User {
+  // ── Identity ──────────────────────────────────────────
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ length: 255 })
+  @Column({ length: 255, unique: true })
   email!: string;
 
-  @Column()
+  @Column({ select: false }) // never loaded unless explicitly requested
+  @Exclude() // stripped by ClassSerializerInterceptor
   passwordHash!: string;
 
   @Column({ type: 'enum', enum: UserRole })
   role!: UserRole;
 
-  @Column({ nullable: false })
+  // ── Base profile ──────────────────────────────────────
+  @Column({ length: 100 })
   fullName!: string;
 
-  @Column({ nullable: true })
-  phoneNumber?: string;
+  @Column({ length: 20, nullable: true, default: null })
+  phoneNumber!: string | null;
 
-  @Column({ nullable: true })
-  profilePicture?: string;
+  @Column({ nullable: true, default: null })
+  profilePicture!: string | null;
 
-  @Column({ nullable: false, default: false })
-  profileCompleted!: boolean;
+  @Column({ type: 'text', nullable: true, default: null })
+  bio!: string | null;
 
-  @Column({ type: 'text', nullable: true })
-  bio?: string;
+  // ── Status flags ──────────────────────────────────────
+  @Column({ default: false })
+  isProfileComplete!: boolean;
 
-  /* Relations */
-  @OneToMany(() => Resume, (resume) => resume.user)
-  resumes?: Resume[];
+  @Column({ default: false })
+  isEmailVerified!: boolean;
 
-  @OneToMany(() => Application, (app) => app.applicant)
-  applications?: Application[];
+  @Column({ default: true })
+  isActive!: boolean;
 
-  @OneToMany(() => Company, (company) => company.owner)
-  companies?: Company[];
+  // ── Hooks ─────────────────────────────────────────────
+  @BeforeInsert()
+  normalizeEmailInsert() {
+    this.email = this.email.toLowerCase().trim();
+  }
 
-  @OneToMany(() => Message, (message) => message.sender)
+  @BeforeUpdate()
+  normalizeEmailUpdate() {
+    if (this.email) this.email = this.email.toLowerCase().trim();
+  }
+
+  // ── Relations ─────────────────────────────────────────
+  // Role-specific profile — only one will be populated based on role
+  @OneToOne(() => ApplicantProfile, (p) => p.user, { nullable: true })
+  applicantProfile!: ApplicantProfile | null;
+
+  @OneToMany(() => Resume, (r) => r.user)
+  resumes!: Resume[];
+
+  @OneToMany(() => Application, (a) => a.applicant)
+  applications!: Application[];
+
+  @OneToMany(() => Company, (c) => c.owner)
+  companies!: Company[];
+
+  @OneToMany(() => Message, (m) => m.sender)
   sentMessages!: Message[];
 
-  @OneToMany(() => Notification, (notification) => notification.user)
+  @OneToMany(() => Notification, (n) => n.user)
   notifications!: Notification[];
 
+  // ── Timestamps ────────────────────────────────────────
   @CreateDateColumn()
   createdAt!: Date;
 
   @UpdateDateColumn()
   updatedAt!: Date;
 
-  @DeleteDateColumn()
-  deletedAt?: Date;
+  @DeleteDateColumn({ nullable: true, default: null })
+  deletedAt!: Date | null;
 }

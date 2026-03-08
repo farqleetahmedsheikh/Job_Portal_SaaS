@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { UserRole } from 'src/common/enums/user-role.enum';
@@ -16,7 +17,7 @@ export class CompaniesController {
 
   @Post()
   create(@Req() req: any, @Body() dto: CreateCompanyDto) {
-    return this.service.createCompany(req.user.userId, dto);
+    return this.service.create(req.user.userId, dto);
   }
 
   @Get('me')

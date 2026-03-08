@@ -2,8 +2,9 @@
 
 import "./globals.css";
 import "./styles/tokens.css";
-
 import { ThemeProvider } from "./components/theme/ThemeProvider";
+import { SessionStoreProvider } from "./store/session.store";
+import { SessionProvider } from "./components/providers/SessionProvider";
 
 export default function RootLayout({
   children,
@@ -11,9 +12,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <SessionStoreProvider>
+            {" "}
+            {/* ← add this */}
+            <SessionProvider>{children}</SessionProvider>
+          </SessionStoreProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,48 +1,105 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+// app.module.ts
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/user.module';
 import { ResumesModule } from './modules/resumes/resumes.module';
 import { JobsModule } from './modules/jobs/jobs.module';
-import { ApplicantsModule } from './modules/applicants/applicants.module';
+import { ApplicantProfilesModule } from './modules/applicants/applicants.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { MessagesModule } from './modules/messages/messages.module';
 import { ApplicationsModule } from './modules/applications/applications.module';
 import { CodingTestsModule } from './modules/coding-tests/coding-tests.module';
 import { CompaniesModule } from './modules/companies/companies.module';
 
+import { validate } from './config/env.validations';
+import databaseConfig from './config/database.config';
+import appConfig from './config/app.config';
+import mailConfig from './config/mail.config';
+import redisConfig from './config/redis.config';
+
 @Module({
   imports: [
-    /* ENV CONFIG */
+    // ── Config ─────────────────────────────────────────
+    // validate() throws at startup if any required env var is missing
+    // so you catch misconfiguration before the app ever accepts traffic
     ConfigModule.forRoot({
       isGlobal: true,
+      cache: true, // caches process.env — faster reads
+      load: [databaseConfig, appConfig, mailConfig, redisConfig],
+      validate, // zod/joi schema — see below
     }),
 
-    /* DATABASE */
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT),
-      username: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
-      autoLoadEntities: true,
-      synchronize: true, // NEVER true in prod
+    // ── Database ────────────────────────────────────────
+    // forRootAsync reads config after ConfigModule is ready
+    // Never read process.env directly in module definitions
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        host: config.get<string>('database.host'),
+        port: config.get<number>('database.port'),
+        username: config.get<string>('database.user'),
+        password: config.get<string>('database.password'),
+        database: config.get<string>('database.name'),
+        autoLoadEntities: true,
+        synchronize: config.get<string>('app.env') !== 'production',
+        ssl:
+          config.get<string>('app.env') === 'production'
+            ? { rejectUnauthorized: true }
+            : false,
+        logging:
+          config.get<string>('app.env') === 'development'
+            ? ['error', 'warn']
+            : ['error'],
+        // Connection pool — prevents DB exhaustion under load
+        extra: {
+          max: 20, // max pool size
+          idleTimeoutMillis: 30_000,
+          connectionTimeoutMillis: 5_000,
+        },
+      }),
     }),
 
-    /* FEATURE MODULES */
+    // ── Rate limiting ───────────────────────────────────
+    // Global default — individual routes override via @Throttle()
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => [
+        {
+          ttl: config.get<number>('app.throttleTtl') ?? 60_000,
+          limit: config.get<number>('app.throttleLimit') ?? 60,
+        },
+      ],
+    }),
+
+    // ── Feature modules ─────────────────────────────────
     AuthModule,
     UsersModule,
     ResumesModule,
     ApplicationsModule,
-    ApplicantsModule,
+    ApplicantProfilesModule,
     JobsModule,
     NotificationsModule,
     MessagesModule,
     CodingTestsModule,
     CompaniesModule,
+  ],
+
+  providers: [
+    // Applies ThrottlerGuard globally so every route is
+    // rate-limited by default — no need to add it per controller
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

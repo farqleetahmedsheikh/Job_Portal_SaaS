@@ -1,55 +1,211 @@
 /* ===============================
-   NAVBAR (Floating Glass Feel)
+   navbar.module.css
 ================================ */
 
 .navbar {
-    height: 75px;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(12px);
+    height: 64px;
+    background: var(--bg-card);
     border-bottom: 1px solid var(--border);
-    padding: 0 40px;
+    padding: 0 24px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    flex-shrink: 0;
 }
 
-/* Search */
+/* ── Logo ── */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    flex-shrink: 0;
+    margin-right: 4px;
+}
+
+.logo-mark {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: var(--color-secondary);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+
+.logo-mark svg {
+    width: 16px;
+    height: 16px;
+    color: #fff;
+}
+
+.logo-text {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: var(--text-primary);
+}
+
+.logo-text span {
+    color: var(--color-secondary);
+}
+
+/* ── Search ── */
+.search-wrap {
+    position: relative;
+    flex: 1;
+    max-width: 360px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted, #8891a8);
+    pointer-events: none;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
 
 .search {
+    width: 100%;
     background: var(--bg-app);
     border: 1px solid var(--border);
-    padding: 10px 18px;
-    border-radius: 999px;
-    font-size: 14px;
-    width: 320px;
+    padding: 8px 16px 8px 36px;
+    border-radius: 9px;
+    font-size: 13px;
     color: var(--text-primary);
-    transition: 0.25s ease;
+    font-family: inherit;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+.search::placeholder {
+    color: var(--text-muted, #8891a8);
 }
 
 .search:focus {
     outline: none;
     border-color: var(--color-secondary);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    background: var(--bg-card);
+    box-shadow: 0 0 0 3px rgba(var(--glow-rgb, 79, 70, 229), 0.1);
 }
 
-/* ===============================
-   NAVBAR RIGHT SECTION
-================================ */
-
-.navbar-right {
+/* ── Right ── */
+.right {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 6px;
+    margin-left: auto;
 }
 
-/* Role badge */
+/* ── Icon button ── */
+.icon-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    color: var(--text-muted, #8891a8);
+    position: relative;
+    transition:
+        background 0.18s ease,
+        color 0.18s ease,
+        border-color 0.18s ease;
+    flex-shrink: 0;
+    text-decoration: none;
+}
 
-.role-badge {
-    background: var(--color-secondary);
-    color: var(--white);
-    padding: 6px 14px;
+.icon-btn:hover {
+    background: var(--bg-app);
+    color: var(--text-primary);
+    border-color: var(--border);
+}
+
+.icon-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Notification dot */
+.icon-btn .dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 6px;
+    height: 6px;
     border-radius: 999px;
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.4px;
+    background: #f43f5e;
+    border: 1.5px solid var(--bg-card);
+}
+
+/* ── Divider ── */
+.divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+    margin: 0 4px;
+    flex-shrink: 0;
+}
+
+/* ── User pill ── */
+.user-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px 4px 4px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease;
+    flex-shrink: 0;
+}
+
+.user-pill:hover {
+    background: var(--bg-app);
+    border-color: rgba(var(--glow-rgb, 79, 70, 229), 0.25);
+}
+
+.user-meta {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.user-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-role {
+    font-size: 10.5px;
+    color: var(--text-muted, #8891a8);
+    text-transform: capitalize;
+}
+
+.chevron {
+    width: 14px;
+    height: 14px;
+    color: var(--text-muted, #8891a8);
+    flex-shrink: 0;
+    margin-left: 2px;
 }

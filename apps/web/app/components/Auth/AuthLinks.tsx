@@ -1,18 +1,15 @@
 /** @format */
-
 "use client";
 
 import React from "react";
 import Link from "next/link";
+import styles from "../../styles/auth.module.css";
 
 interface AuthLinksProps {
-  /** Optional text for "Don't have an account?" section */
   leftLinkText?: string;
   leftLinkHref?: string;
-  /** Optional text for "Forgot password?" link */
   rightLinkText?: string;
   rightLinkHref?: string;
-  className?: string;
 }
 
 export const AuthLinks: React.FC<AuthLinksProps> = ({
@@ -20,18 +17,17 @@ export const AuthLinks: React.FC<AuthLinksProps> = ({
   leftLinkHref = "",
   rightLinkText = "",
   rightLinkHref = "",
-  className = "",
-}) => {
-  return (
-    <div
-      className={`${className}`}
-      style={{ display: "flex", justifyContent: "space-between", marginTop: "1rem", marginBottom: "1rem" }}
-    >
-      {leftLinkText && { leftLinkText } && (
-        <Link href={leftLinkHref}>{leftLinkText}</Link>
-      )}
-
-      {rightLinkText && <Link href={rightLinkHref}>{rightLinkText}</Link>}
-    </div>
-  );
-};
+}) => (
+  <div className={styles.links}>
+    {leftLinkText && (
+      <Link href={leftLinkHref} className={styles.link}>
+        {leftLinkText}
+      </Link>
+    )}
+    {rightLinkText && (
+      <Link href={rightLinkHref} className={styles["link-accent"]}>
+        {rightLinkText}
+      </Link>
+    )}
+  </div>
+);

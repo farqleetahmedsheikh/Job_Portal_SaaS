@@ -1,27 +1,61 @@
-import { Entity, PrimaryColumn, Column, OneToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToOne,
+  JoinColumn,
+  Index,
+  UpdateDateColumn,
+  CreateDateColumn,
+} from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
 @Entity('applicant_profiles')
+@Index(['userId'], { unique: true }) // enforce one profile per user at DB level
 export class ApplicantProfile {
-  @PrimaryColumn('uuid')
-  profileId!: string;
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
 
-  @OneToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'id' })
+  // ── FK stored as plain column — queryable without JOIN ─
+  @Column({ type: 'uuid', unique: true })
+  userId!: string;
+
+  @OneToOne(() => User, (user) => user.applicantProfile, {
+    onDelete: 'CASCADE', // delete profile when user is deleted
+  })
+  @JoinColumn({ name: 'userId' }) // FK column name matches above
   user!: User;
 
-  @Column({ nullable: true })
-  location?: string;
+  // ── Profile fields ─────────────────────────────────────
+  @Column({ nullable: true, default: null })
+  jobTitle!: string | null;
 
-  @Column({ type: 'int' })
-  experienceYears!: number;
+  @Column({ nullable: true, default: null })
+  location!: string | null;
 
-  @Column({ nullable: true })
-  linkedinUrl?: string;
+  @Column({ type: 'smallint', nullable: true, default: null })
+  experienceYears!: number | null;
 
-  @Column({ type: 'simple-array', nullable: false })
-  skills!: Array<string>;
+  // text[] is more efficient than simple-array for querying/indexing
+  @Column({ type: 'text', array: true, nullable: true, default: null })
+  skills!: string[] | null;
 
-  @Column({ nullable: true })
-  githubUrl?: string;
+  @Column({ nullable: true, default: null })
+  linkedinUrl!: string | null;
+
+  @Column({ nullable: true, default: null })
+  githubUrl!: string | null;
+
+  @Column({ nullable: true, default: null })
+  portfolioUrl!: string | null;
+
+  @Column({ type: 'text', nullable: true, default: null })
+  summary!: string | null;
+
+  // ── Timestamps ─────────────────────────────────────────
+  @CreateDateColumn()
+  createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
 }

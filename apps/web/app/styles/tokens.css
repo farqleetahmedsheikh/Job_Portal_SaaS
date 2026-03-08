@@ -1,56 +1,85 @@
-:root {
-    /* =========================
-     BRAND (Luxury Indigo/Navy)
-  ========================== */
+/* :root {
     --color-primary: #1B2559;
-    /* Deep Sapphire */
     --color-secondary: #4F46E5;
-    /* Royal Indigo */
     --color-accent: #0EA5A4;
-    /* Elegant Teal */
 
-    /* =========================
-     STATUS (Premium Tones)
-  ========================== */
     --status-applied: #94A3B8;
-    /* Slate */
     --status-shortlisted: #3B82F6;
-    /* Refined Blue */
     --status-interview: #D97706;
-    /* Warm Amber */
     --status-rejected: #DC2626;
-    /* Soft Crimson */
     --status-hired: #059669;
-    /* Deep Emerald */
 
-    /* =========================
-     BACKGROUND (Soft Luxury)
-  ========================== */
     --bg-app: #F1F5F9;
-    /* Soft Cool Gray */
     --bg-card: #FFFFFF;
     --border: #E2E8F0;
     --divider: #CBD5E1;
 
-    /* =========================
-     TEXT (High-End Contrast)
-  ========================== */
     --text-primary: #0F172A;
-    /* Almost Black Navy */
     --text-secondary: #475569;
     --text-muted: #94A3B8;
     --text-link: #4F46E5;
     --white: #FFFFFF;
 
-    /* =========================
-     RADIUS (Modern SaaS)
-  ========================== */
     --radius: 10px;
 
-    /* =========================
-     SHADOWS (Soft Depth)
-  ========================== */
     --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
     --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
     --shadow-lg: 0 20px 40px rgba(15, 23, 42, 0.12);
+    --glow-rgb: 167,139,250;
+} */
+
+/* ===============================
+   tokens.css — Design System Tokens
+   Import once in globals.css
+================================ */
+
+:root {
+  --color-primary: #2563eb;
+  --color-secondary: #4f46e5;
+  --color-accent: #34d9b3;
+  --glow-rgb: 79, 70, 229;
+
+  --bg-app: #0d0f14;
+  --bg-card: #13161e;
+  --bg-card-rgb: 19, 22, 30;
+  --bg-app-rgb: 13, 15, 20;
+
+  --text-primary: #f0f2f8;
+  --text-secondary: #a0a8c0;
+  --text-muted: #8891a8;
+  --text-link: #818cf8;
+
+  --border: rgba(255, 255, 255, 0.07);
+
+  --status-success: #34d9b3;
+  --status-warning: #f97316;
+  --status-danger: #f43f5e;
+  --status-info: #4f8ef7;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.14), 0 24px 48px rgba(0, 0, 0, 0.1);
+
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.0, 0, 0.2, 1);
+  --transition: 0.28s var(--ease-spring);
+}
+
+[data-theme="light"] {
+  --bg-app: #f4f6fb;
+  --bg-card: #ffffff;
+  --bg-card-rgb: 255, 255, 255;
+  --bg-app-rgb: 244, 246, 251;
+  --text-primary: #0f1117;
+  --text-secondary: #4a5568;
+  --text-muted: #8896a8;
+  --border: rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08), 0 24px 48px rgba(0, 0, 0, 0.05);
 }

@@ -1,54 +1,171 @@
 /* ===============================
-   PREMIUM CARDS
+   card.module.css
 ================================ */
 
 .card {
     background: var(--bg-card);
-    padding: 32px;
-    border-radius: var(--radius);
+    padding: 22px 24px;
+    border-radius: 16px;
     border: 1px solid var(--border);
-    box-shadow: var(--shadow-md);
-    transition: all 0.3s ease;
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.08),
+        0 4px 16px rgba(0, 0, 0, 0.06);
+    transition:
+        transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+        border-color 0.3s cubic-bezier(0.22, 1, 0.36, 1);
     position: relative;
     overflow: hidden;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    cursor: default;
 }
 
-/* Subtle top accent glow */
-
+/* ── Animated top accent bar ── */
 .card::before {
     content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
+    height: 2px;
     background: linear-gradient(90deg,
             var(--color-secondary),
-            var(--color-accent));
+            var(--color-accent, #34d9b3));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    border-radius: 2px 2px 0 0;
+}
+
+/* ── Radial glow ── */
+.card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 90% 60% at 20% 0%,
+            rgba(var(--glow-rgb, 79, 142, 247), 0.07),
+            transparent 70%);
     opacity: 0;
-    transition: 0.3s ease;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
 }
 
 .card:hover {
-    transform: translateY(-6px);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+    border-color: rgba(var(--glow-rgb, 79, 142, 247), 0.2);
+    box-shadow:
+        0 0 0 1px rgba(var(--glow-rgb, 79, 142, 247), 0.08),
+        0 8px 24px rgba(0, 0, 0, 0.12),
+        0 24px 40px rgba(0, 0, 0, 0.08);
 }
 
 .card:hover::before {
+    transform: scaleX(1);
+}
+
+.card:hover::after {
     opacity: 1;
 }
 
-/* Card Typography */
-
-.card h3 {
-    font-size: 15px;
-    font-weight: 600;
-    margin-bottom: 12px;
-    color: var(--text-secondary);
+/* ── Top row: icon + trend ── */
+.card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
 }
 
-.card p {
-    font-size: 28px;
-    font-weight: 700;
+/* ── Icon ── */
+.card-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    display: grid;
+    place-items: center;
+    background: rgba(var(--glow-rgb, 79, 142, 247), 0.1);
+    border: 1px solid rgba(var(--glow-rgb, 79, 142, 247), 0.16);
+    transition:
+        background 0.3s ease,
+        border-color 0.3s ease,
+        transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    flex-shrink: 0;
+}
+
+.card:hover .card-icon {
+    background: rgba(var(--glow-rgb, 79, 142, 247), 0.18);
+    border-color: rgba(var(--glow-rgb, 79, 142, 247), 0.28);
+    transform: scale(1.06);
+}
+
+/* ── Trend badge ── */
+.card-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.trend-up {
+    background: rgba(52, 217, 179, 0.1);
+    color: #34d9b3;
+    border: 1px solid rgba(52, 217, 179, 0.2);
+}
+
+.trend-down {
+    background: rgba(244, 63, 94, 0.1);
+    color: #f43f5e;
+    border: 1px solid rgba(244, 63, 94, 0.2);
+}
+
+.trend-neutral {
+    background: rgba(var(--glow-rgb, 79, 142, 247), 0.08);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+/* ── Body ── */
+.card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.card-title {
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-muted, #8891a8);
+    margin: 0;
+}
+
+.card-value {
+    font-size: 30px;
+    font-weight: 800;
     color: var(--text-primary);
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin: 0;
+}
+
+/* ── Footer / children slot ── */
+.card-footer {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 12.5px;
+    color: var(--text-muted, #8891a8);
+    line-height: 1.4;
+}
+
+.card-footer svg {
+    flex-shrink: 0;
+    opacity: 0.5;
 }

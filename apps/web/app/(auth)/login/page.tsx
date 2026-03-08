@@ -1,23 +1,21 @@
 /** @format */
-
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { loginSchema } from "../../validations/auth.schema";
 import { InputField } from "../../components/Auth/InputField";
 import { AuthForm } from "../../components/Auth/AuthForm";
-import { api } from "../../lib/api";
-import { z } from "zod";
 import { AuthLinks } from "../../components/Auth/AuthLinks";
-import { useRouter } from "next/navigation";
+import { useSession } from "../../hooks/useSession";
 
 type FormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const { login, isLoading } = useSession();
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const {
     register,
@@ -28,36 +26,27 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: FormData) => {
-    setLoading(true);
-    try {
-      const response: { accessToken: string; user: { role: string } } = await api(
-        "http://localhost:9000/api/auth/login",
-        "POST",
-        data,
-      );
-      const user = response.user;
-      console.log("Login response:", response);
-      localStorage.setItem("token", response.accessToken);
-      localStorage.setItem("user", JSON.stringify(user));
-      alert("Logged in successfully!");
-      console.log("Login response:", response);
-      if (response.accessToken) {
-        if (user.role === "applicant") {
-          router.push("/applicant/dashboard");
-        } else {
-          router.push("/employer/dashboard");
-        }
-      }
-    } catch (err: unknown) {
-      console.log("Login error:", err);
-      alert(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-    }
+    setServerError(null);
+    const error = await login(data); // returns error string or null
+    if (error) setServerError(error); // rendered in UI — no alert()
   };
 
   return (
-    <AuthForm title="Login" onSubmit={handleSubmit(onSubmit)} loading={loading}>
+    <AuthForm
+      title="Welcome back"
+      subtitle="Sign in to your HireSphere account"
+      onSubmit={handleSubmit(onSubmit)}
+      loading={isLoading}
+      submitLabel="Sign in"
+    >
+      {serverError && (
+        <p
+          role="alert"
+          style={{ color: "var(--status-danger)", fontSize: 13, margin: 0 }}
+        >
+          {serverError}
+        </p>
+      )}
       <InputField
         label="Email"
         placeholder="you@example.com"
@@ -72,9 +61,9 @@ export default function LoginPage() {
         error={errors.password}
       />
       <AuthLinks
-        leftLinkText="Don’t have an account?"
+        leftLinkText="Don't have an account?"
         leftLinkHref="/register"
-        rightLinkText="Forgot Password?"
+        rightLinkText="Forgot password?"
         rightLinkHref="/forgot-password"
       />
     </AuthForm>
