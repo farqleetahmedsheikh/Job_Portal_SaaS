@@ -1,7 +1,7 @@
 /** @format */
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   User,
   Mail,
@@ -16,67 +16,242 @@ import {
   AlertTriangle,
   Lock,
   Trash2,
+  Github,
+  Linkedin,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useUser } from "../../store/session.store";
+import { useSessionStore } from "../../store/session.store";
+import { api } from "../../lib";
+import { API_BASE } from "../../constants";
+import { initials } from "../../lib";
+import type { SessionUser } from "../../store/session.store";
 import styles from "../../styles/profile.module.css";
-import { User as UserType } from "../../types/user";
 
-interface Props {
-  user: UserType;
-}
-
+// ─── Types ────────────────────────────────────────────────
 interface ProfileForm {
+  // User fields
   fullName: string;
   email: string;
   phone: string;
-  location: string;
   bio: string;
+  // Applicant profile fields
   jobTitle: string;
+  location: string;
+  experienceYears: string;
+  skills: string; // comma-separated in input, sent as array
+  linkedinUrl: string;
+  githubUrl: string;
 }
 
-export default function ProfilePage () {
+interface FieldConfig {
+  name: keyof ProfileForm;
+  label: string;
+  type?: string;
+  placeholder: string;
+  span?: boolean;
+  textarea?: boolean;
+  icon: React.ReactNode;
+  readOnly?: boolean;
+  applicantOnly?: boolean;
+}
+
+// ─── Field config ─────────────────────────────────────────
+const FIELDS: FieldConfig[] = [
+  // ── Base user fields ──
+  {
+    name: "fullName",
+    label: "Full Name",
+    icon: <User size={11} />,
+    placeholder: "Your full name",
+  },
+  {
+    name: "email",
+    label: "Email Address",
+    icon: <Mail size={11} />,
+    placeholder: "you@example.com",
+    type: "email",
+    readOnly: true,
+  },
+  {
+    name: "phone",
+    label: "Phone Number",
+    icon: <Phone size={11} />,
+    placeholder: "+1 (555) 000-0000",
+    type: "tel",
+  },
+  {
+    name: "bio",
+    label: "Bio",
+    icon: null,
+    placeholder: "A short bio about yourself...",
+    span: true,
+    textarea: true,
+  },
+  // ── Applicant-only fields ──
+  {
+    name: "jobTitle",
+    label: "Job Title",
+    icon: <Briefcase size={11} />,
+    placeholder: "e.g. Frontend Developer",
+    applicantOnly: true,
+  },
+  {
+    name: "location",
+    label: "Location",
+    icon: <MapPin size={11} />,
+    placeholder: "City, Country",
+    applicantOnly: true,
+  },
+  {
+    name: "experienceYears",
+    label: "Years of Experience",
+    icon: <User size={11} />,
+    placeholder: "2",
+    type: "number",
+    applicantOnly: true,
+  },
+  {
+    name: "linkedinUrl",
+    label: "LinkedIn URL",
+    icon: <Linkedin size={11} />,
+    placeholder: "https://linkedin.com/in/username",
+    applicantOnly: true,
+  },
+  {
+    name: "githubUrl",
+    label: "GitHub URL",
+    icon: <Github size={11} />,
+    placeholder: "https://github.com/username",
+    applicantOnly: true,
+  },
+];
+
+const DANGER_ACTIONS = [
+  {
+    label: "Change Password",
+    desc: "Update your password to keep your account secure",
+    icon: <Lock size={14} />,
+    variant: "btn-ghost" as const,
+    action: "change-password",
+  },
+  {
+    label: "Delete Account",
+    desc: "Permanently remove your account and all associated data",
+    icon: <Trash2 size={14} />,
+    variant: "btn-danger" as const,
+    action: "delete-account",
+  },
+];
+
+// ─── Component ────────────────────────────────────────────
+export default function ProfilePage() {
+  const router = useRouter();
+  const user = useUser();
+  const { setUser } = useSessionStore();
+
+  const initialForm = useMemo<ProfileForm>(
+    () => ({
+      fullName: user?.fullName ?? "",
+      email: user?.email ?? "",
+      phone: user?.phone ?? "",
+      bio: user?.bio ?? "",
+      jobTitle: user?.applicantProfile?.jobTitle ?? "",
+      location: user?.applicantProfile?.location ?? "",
+      experienceYears: String(user?.applicantProfile?.experienceYears ?? ""),
+      skills: user?.applicantProfile?.skills?.join(", ") ?? "",
+      linkedinUrl: user?.applicantProfile?.linkedinUrl ?? "",
+      githubUrl: user?.applicantProfile?.githubUrl ?? "",
+    }),
+    [user],
+  );
+
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
-  const userData = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")!) : {};
+  const [saving, setSaving] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [form, setForm] = useState<ProfileForm>(initialForm);
+  const [draft, setDraft] = useState<ProfileForm>(initialForm);
 
-  const [form, setForm] = useState<ProfileForm>({
-    fullName: userData.fullName ?? "",
-    email: userData.email ?? "",
-    phone: "",
-    location: "",
-    bio: "",
-    jobTitle: "",
-  });
+  if (!user) {
+    router.replace("/login");
+    return null;
+  }
 
-  const [draft, setDraft] = useState<ProfileForm>(form);
+  const userInitials = initials(form.fullName || "U");
+  const isApplicant = user.role === "applicant";
+  const visibleFields = FIELDS.filter((f) => !f.applicantOnly || isApplicant);
 
-  const initials = form.fullName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  // ── Handlers ──────────────────────────────────────────
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setDraft((prev) => ({ ...prev, [e.target.name]: e.target.value })),
+    [],
+  );
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
-  ) => setDraft((p) => ({ ...p, [e.target.name]: e.target.value }));
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    setServerError(null);
+    try {
+      // Single API call — backend splits fields into correct tables
+      const updatedUser = await api<SessionUser>(
+        `${API_BASE}/users/me`,
+        "PATCH",
+        {
+          // User table fields
+          fullName: draft.fullName || undefined,
+          phoneNumber: draft.phone || undefined,
+          bio: draft.bio || undefined,
+          // Applicant profile fields — backend ignores for employers
+          jobTitle: draft.jobTitle || undefined,
+          location: draft.location || undefined,
+          linkedinUrl: draft.linkedinUrl || undefined,
+          githubUrl: draft.githubUrl || undefined,
+          experienceYears: draft.experienceYears
+            ? Number(draft.experienceYears)
+            : undefined,
+          skills: draft.skills
+            ? draft.skills
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean)
+            : undefined,
+        },
+      );
 
-  const handleSave = () => {
-    setForm(draft);
-    setEditing(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  };
+      // Update session store with fresh data from backend
+      setUser(updatedUser);
+      setForm(draft);
+      setEditing(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      setServerError(
+        err instanceof Error ? err.message : "Failed to save profile",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }, [draft, user, setUser]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setDraft(form);
     setEditing(false);
-  };
+    setServerError(null);
+  }, [form]);
 
+  const handleDangerAction = useCallback(
+    (action: string) => {
+      if (action === "change-password") router.push("/change-password");
+      if (action === "delete-account") router.push("/delete-account");
+    },
+    [router],
+  );
+
+  // ── Render ────────────────────────────────────────────
   return (
     <div className={styles.page}>
-      {/* ── Header ── */}
+      {/* Header */}
       <div className={styles["page-header"]}>
         <div>
           <h1 className={styles["page-title"]}>My Profile</h1>
@@ -84,58 +259,81 @@ export default function ProfilePage () {
             Manage your personal information and account settings
           </p>
         </div>
-        {!editing ? (
-          <button
-            className={`${styles.btn} ${styles["btn-primary"]}`}
-            onClick={() => setEditing(true)}
-          >
-            <Edit2 size={14} /> Edit Profile
-          </button>
-        ) : (
-          <div className={styles["form-actions"]}>
-            <button
-              className={`${styles.btn} ${styles["btn-ghost"]}`}
-              onClick={handleCancel}
-            >
-              <X size={14} /> Cancel
-            </button>
+        <div className={styles["form-actions"]}>
+          {editing ? (
+            <>
+              <button
+                className={`${styles.btn} ${styles["btn-ghost"]}`}
+                onClick={handleCancel}
+                disabled={saving}
+              >
+                <X size={14} /> Cancel
+              </button>
+              <button
+                className={`${styles.btn} ${styles["btn-primary"]}`}
+                onClick={handleSave}
+                disabled={saving}
+                aria-busy={saving}
+              >
+                {saving ? (
+                  <>
+                    <span className={styles.spinner} /> Saving...
+                  </>
+                ) : (
+                  <>
+                    <Check size={14} /> Save Changes
+                  </>
+                )}
+              </button>
+            </>
+          ) : (
             <button
               className={`${styles.btn} ${styles["btn-primary"]}`}
-              onClick={handleSave}
+              onClick={() => setEditing(true)}
             >
-              <Check size={14} /> Save Changes
+              <Edit2 size={14} /> Edit Profile
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* ── Save banner ── */}
+      {/* Banners */}
       {saved && (
-        <div className={styles["save-banner"]}>
+        <div className={styles["save-banner"]} role="status">
           <Check size={16} /> Profile updated successfully
         </div>
       )}
+      {serverError && (
+        <div className={styles["error-banner"]} role="alert">
+          {serverError}
+        </div>
+      )}
 
-      {/* ── Personal info card ── */}
+      {/* Personal info */}
       <div className={styles.card}>
-        {/* Avatar row */}
+        {/* Avatar */}
         <div className={styles["avatar-section"]}>
           <div className={styles["avatar-wrap"]}>
-            {userData?.avatar ? (
+            {user.avatar ? (
               <img
-                src={userData?.avatar}
+                src={user.avatar}
                 alt={form.fullName}
                 className={styles["avatar-img"]}
               />
             ) : (
-              <div className={styles["avatar-fallback"]}>{initials}</div>
+              <div
+                className={styles["avatar-fallback"]}
+                aria-label={userInitials}
+              >
+                {userInitials}
+              </div>
             )}
             {editing && (
               <button
                 className={styles["avatar-upload-btn"]}
-                title="Change photo"
+                aria-label="Change profile photo"
               >
-                <Camera size={12} />
+                <Camera size={12} aria-hidden />
               </button>
             )}
           </div>
@@ -144,8 +342,24 @@ export default function ProfilePage () {
               {form.fullName || "Your Name"}
             </span>
             <span className={styles["avatar-role"]}>
-              {userData?.role.charAt(0) + userData?.role.slice(1).toLowerCase()}
+              {isApplicant
+                ? (user.applicantProfile?.jobTitle ?? "Applicant")
+                : (user.company?.companyName ?? "Employer")}
             </span>
+            {!user.isProfileComplete && (
+              <span
+                style={{
+                  fontSize: 11,
+                  color: "var(--status-warning)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  marginTop: 4,
+                }}
+              >
+                <AlertTriangle size={11} /> Profile incomplete
+              </span>
+            )}
             {editing && (
               <span className={styles["avatar-hint"]}>
                 Click the camera icon to upload a new photo
@@ -157,197 +371,166 @@ export default function ProfilePage () {
         {/* Fields */}
         <div className={styles["card-body"]}>
           <div className={styles["form-grid"]}>
-            {/* Full name */}
-            <div className={styles.field}>
-              <label className={styles.label}>
-                <User size={11} style={{ display: "inline", marginRight: 4 }} />
-                Full Name
-              </label>
-              {editing ? (
-                <input
-                  className={styles.input}
-                  name="fullName"
-                  value={draft.fullName}
-                  onChange={handleChange}
-                  placeholder="Your full name"
-                />
-              ) : (
+            {visibleFields.map(
+              ({
+                name,
+                label,
+                type,
+                placeholder,
+                span,
+                textarea,
+                icon,
+                readOnly,
+              }) => (
                 <div
-                  className={`${styles.value} ${!form.fullName ? styles.empty : ""}`}
+                  key={name}
+                  className={[styles.field, span ? styles["span-2"] : ""].join(
+                    " ",
+                  )}
                 >
-                  {form.fullName || "Not set"}
-                </div>
-              )}
-            </div>
+                  <label className={styles.label} htmlFor={name}>
+                    {icon} {label}
+                  </label>
 
-            {/* Job title */}
-            <div className={styles.field}>
-              <label className={styles.label}>
-                <Briefcase
-                  size={11}
-                  style={{ display: "inline", marginRight: 4 }}
-                />
-                Job Title
-              </label>
-              {editing ? (
-                <input
-                  className={styles.input}
-                  name="jobTitle"
-                  value={draft.jobTitle}
-                  onChange={handleChange}
-                  placeholder="e.g. Frontend Developer"
-                />
-              ) : (
-                <div
-                  className={`${styles.value} ${!form.jobTitle ? styles.empty : ""}`}
-                >
-                  {form.jobTitle || "Not set"}
-                </div>
-              )}
-            </div>
-
-            {/* Email */}
-            <div className={styles.field}>
-              <label className={styles.label}>
-                <Mail size={11} style={{ display: "inline", marginRight: 4 }} />
-                Email Address
-              </label>
-              {editing ? (
-                <input
-                  className={styles.input}
-                  name="email"
-                  type="email"
-                  value={draft.email}
-                  onChange={handleChange}
-                  placeholder="you@example.com"
-                />
-              ) : (
-                <div
-                  className={styles.value}
-                  style={{ display: "flex", alignItems: "center", gap: 8 }}
-                >
-                  {form.email || <span className={styles.empty}>Not set</span>}
-                  {form.email && (
-                    <span
-                      className={`${styles.badge} ${styles["badge-verified"]}`}
+                  {editing && !readOnly ? (
+                    textarea ? (
+                      <textarea
+                        id={name}
+                        name={name}
+                        className={styles.textarea}
+                        value={draft[name]}
+                        onChange={handleChange}
+                        placeholder={placeholder}
+                        rows={3}
+                      />
+                    ) : (
+                      <input
+                        id={name}
+                        name={name}
+                        type={type ?? "text"}
+                        className={styles.input}
+                        value={draft[name]}
+                        onChange={handleChange}
+                        placeholder={placeholder}
+                        min={type === "number" ? 0 : undefined}
+                        max={type === "number" ? 50 : undefined}
+                      />
+                    )
+                  ) : (
+                    <div
+                      className={[
+                        styles.value,
+                        !form[name] ? styles.empty : "",
+                      ].join(" ")}
                     >
-                      <ShieldCheck size={11} /> Verified
-                    </span>
+                      {name === "email" && form.email ? (
+                        <span
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          {form.email}
+                          <span
+                            className={`${styles.badge} ${styles["badge-verified"]}`}
+                          >
+                            <ShieldCheck size={11} aria-hidden /> Verified
+                          </span>
+                        </span>
+                      ) : name === "experienceYears" && form.experienceYears ? (
+                        `${form.experienceYears} years`
+                      ) : (
+                        form[name] || "Not set"
+                      )}
+                    </div>
+                  )}
+                </div>
+              ),
+            )}
+          </div>
+
+          {/* Skills — separate since it's an array */}
+          {isApplicant && (
+            <div className={styles.field} style={{ marginTop: 16 }}>
+              <label className={styles.label} htmlFor="skills">
+                Skills
+                <span
+                  style={{
+                    color: "var(--text-muted)",
+                    fontWeight: 400,
+                    marginLeft: 4,
+                  }}
+                >
+                  (comma separated)
+                </span>
+              </label>
+              {editing ? (
+                <input
+                  id="skills"
+                  name="skills"
+                  className={styles.input}
+                  value={draft.skills}
+                  onChange={handleChange}
+                  placeholder="React, TypeScript, Node.js"
+                />
+              ) : (
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 6,
+                    marginTop: 4,
+                  }}
+                >
+                  {user.applicantProfile?.skills?.length ? (
+                    user.applicantProfile.skills.map((s) => (
+                      <span key={s} className={styles.badge}>
+                        {s}
+                      </span>
+                    ))
+                  ) : (
+                    <span className={styles.empty}>Not set</span>
                   )}
                 </div>
               )}
             </div>
-
-            {/* Phone */}
-            <div className={styles.field}>
-              <label className={styles.label}>
-                <Phone
-                  size={11}
-                  style={{ display: "inline", marginRight: 4 }}
-                />
-                Phone Number
-              </label>
-              {editing ? (
-                <input
-                  className={styles.input}
-                  name="phone"
-                  type="tel"
-                  value={draft.phone}
-                  onChange={handleChange}
-                  placeholder="+1 (555) 000-0000"
-                />
-              ) : (
-                <div
-                  className={`${styles.value} ${!form.phone ? styles.empty : ""}`}
-                >
-                  {form.phone || "Not set"}
-                </div>
-              )}
-            </div>
-
-            {/* Location */}
-            <div className={`${styles.field} ${styles["span-2"]}`}>
-              <label className={styles.label}>
-                <MapPin
-                  size={11}
-                  style={{ display: "inline", marginRight: 4 }}
-                />
-                Location
-              </label>
-              {editing ? (
-                <input
-                  className={styles.input}
-                  name="location"
-                  value={draft.location}
-                  onChange={handleChange}
-                  placeholder="City, Country"
-                />
-              ) : (
-                <div
-                  className={`${styles.value} ${!form.location ? styles.empty : ""}`}
-                >
-                  {form.location || "Not set"}
-                </div>
-              )}
-            </div>
-
-            {/* Bio */}
-            <div className={`${styles.field} ${styles["span-2"]}`}>
-              <label className={styles.label}>Bio</label>
-              {editing ? (
-                <textarea
-                  className={styles.textarea}
-                  name="bio"
-                  value={draft.bio}
-                  onChange={handleChange}
-                  placeholder="A short bio about yourself..."
-                />
-              ) : (
-                <div
-                  className={`${styles.value} ${!form.bio ? styles.empty : ""}`}
-                >
-                  {form.bio || "No bio added yet"}
-                </div>
-              )}
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* ── Danger zone ── */}
+      {/* Danger zone */}
       <div className={styles.card}>
         <div className={styles["card-header"]}>
           <h2 className={styles["card-title"]}>
-            <AlertTriangle size={16} style={{ color: "#f43f5e" }} />
+            <AlertTriangle
+              size={16}
+              style={{ color: "var(--status-danger)" }}
+              aria-hidden
+            />
             Account
           </h2>
         </div>
         <div className={styles["card-body"]}>
           <div className={styles["danger-list"]}>
-            <div className={styles["danger-row"]}>
-              <div className={styles["danger-info"]}>
-                <strong>Change Password</strong>
-                <span>Update your password to keep your account secure</span>
+            {DANGER_ACTIONS.map((action) => (
+              <div key={action.action} className={styles["danger-row"]}>
+                <div className={styles["danger-info"]}>
+                  <strong>{action.label}</strong>
+                  <span>{action.desc}</span>
+                </div>
+                <button
+                  className={`${styles.btn} ${styles[action.variant]}`}
+                  onClick={() => handleDangerAction(action.action)}
+                  aria-label={action.label}
+                >
+                  {action.icon} {action.label.split(" ")[0]}
+                </button>
               </div>
-              <button className={`${styles.btn} ${styles["btn-ghost"]}`}>
-                <Lock size={14} /> Change
-              </button>
-            </div>
-
-            <div className={styles["danger-row"]}>
-              <div className={styles["danger-info"]}>
-                <strong>Delete Account</strong>
-                <span>
-                  Permanently remove your account and all associated data
-                </span>
-              </div>
-              <button className={`${styles.btn} ${styles["btn-danger"]}`}>
-                <Trash2 size={14} /> Delete
-              </button>
-            </div>
+            ))}
           </div>
         </div>
       </div>
     </div>
   );
-};
+}

@@ -1,64 +1,58 @@
 /** @format */
-
 "use client";
-import React, { useState } from "react";
+
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { registerSchema } from "../../validations/auth.schema";
 import { InputField } from "../../components/Auth/InputField";
 import { AuthForm } from "../../components/Auth/AuthForm";
-import { api } from "../../lib/api";
-import { z } from "zod";
 import { AuthLinks } from "../../components/Auth/AuthLinks";
+import { useSession } from "../../hooks/useSession";
 
-type FormData = z.infer<typeof registerSchema> & {
-  role: "applicant" | "employer";
-};
+type FormData = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const { register: registerUser, isLoading } = useSession();
+  const [serverError, setServerError] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
-    formState: { errors },
     watch,
+    formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(registerSchema),
-    defaultValues: {
-      role: "applicant",
-    },
+    defaultValues: { role: "applicant" },
   });
-
-  const onSubmit = async (data: FormData) => {
-    console.log("Submitting form with data:", data);
-    setLoading(true);
-    try {
-      const res: { accessToken: string; role: string; userId: string } =
-        await api("http://localhost:9000/api/auth/register", "POST", data);
-      console.log("register response: ----->", res);
-      localStorage.setItem("token", res.accessToken);
-      localStorage.setItem("role", res.role);
-      localStorage.setItem("userId", res.userId);
-      alert("Registered successfully!");
-      router.push("/complete-profile");
-    } catch (err: unknown) {
-      console.log(err);
-      alert(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const selectedRole = watch("role");
 
+  const onSubmit = async (data: FormData) => {
+    setServerError(null);
+    // useSession.register() handles cookie, store, and redirect
+    const error = await registerUser(data);
+    if (error) setServerError(error);
+  };
+
   return (
     <AuthForm
-      title="Register"
+      title="Create account"
+      subtitle="Join HireSphere today"
       onSubmit={handleSubmit(onSubmit)}
-      loading={loading}
+      loading={isLoading}
+      submitLabel="Create account"
     >
+      {serverError && (
+        <p
+          role="alert"
+          style={{ color: "var(--status-danger)", fontSize: 13, margin: 0 }}
+        >
+          {serverError}
+        </p>
+      )}
+
       <InputField
         label="Full Name"
         placeholder="John Doe"
@@ -67,55 +61,84 @@ export default function RegisterPage() {
       />
       <InputField
         label="Email"
-        placeholder="example@mail.com"
+        placeholder="you@example.com"
         register={register("email")}
         error={errors.email}
       />
       <InputField
         type="password"
         label="Password"
-        placeholder="******"
+        placeholder="••••••••"
         register={register("password")}
         error={errors.password}
       />
 
-      {/* Role Picker */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Select Role
-        </label>
-        <div className="flex gap-4">
-          <label
-            className={`cursor-pointer ${selectedRole === "applicant" ? "font-bold text-primary" : ""}`}
-          >
-            <input
-              type="radio"
-              value="applicant"
-              {...register("role")}
-              className="mr-1"
-            />
-            Applicant
-          </label>
-          <label
-            className={`cursor-pointer ${selectedRole === "employer" ? "font-bold text-primary" : ""}`}
-          >
-            <input
-              type="radio"
-              value="employer"
-              {...register("role")}
-              className="mr-1"
-            />
-            Employer
-          </label>
+      {/* Role picker */}
+      <div>
+        <p
+          style={{
+            fontSize: 13,
+            fontWeight: 500,
+            marginBottom: 8,
+            color: "var(--text-secondary)",
+          }}
+        >
+          I am a...
+        </p>
+        <div style={{ display: "flex", gap: 12 }}>
+          {(["applicant", "employer"] as const).map((r) => (
+            <label
+              key={r}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 7,
+                cursor: "pointer",
+                padding: "9px 16px",
+                borderRadius: "var(--radius-sm)",
+                border: `1px solid ${selectedRole === r ? "var(--color-secondary)" : "var(--border)"}`,
+                background:
+                  selectedRole === r
+                    ? "rgba(var(--glow-rgb),0.08)"
+                    : "transparent",
+                color:
+                  selectedRole === r
+                    ? "var(--text-primary)"
+                    : "var(--text-muted)",
+                fontSize: 13,
+                fontWeight: selectedRole === r ? 600 : 400,
+                transition: "all 0.2s ease",
+              }}
+            >
+              <input
+                type="radio"
+                value={r}
+                {...register("role")}
+                style={{ display: "none" }} // visually hidden — label handles click
+              />
+              {r === "applicant" ? "Job Seeker" : "Company"}
+            </label>
+          ))}
         </div>
         {errors.role && (
-          <p className="text-red-500 text-sm mt-1">{errors.role.message}</p>
+          <p
+            role="alert"
+            style={{
+              color: "var(--status-danger)",
+              fontSize: 12,
+              marginTop: 6,
+            }}
+          >
+            {errors.role.message}
+          </p>
         )}
       </div>
 
       <AuthLinks
-        rightLinkText="Already have an account?"
-        rightLinkHref="/login"
+        leftLinkText="Already have an account?"
+        leftLinkHref="/login"
+        rightLinkText="Terms of Service"
+        rightLinkHref="/terms"
       />
     </AuthForm>
   );

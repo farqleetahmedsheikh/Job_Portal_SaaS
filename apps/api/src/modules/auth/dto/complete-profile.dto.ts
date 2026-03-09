@@ -1,21 +1,53 @@
-import { IsString, IsNumber, Min, IsNotEmpty } from 'class-validator';
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+import {
+  IsString,
+  IsInt,
+  IsOptional,
+  IsArray,
+  ArrayMinSize,
+  Min,
+  Max,
+  IsUrl,
+  IsNotEmpty,
+} from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CompleteApplicantProfileDto {
   @IsString()
   @IsNotEmpty()
   jobTitle!: string;
 
-  @IsNumber()
+  @IsInt()
   @Min(0)
-  @IsNotEmpty()
+  @Max(50)
   experienceYears!: number;
 
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsString({ each: true })
+  skills!: string[]; // ← array, not string — frontend sends array
+
   @IsString()
-  @IsNotEmpty()
-  skills!: string[]; // already parsed as array in frontend
-  location!: null;
-  linkedinUrl!: null;
-  githubUrl!: null;
+  @IsOptional()
+  @Transform(
+    ({ value }) => (value === '' || value === null ? undefined : value), // ← empty string → undefined
+  )
+  location?: string;
+
+  @IsUrl()
+  @IsOptional()
+  @Transform(({ value }) =>
+    value === '' || value === null ? undefined : value,
+  )
+  linkedinUrl?: string;
+
+  @IsUrl()
+  @IsOptional()
+  @Transform(({ value }) =>
+    value === '' || value === null ? undefined : value,
+  )
+  githubUrl?: string;
 }
 
 export class CompleteEmployerProfileDto {
@@ -30,6 +62,18 @@ export class CompleteEmployerProfileDto {
   @IsString()
   @IsNotEmpty()
   industry!: string;
-  website!: null;
-  description!: null;
+
+  @IsUrl()
+  @IsOptional()
+  @Transform(({ value }) =>
+    value === '' || value === null ? undefined : value,
+  )
+  website?: string;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) =>
+    value === '' || value === null ? undefined : value,
+  )
+  description?: string;
 }

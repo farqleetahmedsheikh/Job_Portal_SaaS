@@ -15,7 +15,7 @@ import { randomInt } from 'crypto';
 import { Response } from 'express';
 
 import { UsersService } from '../users/users.service';
-import { ApplicantProfilesService } from '../applicants/applicant-profile.service';
+import { ApplicantProfilesService } from '../applicants/applicant-profiles.service';
 import { CompaniesService } from '../companies/companies.service';
 import { MailService } from '../mail/mail.service';
 import { CacheService } from '../cache/cache.service';
@@ -42,7 +42,35 @@ export interface SafeUser {
   email: string;
   role: UserRole;
   avatar: string | null;
+  phone: string | null;
+  bio: string | null;
   isProfileComplete: boolean;
+  isEmailVerified: boolean;
+  applicantProfile: SafeApplicantProfile | null;
+  company: SafeCompany | null;
+}
+
+export interface SafeApplicantProfile {
+  id: string;
+  jobTitle: string | null;
+  experienceYears: number | null;
+  skills: string[] | null;
+  location: string | null;
+  linkedinUrl: string | null;
+  githubUrl: string | null;
+  portfolioUrl: string | null;
+  summary: string | null;
+}
+
+export interface SafeCompany {
+  id: string;
+  companyName: string;
+  industry: string;
+  location: string;
+  website: string | null;
+  logoUrl: string | null;
+  description: string | null;
+  isVerified: boolean;
 }
 
 // ─── Constants ────────────────────────────────────────────
@@ -100,9 +128,10 @@ export class AuthService {
     if (!user.isActive) {
       throw new UnauthorizedException('Account has been deactivated');
     }
-
+    const fullUser = await this.users.findByIdWithFullProfile(user.id);
+    if (!fullUser) throw new UnauthorizedException('User not found');
     this.setAuthCookie(res, user.id, user.role);
-    return this.toSafeUser(user);
+    return this.toSafeUser(fullUser);
   }
 
   // ── Logout ────────────────────────────────────────────────
@@ -112,7 +141,7 @@ export class AuthService {
 
   // ── Me ────────────────────────────────────────────────────
   async getMe(userId: string): Promise<SafeUser> {
-    const user = await this.users.findById(userId);
+    const user = await this.users.findByIdWithFullProfile(userId);
     if (!user) throw new UnauthorizedException('User not found');
     return this.toSafeUser(user);
   }
@@ -254,13 +283,45 @@ export class AuthService {
   }
 
   private toSafeUser(user: User): SafeUser {
+    const primaryCompany = user.companies?.[0] ?? null;
+
     return {
       id: user.id,
       fullName: user.fullName,
       email: user.email,
       role: user.role,
       avatar: user.profilePicture ?? null,
+      phone: user.phoneNumber ?? null,
+      bio: user.bio ?? null,
       isProfileComplete: user.isProfileComplete ?? false,
+      isEmailVerified: user.isEmailVerified ?? false,
+
+      applicantProfile: user.applicantProfile
+        ? {
+            id: user.applicantProfile.id,
+            jobTitle: user.applicantProfile.jobTitle ?? null,
+            experienceYears: user.applicantProfile.experienceYears ?? null,
+            skills: user.applicantProfile.skills ?? null,
+            location: user.applicantProfile.location ?? null,
+            linkedinUrl: user.applicantProfile.linkedinUrl ?? null,
+            githubUrl: user.applicantProfile.githubUrl ?? null,
+            portfolioUrl: user.applicantProfile.portfolioUrl ?? null,
+            summary: user.applicantProfile.summary ?? null,
+          }
+        : null,
+
+      company: primaryCompany
+        ? {
+            id: primaryCompany.id,
+            companyName: primaryCompany.companyName,
+            industry: primaryCompany.industry,
+            location: primaryCompany.location,
+            website: primaryCompany.website ?? null,
+            logoUrl: primaryCompany.logoUrl ?? null,
+            description: primaryCompany.description ?? null,
+            isVerified: primaryCompany.isVerified ?? false,
+          }
+        : null,
     };
   }
 

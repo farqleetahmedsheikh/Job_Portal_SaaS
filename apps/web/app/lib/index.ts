@@ -21,7 +21,20 @@ export async function api<T = unknown>(
   });
 
   if (res.status === 401) {
-    window.location.href = "/login?reason=expired";
+    const authRoutes = [
+      "/login",
+      "/register",
+      "/complete-profile",
+      "/forgot-password",
+    ];
+    const isAuthPage = authRoutes.some((r) =>
+      window.location.pathname.startsWith(r),
+    );
+
+    if (!isAuthPage) {
+      window.location.href = "/login?reason=expired";
+    }
+
     throw new Error("Session expired");
   }
 

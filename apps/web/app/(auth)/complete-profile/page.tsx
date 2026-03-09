@@ -1,108 +1,155 @@
 /** @format */
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
+import { useForm, type Resolver } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { InputField } from "../../components/Auth/InputField";
 import { AuthForm } from "../../components/Auth/AuthForm";
-import { api } from "../../lib/api";
+import { useUser } from "../../store/session.store";
+import { api } from "../../lib";
+import { API_BASE } from "../../constants";
 
-// --- Schemas ---
+// ─── Schemas ──────────────────────────────────────────────
 const applicantSchema = z.object({
   jobTitle: z.string().min(2, "Job title is required"),
-  experienceYears: z.number().min(0, "Experience cannot be negative"),
-  skills: z.string().min(2, "At least one skill required"), // comma-separated
+  experienceYears: z.preprocess(
+    (val) => (val === "" ? undefined : Number(val)),
+    z
+      .number({ error: "Must be a number" })
+      .min(0, "Cannot be negative")
+      .max(50, "Cannot exceed 50"),
+  ),
+  skills: z.string().min(2, "At least one skill required"),
+  location: z.string().optional(),
+  linkedinUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
+  githubUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
 });
 
 const employerSchema = z.object({
   companyName: z.string().min(2, "Company name is required"),
   location: z.string().min(2, "Location is required"),
   industry: z.string().min(2, "Industry is required"),
+  website: z.string().url("Invalid URL").optional().or(z.literal("")),
+  description: z.string().optional(),
 });
 
 type ApplicantForm = z.infer<typeof applicantSchema>;
 type EmployerForm = z.infer<typeof employerSchema>;
 
-type Role = "APPLICANT" | "EMPLOYER" | null;
-
+// ─── Page ─────────────────────────────────────────────────
 export default function CompleteProfilePage() {
   const router = useRouter();
-  const [role, setRole] = useState<Role>(null);
-  const [loading, setLoading] = useState(false);
-  const userId = localStorage.getItem("userId");
+  const user = useUser(); // from session store — no localStorage
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
-  // Determine role from localStorage
-  useEffect(() => {
-    const storedRole = localStorage.getItem("role")?.toUpperCase() as Role;
-    setRole(storedRole || null);
-  }, []);
-
-  // Applicant form
-  const applicantForm = useForm<ApplicantForm>({
-    resolver: zodResolver(applicantSchema),
+  const applicantForm = useForm<ApplicantForm, unknown, ApplicantForm>({
+    resolver: zodResolver(applicantSchema) as Resolver<ApplicantForm>,
   });
-
-  // Employer form
-  const employerForm = useForm<EmployerForm>({
-    resolver: zodResolver(employerSchema),
+  const employerForm = useForm<EmployerForm, unknown, EmployerForm>({
+    resolver: zodResolver(employerSchema) as Resolver<EmployerForm>,
   });
+  console.log("User from session store:", user); // Debug log to verify user data
 
-  // --- Unified submit handlers ---
-  const handleApplicantSubmit: SubmitHandler<ApplicantForm> = async (data) => {
-    if (!userId) return alert("User not found. Please login again.");
+  // Redirect if not logged in
+  if (!user) {
+    router.replace("/login");
+    return null;
+  }
 
-    setLoading(true);
+  // Already completed
+  if (user.isProfileComplete) {
+    router.replace(
+      user.role === "applicant"
+        ? "/applicant/dashboard"
+        : "/employer/dashboard",
+    );
+    return null;
+  }
+
+  // ── Applicant submit ──────────────────────────────────
+  const handleApplicantSubmit = async (data: ApplicantForm) => {
+    setError(null);
     try {
-      await api(
-        `http://localhost:9000/api/auth/applicant-profile/${userId}`,
-        "POST",
-        {
-          jobTitle: data.jobTitle,
-          experienceYears: data.experienceYears,
-          skills: data.skills.split(",").map((s) => s.trim()),
-        },
-      );
-      alert("Applicant profile completed!");
-      router.push("/login");
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
+      await api(`${API_BASE}/auth/applicant-profile/${user.id}`, "POST", {
+        jobTitle: data.jobTitle,
+        experienceYears: data.experienceYears,
+        // ✅ send as array — DTO expects string[]
+        skills: data.skills
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+        // ✅ send undefined not null/empty string — @IsOptional skips undefined
+        location: data.location?.trim() || undefined,
+        linkedinUrl: data.linkedinUrl?.trim() || undefined,
+        githubUrl: data.githubUrl?.trim() || undefined,
+      });
+      setSuccess(true);
+      setTimeout(() => router.replace("/applicant/dashboard"), 1200);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
     }
   };
 
-  const handleEmployerSubmit: SubmitHandler<EmployerForm> = async (data) => {
-    if (!userId) return alert("User not found. Please login again.");
-
-    setLoading(true);
+  // ── Employer submit ───────────────────────────────────
+  const handleEmployerSubmit = async (data: EmployerForm) => {
+    setError(null);
     try {
-      await api(
-        `http://localhost:9000/api/auth/employer-profile/${userId}`,
-        "POST",
-        data,
-      );
-      alert("Company profile completed!");
-      router.push("/login");
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
+      await api(`${API_BASE}/auth/employer-profile/${user.id}`, "POST", {
+        companyName: data.companyName,
+        location: data.location,
+        industry: data.industry,
+        website: data.website?.trim() || undefined, // ← undefined not null
+        description: data.description?.trim() || undefined, // ← undefined not null
+      });
+      setSuccess(true);
+      setTimeout(() => router.push("/employer/dashboard"), 1200);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
     }
   };
 
-  // --- Render ---
-  if (!role) return <p>Loading...</p>;
+  if (success) {
+    return (
+      <div
+        style={{ display: "grid", placeItems: "center", minHeight: "100vh" }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <p style={{ fontSize: 40 }}>✓</p>
+          <h2>Profile complete!</h2>
+          <p style={{ color: "var(--text-muted)" }}>Redirecting you now...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
-      {role === "APPLICANT" && (
+      {error && (
+        <p
+          role="alert"
+          style={{
+            color: "var(--status-danger)",
+            fontSize: 13,
+            textAlign: "center",
+            marginBottom: 12,
+          }}
+        >
+          {error}
+        </p>
+      )}
+
+      {/* ── Applicant form ── */}
+      {user.role === "applicant" && (
         <AuthForm
           title="Complete Your Profile"
+          subtitle="Help employers find the right fit"
           onSubmit={applicantForm.handleSubmit(handleApplicantSubmit)}
-          loading={loading}
+          loading={applicantForm.formState.isSubmitting}
+          submitLabel="Save Profile"
         >
           <InputField
             label="Job Title"
@@ -111,7 +158,7 @@ export default function CompleteProfilePage() {
             error={applicantForm.formState.errors.jobTitle}
           />
           <InputField
-            label="Experience (years)"
+            label="Years of Experience"
             type="number"
             placeholder="2"
             register={applicantForm.register("experienceYears", {
@@ -121,28 +168,49 @@ export default function CompleteProfilePage() {
           />
           <InputField
             label="Skills (comma separated)"
-            placeholder="React, Node, SQL"
+            placeholder="React, TypeScript, Node.js"
             register={applicantForm.register("skills")}
             error={applicantForm.formState.errors.skills}
+          />
+          <InputField
+            label="Location (optional)"
+            placeholder="Lahore, Pakistan"
+            register={applicantForm.register("location")}
+            error={applicantForm.formState.errors.location}
+          />
+          <InputField
+            label="LinkedIn URL (optional)"
+            placeholder="https://linkedin.com/in/username"
+            register={applicantForm.register("linkedinUrl")}
+            error={applicantForm.formState.errors.linkedinUrl}
+          />
+          <InputField
+            label="GitHub URL (optional)"
+            placeholder="https://github.com/username"
+            register={applicantForm.register("githubUrl")}
+            error={applicantForm.formState.errors.githubUrl}
           />
         </AuthForm>
       )}
 
-      {role === "EMPLOYER" && (
+      {/* ── Employer form ── */}
+      {user.role === "employer" && (
         <AuthForm
-          title="Complete Your Company Profile"
+          title="Set Up Your Company"
+          subtitle="Tell candidates about your company"
           onSubmit={employerForm.handleSubmit(handleEmployerSubmit)}
-          loading={loading}
+          loading={employerForm.formState.isSubmitting}
+          submitLabel="Save Company"
         >
           <InputField
             label="Company Name"
-            placeholder="Tech Pvt Ltd"
+            placeholder="Acme Corp"
             register={employerForm.register("companyName")}
             error={employerForm.formState.errors.companyName}
           />
           <InputField
             label="Location"
-            placeholder="Islamabad"
+            placeholder="Karachi, Pakistan"
             register={employerForm.register("location")}
             error={employerForm.formState.errors.location}
           />
@@ -151,6 +219,12 @@ export default function CompleteProfilePage() {
             placeholder="Software Development"
             register={employerForm.register("industry")}
             error={employerForm.formState.errors.industry}
+          />
+          <InputField
+            label="Website (optional)"
+            placeholder="https://company.com"
+            register={employerForm.register("website")}
+            error={employerForm.formState.errors.website}
           />
         </AuthForm>
       )}

@@ -29,8 +29,12 @@ export interface RegisterPayload {
 }
 
 export interface AuthResponse {
-  user: Pick<User, "id" | "fullName" | "email" | "role" | "avatar">;
-  // accessToken is NOT returned in body — it's set as httpOnly cookie
+  id: string;
+  fullName: string;
+  email: string;
+  role: "applicant" | "employer";
+  avatar: string | null;
+  isProfileComplete: boolean;
 }
 
 // ─── Job ──────────────────────────────────────────────────

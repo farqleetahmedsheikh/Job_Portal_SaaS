@@ -1,27 +1,34 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Injectable } from '@nestjs/common';
+// auth/strategies/jwt.strategy.ts
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { JwtPayload } from '../interfaces/jwt-payload.interface';
+import { Request } from 'express';
+import { UsersService } from '../../users/users.service';
+
+// Extracts token from cookie — NOT Authorization header
+const cookieExtractor = (req: Request): string | null => {
+  console.log('🍪 Cookies received:', req.cookies); // ← add this temporarily
+  return req?.cookies?.['token'] ?? null;
+};
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(configService: ConfigService) {
+  constructor(
+    private readonly users: UsersService,
+    private readonly config: ConfigService,
+  ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([cookieExtractor]),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET') || 'my-secret',
+      secretOrKey: config.get<string>('JWT_SECRET'),
     });
   }
 
-  // eslint-disable-next-line @typescript-eslint/require-await
-  async validate(payload: JwtPayload) {
-    return {
-      userId: payload.userId,
-      role: payload.role,
-    };
+  async validate(payload: { sub: string; role: string }) {
+    console.log('✅ JWT payload validated:', payload); // ← add temporarily
+    const user = await this.users.findById(payload.sub);
+    if (!user) throw new UnauthorizedException('User not found');
+    return { sub: user.id, role: user.role };
   }
 }
