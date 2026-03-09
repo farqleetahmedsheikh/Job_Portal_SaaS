@@ -137,7 +137,7 @@ export function ProfileStrengthCard() {
         {/* CTA — only if incomplete */}
         {strength < 100 && (
           <Link
-            href="/profile"
+            href="/applicant/profile"
             style={{ display: "block", marginTop: 20 }}
             className={styles["welcome-action"]}
           >

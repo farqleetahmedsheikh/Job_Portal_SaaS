@@ -1,0 +1,664 @@
+/** @format */
+
+.page {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color .15s;
+    width: fit-content;
+}
+
+.back:hover {
+    color: var(--text-primary);
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 1fr 296px;
+    gap: 20px;
+    align-items: start;
+}
+
+.main {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Header card */
+.headerCard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 22px;
+}
+
+.headerTop {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.logo {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(var(--glow-rgb), .18), rgba(var(--glow-rgb), .04));
+    border: 1px solid rgba(var(--glow-rgb), .2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--color-secondary);
+    letter-spacing: .5px;
+}
+
+.headerInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.headerBadges {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.urgentBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: rgba(239, 68, 68, .1);
+    color: var(--status-danger);
+    border: 1px solid rgba(239, 68, 68, .2);
+}
+
+.role {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 8px;
+    letter-spacing: -.3px;
+}
+
+.headerMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.headerMeta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.headerActions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.factRow {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 16px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 14px;
+}
+
+.fact {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.factIcon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: rgba(var(--glow-rgb), .08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-secondary);
+    flex-shrink: 0;
+}
+
+.factLabel {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin: 0 0 2px;
+}
+
+.factVal {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.skillRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.skillTag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 99px;
+    background: rgba(var(--glow-rgb), .1);
+    color: var(--color-secondary);
+    border: 1px solid rgba(var(--glow-rgb), .2);
+}
+
+/* Sections */
+.section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px 22px;
+}
+
+.sectionTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 14px;
+    letter-spacing: -.2px;
+}
+
+.prose {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.75;
+    margin: 0;
+    white-space: pre-line;
+}
+
+.subsectionLabel {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--text-muted);
+    margin: 18px 0 10px;
+}
+
+.list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.listItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.listItemMuted {
+    color: var(--text-muted);
+}
+
+.listIconCheck {
+    color: var(--color-secondary);
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.listIconChevron {
+    color: var(--text-muted);
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.benefitGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.benefitItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.similarList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.similarRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg);
+    text-decoration: none;
+    transition: all .15s;
+}
+
+.similarRow:hover {
+    border-color: rgba(var(--glow-rgb), .25);
+    background: rgba(var(--glow-rgb), .02);
+}
+
+.similarLogo {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: rgba(var(--glow-rgb), .1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--color-secondary);
+    flex-shrink: 0;
+}
+
+.similarInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.similarRole {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 2px;
+}
+
+.similarMeta {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.similarSalary {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+/* Sidebar */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: sticky;
+    top: 24px;
+}
+
+.applyCard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.applyHeader {
+    margin-bottom: 2px;
+}
+
+.applyRole {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 2px;
+}
+
+.applyCompany {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.applyDivider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2px 0;
+}
+
+.applyMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.applyMeta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.applyStepTitle {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.applyStepSub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.confirmBox {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+}
+
+.confirmBox span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.resumeOptions {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.resumeOption {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all .15s;
+    width: 100%;
+    text-align: left;
+}
+
+.resumeOption:hover {
+    border-color: rgba(var(--glow-rgb), .3);
+}
+
+.resumeFileIcon {
+    font-size: 15px;
+}
+
+.uploadLink {
+    font-size: 12px;
+    color: var(--color-secondary);
+    text-decoration: none;
+    text-align: center;
+    padding: 4px;
+}
+
+.appliedState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    padding: 8px 0;
+}
+
+.appliedState h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.appliedState p {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.appliedIcon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(34, 197, 94, .12);
+    border: 1px solid rgba(34, 197, 94, .25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--status-success);
+    margin-bottom: 4px;
+}
+
+.companyCard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.companyTop {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.companyLogo {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-sm);
+    background: rgba(var(--glow-rgb), .1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--color-secondary);
+    flex-shrink: 0;
+}
+
+.companyName {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 2px;
+}
+
+.companyIndustry {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.ratingRow {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.ratingVal {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-left: 4px;
+}
+
+.ratingCount {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.companyAbout {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.companyMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+
+.companyMeta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.companyMeta a {
+    color: var(--color-secondary);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+/* Buttons */
+.iconBtn {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-hover);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all .15s;
+}
+
+.iconBtn:hover {
+    color: var(--text-primary);
+    border-color: rgba(var(--glow-rgb), .3);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 18px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: all .15s;
+    white-space: nowrap;
+}
+
+.btnFull {
+    width: 100%;
+}
+
+.btnPrimary {
+    background: var(--color-secondary);
+    color: #fff;
+}
+
+.btnPrimary:hover {
+    filter: brightness(1.08);
+}
+
+.btnOutline {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+.btnOutline:hover {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+}
+
+.btnGhost {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid transparent;
+}
+
+.btnGhost:hover {
+    background: var(--surface-hover);
+}
+
+@media (max-width: 768px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+        position: static;
+        order: -1;
+    }
+
+    .factRow {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .benefitGrid {
+        grid-template-columns: 1fr;
+    }
+}

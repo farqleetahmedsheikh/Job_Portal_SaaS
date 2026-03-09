@@ -29,7 +29,7 @@ export function RecentApplications({ applications }: Props) {
     <div>
       <div className={styles["section-header"]}>
         <h2 className={styles["section-title"]}>Recent Applications</h2>
-        <Link href="/applications" className={styles["section-link"]}>
+        <Link href="applicant/applications" className={styles["section-link"]}>
           View all →
         </Link>
       </div>
