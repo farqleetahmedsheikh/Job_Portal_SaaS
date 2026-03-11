@@ -1,51 +1,92 @@
+/** @format */
+
 import {
   Entity,
   PrimaryGeneratedColumn,
-  ManyToOne,
   Column,
-  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
   Index,
 } from 'typeorm';
+import { AppStatus, AppSource } from '../../../common/enums/enums';
 import { User } from '../../users/entities/user.entity';
 import { Job } from '../../jobs/entities/job.entity';
 import { Resume } from '../../resumes/entities/resume.entity';
-import { ApplicationStatus } from '../../../common/enums/application-status.enum';
-import { ApplicationHistory } from './application-history.entity';
+import { ApplicationStatusHistory } from './application-status-history.entity';
+
+// ─── Drop in: src/modules/applications/entities/application.entity.ts ────────
 
 @Entity('applications')
-@Index(['job', 'applicant', 'resume'], { unique: true })
-@Index(['status'])
+@Index(['jobId', 'applicantId'], { unique: true }) // one application per job per user
 export class Application {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @ManyToOne(() => Job, (job) => job.applications, { onDelete: 'CASCADE' })
-  job!: Job;
+  @Column({ name: 'job_id' })
+  jobId!: string;
 
-  @ManyToOne(() => User, (user) => user.applications, { onDelete: 'CASCADE' })
-  applicant!: User;
+  @Column({ name: 'applicant_id' })
+  applicantId!: string;
 
-  @ManyToOne(() => Resume, { onDelete: 'SET NULL' })
-  resume!: Resume;
+  @Column({ name: 'resume_id', nullable: true })
+  resumeId!: string | null;
 
+  // Pipeline stages shown on Applicants page kanban/table
+  // new → reviewing → shortlisted → interview → offered → rejected | withdrawn
+  @Column({ type: 'enum', enum: AppStatus, default: AppStatus.NEW })
+  status?: AppStatus;
+
+  // Where the applicant came from (for analytics)
+  @Column({ type: 'enum', enum: AppSource, default: AppSource.HIRESPHERE })
+  source?: AppSource;
+
+  @Column({ name: 'cover_letter', type: 'text', nullable: true })
+  coverLetter?: string | null;
+
+  // Internal notes only visible to employer — never expose to applicant
+  @Column({ name: 'employer_notes', type: 'text', nullable: true })
+  employerNotes?: string | null;
+
+  // Star flag on Applicants List page
+  @Column({ name: 'is_starred', default: false })
+  isStarred?: boolean;
+
+  // Tracks when employer first opened the application
   @Column({
-    type: 'enum',
-    enum: ApplicationStatus,
-    default: ApplicationStatus.APPLIED,
+    name: 'viewed_by_employer_at',
+    type: 'timestamptz',
+    nullable: true,
   })
-  status!: ApplicationStatus;
+  viewedByEmployerAt?: Date | null;
 
-  @Column({ type: 'float', default: 0 })
-  aiScore!: number;
+  @CreateDateColumn({ name: 'applied_at', type: 'timestamptz' })
+  appliedAt!: Date;
 
-  @OneToMany(() => ApplicationHistory, (history) => history.application)
-  history!: ApplicationHistory[];
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  updatedAt?: Date;
 
-  @CreateDateColumn()
-  createdAt!: Date;
+  // ── Relations ──
 
-  @UpdateDateColumn()
-  updatedAt!: Date;
+  @ManyToOne(() => Job, (j) => j.applications, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'job_id' })
+  job?: Job;
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'applicant_id' })
+  applicant?: User;
+
+  @ManyToOne(() => Resume, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'resume_id' })
+  resume?: Resume | null;
+
+  @OneToMany(() => ApplicationStatusHistory, (h) => h.application, {
+    cascade: true,
+  })
+  statusHistory?: ApplicationStatusHistory[];
 }
+
+// ─── Drop in: src/modules/applications/entities/
+// Audit trail — every time employer moves a card on the pipeline, log it here

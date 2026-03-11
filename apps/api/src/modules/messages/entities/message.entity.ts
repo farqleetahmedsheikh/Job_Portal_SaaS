@@ -1,50 +1,46 @@
+/** @format */
+
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
   CreateDateColumn,
-  Index,
+  ManyToOne,
   JoinColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { Conversation } from './conversation.entity';
+
+// ─── Drop in: src/modules/messaging/entities/message.entity.ts ───────────────
 
 @Entity('messages')
-@Index(['receiver', 'read'])
-@Index(['sender'])
 export class Message {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  /**
-   * User who sends the message
-   */
-  @ManyToOne(() => User, { onDelete: 'CASCADE', nullable: false })
-  @JoinColumn({ name: 'senderId' })
-  sender!: User;
+  @Column({ name: 'conversation_id' })
+  conversationId!: string;
 
-  /**
-   * User who receives the message
-   */
-  @ManyToOne(() => User, { onDelete: 'CASCADE', nullable: false })
-  @JoinColumn({ name: 'receiverId' })
-  receiver!: User;
+  @Column({ name: 'sender_id' })
+  senderId!: string;
 
-  /**
-   * Message body
-   */
   @Column({ type: 'text' })
-  content!: string;
+  text!: string;
 
-  /**
-   * Read / Unread status
-   */
-  @Column({ default: false })
-  read!: boolean;
+  // Soft-delete: message text hidden from UI but record kept for audit
+  @Column({ name: 'is_deleted', default: false })
+  isDeleted?: boolean;
 
-  /**
-   * Timestamp
-   */
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
+
+  // ── Relations ──
+
+  @ManyToOne(() => Conversation, (c) => c.messages, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'conversation_id' })
+  conversation?: Conversation;
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'sender_id' })
+  sender?: User;
 }

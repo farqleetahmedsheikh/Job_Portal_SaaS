@@ -1,50 +1,70 @@
+/** @format */
+
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
+  ManyToOne,
+  JoinColumn,
   Index,
 } from 'typeorm';
+import { ResumeStatus } from '../../../common/enums/enums';
 import { User } from '../../users/entities/user.entity';
 
+// ─── Drop in: src/modules/resumes/entities/resume.entity.ts ──────────────────
+
 @Entity('resumes')
-@Index(['user'])
+// Partial index: only one default per user (DB also enforces this via trigger)
+@Index(['userId', 'isDefault'], {
+  where: 'is_default = TRUE AND deleted_at IS NULL',
+})
 export class Resume {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @ManyToOne(() => User, (user: User) => user.resumes, { onDelete: 'CASCADE' })
-  user!: User;
+  @Column({ name: 'user_id' })
+  userId!: string;
 
-  @Column()
-  title!: string;
+  @Column({ length: 200 })
+  name!: string;
 
-  @Column()
+  @Column({ name: 'file_url', type: 'text' })
   fileUrl!: string;
 
-  @Column({ nullable: true })
-  yearsOfExperience?: number;
+  // Size in bytes — used to show file size on Resume Manager page
+  @Column({ name: 'file_size', type: 'int' })
+  fileSize!: number;
 
-  @Column({ type: 'text', array: true, nullable: true })
-  skills?: string[];
+  @Column({ name: 'mime_type', length: 60, default: 'application/pdf' })
+  mimeType!: string;
 
-  @Column({ type: 'text', nullable: true })
-  education?: string;
+  // processing → ready → error  (set by file processing job)
+  @Column({
+    type: 'enum',
+    enum: ResumeStatus,
+    default: ResumeStatus.PROCESSING,
+  })
+  status!: ResumeStatus;
 
-  @Column({ type: 'text', array: true, nullable: true })
-  certifications?: string[];
+  // Star badge on Resume Manager page — DB trigger enforces only one per user
+  @Column({ name: 'is_default', default: false })
+  isDefault!: boolean;
 
-  @Column({ type: 'float', default: 0 })
-  aiScore!: number;
-
-  @Column({ default: true })
-  isActive!: boolean;
-
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt!: Date;
+
+  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz' })
+  deletedAt?: Date | null;
+
+  // ── Relations ──
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
+  user?: User;
 }

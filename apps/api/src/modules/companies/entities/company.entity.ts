@@ -1,74 +1,107 @@
+/** @format */
+
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
-  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
-  Index,
+  ManyToOne,
+  OneToMany,
   JoinColumn,
 } from 'typeorm';
+import { CompanySize } from '../../../common/enums/enums';
 import { User } from '../../users/entities/user.entity';
-import { Job } from '../../jobs/entities/job.entity';
+import { CompanyPerk } from './company-perk.entity';
+import { Job } from 'src/modules/jobs/entities/job.entity';
+
+// ─── Drop in: src/modules/companies/entities/company.entity.ts ───────────────
 
 @Entity('companies')
-@Index(['ownerId']) // fast owner lookup without JOIN
-@Index(['ownerId', 'companyName'], { unique: true }) // one company name per owner
-@Index(['industry']) // fast industry filtering
-@Index(['createdAt']) // fast sorting
 export class Company {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  // ── FK as plain column ────────────────────────────────
-  @Column({ type: 'uuid' })
+  @Column({ name: 'owner_id' })
   ownerId!: string;
 
-  @ManyToOne(() => User, (user) => user.companies, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({ name: 'ownerId' })
-  owner!: User;
-
-  // ── Company info ──────────────────────────────────────
-  @Column({ length: 150 })
+  @Column({ name: 'company_name', length: 150 })
   companyName!: string;
 
-  @Column({ length: 100 })
-  industry!: string;
+  @Column({ length: 160, nullable: true, unique: true })
+  slug?: string | null;
 
-  @Column({ length: 200 })
-  location!: string;
+  @Column({ length: 255, nullable: true })
+  tagline?: string | null;
 
-  @Column({ type: 'varchar', nullable: true, default: null })
-  website!: string | null;
+  @Column({ type: 'text', nullable: true })
+  about?: string | null;
 
-  @Column({ type: 'varchar', nullable: true, default: null })
-  logoUrl!: string | null;
+  @Column({ type: 'text', nullable: true })
+  culture?: string | null;
 
-  @Column({ type: 'text', nullable: true, default: null })
-  description!: string | null;
+  @Column({ length: 80, nullable: true })
+  industry?: string | null;
 
-  // Range stored as string e.g. "50-100", "1000+"
-  @Column({ length: 20, type: 'varchar', nullable: true, default: null })
-  employeeCount!: string | null;
+  @Column({ type: 'enum', enum: CompanySize, nullable: true })
+  size?: CompanySize | null;
 
-  @Column({ default: false })
+  @Column({ length: 150, nullable: true })
+  location!: string | null;
+
+  @Column({ name: 'founded_year', type: 'smallint', nullable: true })
+  foundedYear?: number | null;
+
+  @Column({ name: 'website_url', type: 'text', nullable: true })
+  websiteUrl?: string | null;
+
+  @Column({ name: 'logo_url', type: 'text', nullable: true })
+  logoUrl?: string | null;
+
+  @Column({ name: 'cover_url', type: 'text', nullable: true })
+  coverUrl?: string | null;
+
+  @Column({ name: 'linkedin_url', type: 'text', nullable: true })
+  linkedinUrl?: string | null;
+
+  @Column({ name: 'twitter_url', type: 'text', nullable: true })
+  twitterUrl?: string | null;
+
+  @Column({ name: 'instagram_url', type: 'text', nullable: true })
+  instagramUrl?: string | null;
+
+  @Column({ name: 'is_verified', default: false })
   isVerified!: boolean;
 
-  // ── Relations ─────────────────────────────────────────
-  @OneToMany(() => Job, (job) => job.company)
-  jobs!: Job[];
+  @Column({ name: 'is_active', default: true })
+  isActive!: boolean;
 
-  // ── Timestamps ────────────────────────────────────────
-  @CreateDateColumn()
+  // Cached counters — updated by DB triggers, never write manually
+  @Column({ name: 'active_jobs_count', default: 0 })
+  activeJobsCount?: number;
+
+  @Column({ name: 'total_hires_count', default: 0 })
+  totalHiresCount?: number;
+
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
-  updatedAt!: Date;
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  updatedAt?: Date;
 
-  @DeleteDateColumn({ nullable: true, default: null })
-  deletedAt!: Date | null;
+  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz' })
+  deletedAt?: Date | null;
+
+  // ── Relations ──
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'owner_id' })
+  owner?: User;
+
+  @OneToMany(() => CompanyPerk, (p) => p.company, { cascade: true })
+  perks?: CompanyPerk[];
+
+  @OneToMany(() => Job, (j) => j.company)
+  jobs?: Job[];
 }
