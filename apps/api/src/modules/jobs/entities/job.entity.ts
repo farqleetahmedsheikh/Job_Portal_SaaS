@@ -23,8 +23,7 @@ import { Company } from '../../companies/entities/company.entity';
 import { User } from '../../users/entities/user.entity';
 import { JobSkill } from './job-skill.entity';
 import { Application } from 'src/modules/applications/entities/application.entity';
-
-// ─── Drop in: src/modules/jobs/entities/job.entity.ts ────────────────────────
+import { CodingTest } from 'src/modules/coding-tests/entities/coding-test.entity';
 
 @Entity('jobs')
 @Check(
@@ -34,16 +33,18 @@ export class Job {
   @PrimaryGeneratedColumn('uuid')
   id?: string;
 
-  @Column({ name: 'company_id' })
+  @Column({ name: 'company_id', type: 'uuid' })
   companyId?: string;
 
-  @Column({ name: 'posted_by_id' })
+  @Column({ name: 'posted_by_id', type: 'uuid' })
   postedById?: string;
 
-  @Column({ length: 150 })
+  // ✅ All string columns need explicit type: 'varchar' or type: 'text'
+  //    TypeORM cannot infer the PG type from `string | null` — it sees "Object"
+  @Column({ type: 'varchar', length: 150 })
   title?: string;
 
-  @Column({ length: 80, nullable: true })
+  @Column({ type: 'varchar', length: 80, nullable: true, default: null })
   department?: string | null;
 
   @Column({ type: 'enum', enum: JobType, default: JobType.FULL_TIME })
@@ -57,7 +58,7 @@ export class Job {
   })
   locationType?: LocationType;
 
-  @Column({ length: 150 })
+  @Column({ type: 'varchar', length: 150 })
   location?: string;
 
   @Column({
@@ -65,6 +66,7 @@ export class Job {
     type: 'enum',
     enum: ExperienceLevel,
     nullable: true,
+    default: null,
   })
   experienceLevel?: ExperienceLevel | null;
 
@@ -74,6 +76,7 @@ export class Job {
     precision: 12,
     scale: 2,
     nullable: true,
+    default: null,
   })
   salaryMin?: number | null;
 
@@ -83,6 +86,7 @@ export class Job {
     precision: 12,
     scale: 2,
     nullable: true,
+    default: null,
   })
   salaryMax?: number | null;
 
@@ -94,50 +98,58 @@ export class Job {
   })
   salaryCurrency?: SalaryCurrency;
 
-  @Column({ name: 'salary_is_public', default: true })
+  @Column({ name: 'salary_is_public', type: 'boolean', default: true })
   salaryIsPublic?: boolean;
 
   @Column({ type: 'smallint', default: 1 })
   openings?: number;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'date', nullable: true, default: null })
   deadline?: Date | null;
 
-  // draft → active → paused → closed / expired
   @Column({ type: 'enum', enum: JobStatus, default: JobStatus.DRAFT })
   status?: JobStatus;
 
-  // Rich text fields — store as plain text, render as markdown on frontend
+  // Rich text — type: 'text' must be explicit even for non-nullable
   @Column({ type: 'text' })
   description?: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true, default: null })
   responsibilities?: string | null;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true, default: null })
   requirements?: string | null;
 
-  @Column({ name: 'nice_to_have', type: 'text', nullable: true })
+  @Column({ name: 'nice_to_have', type: 'text', nullable: true, default: null })
   niceToHave?: string | null;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true, default: null })
   benefits?: string | null;
 
-  // Denormalized array for fast queries — also stored normalized in job_skills
   @Column({ type: 'text', array: true, default: '{}' })
   skills?: string[];
 
   // Counters — updated by DB triggers, never write manually
-  @Column({ name: 'views_count', default: 0 })
+  @Column({ name: 'views_count', type: 'int', default: 0 })
   viewsCount?: number;
 
-  @Column({ name: 'applicants_count', default: 0 })
+  @Column({ name: 'applicants_count', type: 'int', default: 0 })
   applicantsCount?: number;
 
-  @Column({ name: 'published_at', type: 'timestamptz', nullable: true })
+  @Column({
+    name: 'published_at',
+    type: 'timestamptz',
+    nullable: true,
+    default: null,
+  })
   publishedAt?: Date | null;
 
-  @Column({ name: 'expires_at', type: 'timestamptz', nullable: true })
+  @Column({
+    name: 'expires_at',
+    type: 'timestamptz',
+    nullable: true,
+    default: null,
+  })
   expiresAt?: Date | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
@@ -149,8 +161,7 @@ export class Job {
   @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz' })
   deletedAt?: Date | null;
 
-  // ── Relations ──
-
+  // ── Relations ──────────────────────────────────────────────────────────────
   @ManyToOne(() => Company, (c) => c.jobs, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'company_id' })
   company?: Company;
@@ -164,4 +175,7 @@ export class Job {
 
   @OneToMany(() => Application, (a) => a.job)
   applications?: Application[];
+
+  @OneToMany(() => CodingTest, (ct) => ct.job)
+  codingTests?: CodingTest[];
 }

@@ -1,10 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import type { Request } from 'express';
-import type { JwtPayload } from '../../modules/auth/auth.service';
+
+export interface JwtPayload {
+  sub: string; // user uuid
+  role: string; // UserRole
+}
 
 export const CurrentUser = createParamDecorator(
-  (_: unknown, ctx: ExecutionContext): JwtPayload => {
-    const req = ctx.switchToHttp().getRequest<Request>();
-    return req.user as JwtPayload;
-  },
+  (_: unknown, ctx: ExecutionContext): JwtPayload =>
+    ctx.switchToHttp().getRequest().user,
 );

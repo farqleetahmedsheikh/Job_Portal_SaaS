@@ -12,8 +12,6 @@ import {
 import { NotifType } from '../../../common/enums/enums';
 import { User } from '../../users/entities/user.entity';
 
-// ─── Drop in: src/modules/notifications/entities/notification.entity.ts ──────
-
 @Entity('notifications')
 @Index(['userId', 'isRead', 'createdAt']) // fast inbox query
 export class Notification {
@@ -30,7 +28,7 @@ export class Notification {
   title!: string;
 
   @Column({ type: 'text', nullable: true })
-  body!: string | null;
+  body!: string;
 
   @Column({ name: 'is_read', default: false })
   isRead?: boolean;
@@ -39,10 +37,10 @@ export class Notification {
   // e.g. ref_type = 'application', ref_id = <application_uuid>
   // Use ref_type + ref_id on frontend to build the notification link
   @Column({ name: 'ref_id', type: 'uuid', nullable: true })
-  refId?: string | null;
+  refId?: string;
 
   @Column({ name: 'ref_type', length: 40, nullable: true })
-  refType?: string | null; // 'application' | 'interview' | 'job' | 'message'
+  refType?: string; // 'application' | 'interview' | 'job' | 'message'
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;

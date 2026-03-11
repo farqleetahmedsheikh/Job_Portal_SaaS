@@ -6,7 +6,7 @@ export class CreateCompanyDto {
 
   @IsOptional()
   @IsString()
-  website?: string;
+  websiteUrl?: string;
 
   @IsOptional()
   @IsString()
@@ -17,4 +17,7 @@ export class CreateCompanyDto {
 
   @IsString()
   industry!: string;
+
+  @IsString()
+  description?: string;
 }

@@ -1,79 +1,89 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   IsString,
-  IsInt,
   IsOptional,
   IsArray,
-  ArrayMinSize,
+  IsBoolean,
+  IsNumber,
+  IsEnum,
+  MinLength,
+  MaxLength,
   Min,
   Max,
-  IsUrl,
-  IsNotEmpty,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { ExperienceLevel } from 'src/common/enums/enums';
 
 export class CompleteApplicantProfileDto {
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  jobTitle!: string;
+  @MaxLength(100)
+  jobTitle?: string;
 
-  @IsInt()
+  @IsOptional()
+  @IsNumber()
   @Min(0)
   @Max(50)
-  experienceYears!: number;
+  experienceYears?: number;
 
-  @IsArray()
-  @ArrayMinSize(1)
-  @IsString({ each: true })
-  skills!: string[]; // ← array, not string — frontend sends array
-
-  @IsString()
   @IsOptional()
-  @Transform(
-    ({ value }) => (value === '' || value === null ? undefined : value), // ← empty string → undefined
-  )
+  @IsEnum(ExperienceLevel)
+  experienceLevel?: ExperienceLevel;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  skills?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  languages?: string[];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
   location?: string;
 
-  @IsUrl()
   @IsOptional()
-  @Transform(({ value }) =>
-    value === '' || value === null ? undefined : value,
-  )
+  @IsString()
+  @MaxLength(1000)
+  summary?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isOpenToWork?: boolean;
+
+  @IsOptional()
+  @IsString()
   linkedinUrl?: string;
 
-  @IsUrl()
   @IsOptional()
-  @Transform(({ value }) =>
-    value === '' || value === null ? undefined : value,
-  )
+  @IsString()
   githubUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  portfolioUrl?: string;
 }
 
 export class CompleteEmployerProfileDto {
   @IsString()
-  @IsNotEmpty()
+  @MinLength(2)
+  @MaxLength(100)
   companyName!: string;
 
   @IsString()
-  @IsNotEmpty()
+  @MaxLength(150)
   location!: string;
 
   @IsString()
-  @IsNotEmpty()
+  @MaxLength(100)
   industry!: string;
 
-  @IsUrl()
   @IsOptional()
-  @Transform(({ value }) =>
-    value === '' || value === null ? undefined : value,
-  )
+  @IsString()
   website?: string;
 
-  @IsString()
   @IsOptional()
-  @Transform(({ value }) =>
-    value === '' || value === null ? undefined : value,
-  )
+  @IsString()
   description?: string;
 }

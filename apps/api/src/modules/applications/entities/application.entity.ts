@@ -86,7 +86,7 @@ export class Application {
     cascade: true,
   })
   statusHistory?: ApplicationStatusHistory[];
-}
 
-// ─── Drop in: src/modules/applications/entities/
-// Audit trail — every time employer moves a card on the pipeline, log it here
+  @OneToMany(() => ApplicationStatusHistory, (h) => h.application)
+  history?: ApplicationStatusHistory[];
+}

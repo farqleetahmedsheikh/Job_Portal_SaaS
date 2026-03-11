@@ -14,7 +14,7 @@ import { ResumesModule } from './modules/resumes/resumes.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { ApplicantProfilesModule } from './modules/applicants/applicants.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
-import { MessagesModule } from './modules/messages/messages.module';
+import { MessagingModule } from './modules/messages/messages.module';
 import { ApplicationsModule } from './modules/applications/applications.module';
 import { CodingTestsModule } from './modules/coding-tests/coding-tests.module';
 import { CompaniesModule } from './modules/companies/companies.module';
@@ -88,7 +88,7 @@ import redisConfig from './config/redis.config';
     ApplicantProfilesModule,
     JobsModule,
     NotificationsModule,
-    MessagesModule,
+    MessagingModule,
     CodingTestsModule,
     CompaniesModule,
   ],

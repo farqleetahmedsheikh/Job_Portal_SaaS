@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /** @format */
 
 import {
@@ -15,8 +16,8 @@ import {
 import { Exclude } from 'class-transformer';
 import { UserRole } from '../../../common/enums/enums';
 import { ApplicantProfile } from 'src/modules/applicants/entities/applicant-profile.entity';
+import { Company } from 'src/modules/companies/entities/company.entity';
 
-// ─── Drop this file in: src/modules/users/entities/user.entity.ts ───────────
 
 @Entity('users')
 @Index(['email'], { unique: true, where: 'deleted_at IS NULL' })
@@ -40,13 +41,13 @@ export class User {
   role!: UserRole;
 
   @Column({ name: 'avatar_url', type: 'text', nullable: true })
-  avatarUrl?: string | null;
+  avatarUrl?: string;
 
   @Column({ length: 30, nullable: true })
-  phone?: string | null;
+  phone?: string;
 
   @Column({ type: 'text', nullable: true })
-  bio?: string | null;
+  bio?: string;
 
   @Column({ name: 'is_profile_complete', default: false })
   isProfileComplete!: boolean;
@@ -58,7 +59,7 @@ export class User {
   isActive!: boolean;
 
   @Column({ name: 'last_active_at', type: 'timestamptz', nullable: true })
-  lastActiveAt?: Date | null;
+  lastActiveAt?: Date;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
@@ -67,12 +68,15 @@ export class User {
   updatedAt?: Date;
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz' })
-  deletedAt?: Date | null;
+  deletedAt?: Date;
 
   // ── Relations (loaded on demand — don't add `eager:true` unless needed) ──
 
   @OneToOne(() => ApplicantProfile, (p) => p.user, { cascade: true })
-  applicantProfile?: ApplicantProfile | null;
+  applicantProfile?: ApplicantProfile;
+
+  @OneToOne(() => Company, (c) => c.owner, { cascade: true })
+  companies?: Company;
 
   // Import Company lazily to avoid circular deps
   // @OneToMany(() => Company, (c) => c.owner)
@@ -86,5 +90,3 @@ export class User {
     this.email = this.email?.toLowerCase().trim();
   }
 }
-
-// ─── Drop this file in: src/modules/users/entities/applicant-profile.entity.ts

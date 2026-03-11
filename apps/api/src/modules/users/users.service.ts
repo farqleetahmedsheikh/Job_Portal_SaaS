@@ -1,4 +1,7 @@
-// users/users.service.ts
+/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+// src/modules/users/users.service.ts
 import {
   Injectable,
   NotFoundException,
@@ -6,7 +9,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import {
@@ -14,7 +17,6 @@ import {
   ProfileStrengthItem,
 } from './dto/profile-strength.dto';
 
-// ─── Payload Types ────────────────────────────────────────
 interface CreateUserPayload {
   email: string;
   passwordHash: string;
@@ -26,8 +28,8 @@ type UpdateUserPayload = Partial<
   Pick<
     User,
     | 'fullName'
-    | 'phoneNumber'
-    | 'profilePicture'
+    | 'phone'
+    | 'avatarUrl'
     | 'bio'
     | 'isProfileComplete'
     | 'isEmailVerified'
@@ -36,14 +38,14 @@ type UpdateUserPayload = Partial<
   >
 >;
 
-// ─── Safe select — passwordHash never included ────────────
+// ─── Safe select — passwordHash never included ─────────────────────────────────
 const SAFE_SELECT: (keyof User)[] = [
   'id',
   'email',
   'role',
   'fullName',
-  'phoneNumber',
-  'profilePicture',
+  'phone',
+  'avatarUrl',
   'bio',
   'isProfileComplete',
   'isEmailVerified',
@@ -59,9 +61,10 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    private readonly ds: DataSource,
   ) {}
 
-  // ── Find by email (no password) ───────────────────────
+  // ── Find by email (no password) ────────────────────────────────────────────
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepo.findOne({
       where: { email: email.toLowerCase().trim(), isActive: true },
@@ -69,64 +72,68 @@ export class UsersService {
     });
   }
 
-  // ── Find by email WITH password (login only) ──────────
+  // ── Find by email WITH password (login only) ───────────────────────────────
   async findByEmailWithPassword(email: string): Promise<User | null> {
     return this.userRepo
       .createQueryBuilder('user')
-      .addSelect('user.passwordHash') // opt-in to select:false field
+      .addSelect('user.passwordHash')
       .where('user.email = :email', { email: email.toLowerCase().trim() })
       .andWhere('user.deletedAt IS NULL')
       .getOne();
   }
 
-  // ── Find by ID (no relations) ─────────────────────────
+  // ── Find by ID (no relations) ──────────────────────────────────────────────
   async findById(id: string): Promise<User> {
     const user = await this.userRepo.findOne({
       where: { id },
       select: SAFE_SELECT,
     });
-
     if (!user) throw new NotFoundException('User not found');
     return user;
   }
 
-  // ── Find by ID with full profile (login / me) ─────────
-  // Loads both applicantProfile and companies in one query.
+  // ── Find by ID with full profile (login / me / after update) ──────────────
   // Uses leftJoin + select (NOT leftJoinAndSelect + select — that drops the join)
   async findByIdWithFullProfile(id: string): Promise<User | null> {
     return this.userRepo
       .createQueryBuilder('user')
-      .leftJoin('user.applicantProfile', 'applicantProfile')
-      .leftJoin('user.companies', 'companies')
+      .leftJoin('user.applicantProfile', 'ap')
+      .leftJoin('user.companies', 'co')
       .where('user.id = :id', { id })
       .andWhere('user.deletedAt IS NULL')
       .select([
-        // base user fields — no passwordHash
+        // ── base user — no passwordHash
         ...SAFE_SELECT.map((f) => `user.${f}`),
-        // applicant profile fields
-        'applicantProfile.id',
-        'applicantProfile.jobTitle',
-        'applicantProfile.skills',
-        'applicantProfile.experienceYears',
-        'applicantProfile.location',
-        'applicantProfile.linkedinUrl',
-        'applicantProfile.githubUrl',
-        'applicantProfile.portfolioUrl',
-        'applicantProfile.summary',
-        // company fields
-        'companies.id',
-        'companies.companyName',
-        'companies.industry',
-        'companies.location',
-        'companies.website',
-        'companies.logoUrl',
-        'companies.description',
-        'companies.isVerified',
+
+        // ── applicant profile — all fields the frontend needs
+        'ap.id',
+        'ap.jobTitle',
+        'ap.skills',
+        'ap.experienceYears',
+        'ap.location',
+        'ap.summary',
+        'ap.linkedinUrl',
+        'ap.githubUrl',
+        'ap.portfolioUrl',
+        'ap.isOpenToWork',
+        'ap.isPublic',
+        'ap.educations',
+        'ap.experiences',
+
+        // ── company
+        'co.id',
+        'co.companyName',
+        'co.industry',
+        'co.location',
+        'co.websiteUrl',
+        'co.logoUrl',
+        'co.about',
+        'co.isVerified',
       ])
       .getOne();
   }
 
-  // ── Create ────────────────────────────────────────────
+  // ── Create ─────────────────────────────────────────────────────────────────
   async create(payload: CreateUserPayload): Promise<User> {
     try {
       const user = this.userRepo.create({
@@ -143,11 +150,10 @@ export class UsersService {
     }
   }
 
-  // ── Update ────────────────────────────────────────────
+  // ── Update ─────────────────────────────────────────────────────────────────
   // Uses save() not update() so @BeforeUpdate hooks fire correctly
   async update(userId: string, updates: UpdateUserPayload): Promise<User> {
     const user = await this.findById(userId);
-
     Object.assign(user, updates);
 
     try {
@@ -163,18 +169,23 @@ export class UsersService {
     return this.findById(userId);
   }
 
-  // ── Soft delete ───────────────────────────────────────
+  // ── Soft delete ─────────────────────────────────────────────────────────────
   async softDelete(userId: string): Promise<void> {
     const user = await this.findById(userId);
     await this.userRepo.softRemove(user);
   }
 
-  // ── Deactivate (reversible) ───────────────────────────
+  // ── Delete account (called from DELETE /users/me) ──────────────────────────
+  async deleteAccount(userId: string): Promise<void> {
+    await this.softDelete(userId);
+  }
+
+  // ── Deactivate (reversible) ────────────────────────────────────────────────
   async deactivate(userId: string): Promise<void> {
     await this.update(userId, { isActive: false });
   }
 
-  // ── Exists check (lightweight) ────────────────────────
+  // ── Exists check ───────────────────────────────────────────────────────────
   async existsByEmail(email: string): Promise<boolean> {
     const count = await this.userRepo.count({
       where: { email: email.toLowerCase().trim() },
@@ -182,6 +193,15 @@ export class UsersService {
     return count > 0;
   }
 
+  // ── Dashboard stats (role-aware) ───────────────────────────────────────────
+  async getDashboardStats(userId: string, role: UserRole) {
+    if (role === UserRole.APPLICANT) {
+      return this.getApplicantStats(userId);
+    }
+    return this.getEmployerStats(userId);
+  }
+
+  // ── Profile strength ───────────────────────────────────────────────────────
   calculateProfileStrength(user: User): ProfileStrengthResponse {
     const isApplicant = user.role === UserRole.APPLICANT;
     const profile = user.applicantProfile;
@@ -192,10 +212,10 @@ export class UsersService {
           { label: 'Full name set', done: !!user.fullName, weight: 10 },
           {
             label: 'Profile photo uploaded',
-            done: !!user.profilePicture,
+            done: !!user.avatarUrl,
             weight: 10,
           },
-          { label: 'Phone number added', done: !!user.phoneNumber, weight: 10 },
+          { label: 'Phone number added', done: !!user.phone, weight: 10 },
           { label: 'Bio written', done: !!user.bio, weight: 10 },
           { label: 'Job title set', done: !!profile?.jobTitle, weight: 15 },
           {
@@ -220,10 +240,10 @@ export class UsersService {
           { label: 'Full name set', done: !!user.fullName, weight: 10 },
           {
             label: 'Profile photo uploaded',
-            done: !!user.profilePicture,
+            done: !!user.avatarUrl,
             weight: 10,
           },
-          { label: 'Phone number added', done: !!user.phoneNumber, weight: 10 },
+          { label: 'Phone number added', done: !!user.phone, weight: 10 },
           { label: 'Bio written', done: !!user.bio, weight: 10 },
           {
             label: 'Company name set',
@@ -254,5 +274,61 @@ export class UsersService {
     );
 
     return { strength, checklist };
+  }
+
+  // ── Private: applicant stats ───────────────────────────────────────────────
+  private async getApplicantStats(userId: string) {
+    const rows = await this.ds.query(
+      `SELECT
+         COUNT(*)::int                                             AS total_applications,
+         COUNT(*) FILTER (WHERE status IN ('reviewing','shortlisted','interview'))::int
+                                                                  AS active_applications,
+         (SELECT COUNT(*)::int FROM saved_jobs  WHERE user_id = $1) AS saved_jobs,
+         (SELECT COUNT(*)::int FROM interviews
+          WHERE candidate_id = $1 AND status = 'upcoming')        AS upcoming_interviews`,
+      [userId],
+    );
+
+    const r = rows[0];
+    return {
+      totalApplications: r.total_applications,
+      activeApplications: r.active_applications,
+      savedJobs: r.saved_jobs,
+      upcomingInterviews: r.upcoming_interviews,
+    };
+  }
+
+  // ── Private: employer stats ────────────────────────────────────────────────
+  private async getEmployerStats(userId: string) {
+    const rows = await this.ds.query(
+      `SELECT
+         (SELECT COUNT(*)::int FROM jobs j
+          JOIN companies c ON c.id = j.company_id
+          WHERE c.owner_id = $1 AND j.status = 'active' AND j.deleted_at IS NULL)   AS active_jobs,
+
+         (SELECT COUNT(*)::int FROM applications a
+          JOIN jobs j ON j.id = a.job_id
+          JOIN companies c ON c.id = j.company_id
+          WHERE c.owner_id = $1)                                                      AS total_applications,
+
+         (SELECT COUNT(*)::int FROM applications a
+          JOIN jobs j ON j.id = a.job_id
+          JOIN companies c ON c.id = j.company_id
+          WHERE c.owner_id = $1 AND a.status = 'new')                                AS new_applications,
+
+         (SELECT COUNT(*)::int FROM interviews i
+          JOIN jobs j ON j.id = i.job_id
+          JOIN companies c ON c.id = j.company_id
+          WHERE c.owner_id = $1 AND i.status = 'upcoming')                           AS upcoming_interviews`,
+      [userId],
+    );
+
+    const r = rows[0];
+    return {
+      activeJobs: r.active_jobs,
+      totalApplications: r.total_applications,
+      newApplications: r.new_applications,
+      upcomingInterviews: r.upcoming_interviews,
+    };
   }
 }

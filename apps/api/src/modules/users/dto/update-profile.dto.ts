@@ -8,6 +8,7 @@ import {
   Max,
   IsArray,
   IsUrl,
+  IsBoolean,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
@@ -21,7 +22,7 @@ export class UpdateUserProfileDto {
   @IsString()
   @IsOptional()
   @MaxLength(20)
-  phoneNumber?: string;
+  phone?: string;
 
   @IsString()
   @IsOptional()
@@ -60,5 +61,16 @@ export class UpdateUserProfileDto {
   @Transform(({ value }: { value: unknown }) =>
     value === '' ? undefined : value,
   )
+  @IsUrl()
+  @IsOptional()
   githubUrl?: string;
+
+  @IsString()
+  summary?: any;
+
+  @IsString()
+  languages?: any;
+
+  @IsBoolean()
+  isOpenToWork?: any;
 }

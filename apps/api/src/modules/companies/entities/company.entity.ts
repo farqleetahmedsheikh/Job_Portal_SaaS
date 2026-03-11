@@ -26,50 +26,50 @@ export class Company {
   @Column({ name: 'owner_id' })
   ownerId!: string;
 
-  @Column({ name: 'company_name', length: 150 })
+  @Column({ type: 'varchar', name: 'company_name', length: 150 })
   companyName!: string;
 
-  @Column({ length: 160, nullable: true, unique: true })
-  slug?: string | null;
+  @Column({ type: 'varchar', length: 160, nullable: true, unique: true })
+  slug?: string;
 
   @Column({ length: 255, nullable: true })
-  tagline?: string | null;
+  tagline?: string;
 
   @Column({ type: 'text', nullable: true })
-  about?: string | null;
+  about?: string;
 
   @Column({ type: 'text', nullable: true })
-  culture?: string | null;
+  culture?: string;
 
   @Column({ length: 80, nullable: true })
-  industry?: string | null;
+  industry?: string;
 
   @Column({ type: 'enum', enum: CompanySize, nullable: true })
-  size?: CompanySize | null;
+  size?: CompanySize;
 
   @Column({ length: 150, nullable: true })
-  location!: string | null;
+  location!: string;
 
   @Column({ name: 'founded_year', type: 'smallint', nullable: true })
-  foundedYear?: number | null;
+  foundedYear?: number;
 
   @Column({ name: 'website_url', type: 'text', nullable: true })
-  websiteUrl?: string | null;
+  websiteUrl?: string;
 
   @Column({ name: 'logo_url', type: 'text', nullable: true })
-  logoUrl?: string | null;
+  logoUrl?: string;
 
   @Column({ name: 'cover_url', type: 'text', nullable: true })
-  coverUrl?: string | null;
+  coverUrl?: string;
 
   @Column({ name: 'linkedin_url', type: 'text', nullable: true })
-  linkedinUrl?: string | null;
+  linkedinUrl?: string;
 
   @Column({ name: 'twitter_url', type: 'text', nullable: true })
-  twitterUrl?: string | null;
+  twitterUrl?: string;
 
   @Column({ name: 'instagram_url', type: 'text', nullable: true })
-  instagramUrl?: string | null;
+  instagramUrl?: string;
 
   @Column({ name: 'is_verified', default: false })
   isVerified!: boolean;

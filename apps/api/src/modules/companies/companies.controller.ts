@@ -1,12 +1,25 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-import { UserRole } from 'src/common/enums/user-role.enum';
+
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { UserRole } from 'src/common/enums/enums';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { CompaniesService } from './companies.service';
+import { UpdatePerksDto } from './dto/update-perks.dto';
+import { UpdateCompanyDto } from './dto/update-compnay.dto';
 import { CreateCompanyDto } from './dto/company.dto';
+import { CompaniesService } from './companies.service';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.EMPLOYER)
@@ -14,13 +27,47 @@ import { CreateCompanyDto } from './dto/company.dto';
 export class CompaniesController {
   constructor(private readonly service: CompaniesService) {}
 
+  // POST /api/companies
   @Post()
   create(@Req() req: any, @Body() dto: CreateCompanyDto) {
     return this.service.create(req.user.userId, dto);
   }
 
+  // GET /api/companies/me
   @Get('me')
   getMyCompany(@Req() req: any) {
     return this.service.findByOwner(req.user.userId);
+  }
+
+  // GET /api/companies/:id  — any authenticated user (public profile)
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.service.findById(id);
+  }
+
+  // PATCH /api/companies/:id
+  @Patch(':id')
+  update(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() dto: UpdateCompanyDto,
+  ) {
+    return this.service.update(id, req.user.userId, dto);
+  }
+
+  // PATCH /api/companies/:id/perks
+  @Patch(':id/perks')
+  updatePerks(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() dto: UpdatePerksDto,
+  ) {
+    return this.service.updatePerks(id, req.user.userId, dto);
+  }
+
+  // DELETE /api/companies/:id
+  @Delete(':id')
+  delete(@Req() req: any, @Param('id') id: string) {
+    return this.service.delete(id, req.user.userId);
   }
 }

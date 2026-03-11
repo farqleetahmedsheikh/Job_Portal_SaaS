@@ -11,95 +11,132 @@ import {
 import { User } from '../../users/entities/user.entity';
 
 @Entity('applicant_profiles')
-@Index(['userId'], { unique: true }) // enforce one profile per user at DB level
-@Entity('applicant_profiles')
+@Index(['userId'], { unique: true })
 export class ApplicantProfile {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  // Explicit FK column — needed for upsert queries
-  @Column({ name: 'user_id' })
+  @Column({ name: 'user_id', type: 'uuid' })
   userId!: string;
 
-  @Column({ name: 'job_title', length: 120, nullable: true })
+  @Column({
+    name: 'job_title',
+    type: 'varchar',
+    length: 120,
+    nullable: true,
+    default: null,
+  })
   jobTitle?: string | null;
 
-  @Column({ name: 'experience_years', type: 'smallint', nullable: true })
+  @Column({
+    name: 'experience_years',
+    type: 'smallint',
+    nullable: true,
+    default: null,
+  })
   experienceYears?: number | null;
 
-  // PostgreSQL native text array
-  @Column({ type: 'text', array: true, default: '{}' })
-  skills?: string[];
+  // ── JSONB — default must be a string, not a JS array literal ──────────────
+  @Column({ type: 'jsonb', default: '[]' })
+  educations!: {
+    school: string;
+    degree: string;
+    field: string;
+    startYear: string;
+    endYear?: string;
+    grade?: string;
+    description?: string;
+  }[];
 
-  @Column({ length: 120, nullable: true })
+  @Column({ type: 'jsonb', default: '[]' })
+  experiences!: {
+    company: string;
+    title: string;
+    startDate: string;
+    endDate?: string;
+    isCurrent?: boolean;
+    description?: string;
+    skills?: string[];
+  }[];
+
+  @Column({ type: 'text', array: true, default: '{}' })
+  skills!: string[];
+
+  @Column({ type: 'varchar', length: 120, nullable: true, default: null })
   location?: string | null;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true, default: null })
   summary?: string | null;
 
-  @Column({ name: 'linkedin_url', type: 'text', nullable: true })
+  @Column({ name: 'linkedin_url', type: 'text', nullable: true, default: null })
   linkedinUrl?: string | null;
 
-  @Column({ name: 'github_url', type: 'text', nullable: true })
+  @Column({ name: 'github_url', type: 'text', nullable: true, default: null })
   githubUrl?: string | null;
 
-  @Column({ name: 'portfolio_url', type: 'text', nullable: true })
+  @Column({
+    name: 'portfolio_url',
+    type: 'text',
+    nullable: true,
+    default: null,
+  })
   portfolioUrl?: string | null;
 
-  // ── Privacy / visibility settings (from Settings page) ──
-
-  @Column({ name: 'open_to_work', default: true })
+  // ── Visibility ─────────────────────────────────────────────────────────────
+  @Column({ name: 'open_to_work', type: 'boolean', default: true })
   openToWork!: boolean;
 
-  @Column({ name: 'recruiters_only', default: false })
+  @Column({ name: 'is_open_to_work', type: 'boolean', default: false })
+  isOpenToWork!: boolean;
+
+  @Column({ name: 'profile_visible', type: 'boolean', default: true })
+  isPublic!: boolean;
+
+  @Column({ name: 'recruiters_only', type: 'boolean', default: false })
   recruitersOnly!: boolean;
 
-  @Column({ name: 'show_email', default: false })
+  @Column({ name: 'show_email', type: 'boolean', default: false })
   showEmail!: boolean;
 
-  @Column({ name: 'show_phone', default: false })
+  @Column({ name: 'show_phone', type: 'boolean', default: false })
   showPhone!: boolean;
 
-  @Column({ name: 'activity_visible', default: true })
+  @Column({ name: 'activity_visible', type: 'boolean', default: true })
   activityVisible!: boolean;
 
-  @Column({ name: 'profile_visible', default: true })
-  profileVisible!: boolean;
-
-  // ── Notification preferences (from Settings > Notifications) ──
-
-  @Column({ name: 'notif_email_applications', default: true })
+  // ── Notification preferences ───────────────────────────────────────────────
+  @Column({ name: 'notif_email_applications', type: 'boolean', default: true })
   notifEmailApplications!: boolean;
 
-  @Column({ name: 'notif_email_messages', default: true })
+  @Column({ name: 'notif_email_messages', type: 'boolean', default: true })
   notifEmailMessages!: boolean;
 
-  @Column({ name: 'notif_email_digest', default: false })
+  @Column({ name: 'notif_email_digest', type: 'boolean', default: false })
   notifEmailDigest!: boolean;
 
-  @Column({ name: 'notif_email_marketing', default: false })
+  @Column({ name: 'notif_email_marketing', type: 'boolean', default: false })
   notifEmailMarketing!: boolean;
 
-  @Column({ name: 'notif_push_applications', default: true })
+  @Column({ name: 'notif_push_applications', type: 'boolean', default: true })
   notifPushApplications!: boolean;
 
-  @Column({ name: 'notif_push_messages', default: true })
+  @Column({ name: 'notif_push_messages', type: 'boolean', default: true })
   notifPushMessages!: boolean;
 
-  @Column({ name: 'notif_push_reminders', default: true })
+  @Column({ name: 'notif_push_reminders', type: 'boolean', default: true })
   notifPushReminders!: boolean;
 
-  @Column({ name: 'notif_push_job_alerts', default: false })
+  @Column({ name: 'notif_push_job_alerts', type: 'boolean', default: false })
   notifPushJobAlerts!: boolean;
 
+  // ── Timestamps ─────────────────────────────────────────────────────────────
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt?: Date;
 
-  // ── Relation ──
-
+  // ── Relation ───────────────────────────────────────────────────────────────
   @OneToOne(() => User, (u) => u.applicantProfile)
   @JoinColumn({ name: 'user_id' })
   user?: User;

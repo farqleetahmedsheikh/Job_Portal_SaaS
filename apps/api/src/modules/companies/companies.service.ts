@@ -6,17 +6,12 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { Company } from './entities/company.entity';
-
-interface CreateCompanyPayload {
-  companyName: string;
-  location: string;
-  industry: string;
-  website?: string | null;
-  description?: string | null;
-  logoUrl?: string | null;
-}
+import { UpdatePerksDto } from './dto/update-perks.dto';
+import { UpdateCompanyDto } from './dto/update-compnay.dto';
+import { CreateCompanyDto } from './dto/company.dto';
+import { CompanyPerk } from './entities/company-perk.entity';
 
 @Injectable()
 export class CompaniesService {
@@ -25,38 +20,39 @@ export class CompaniesService {
   constructor(
     @InjectRepository(Company)
     private readonly companyRepo: Repository<Company>,
+    @InjectRepository(CompanyPerk)
+    private readonly perkRepo: Repository<CompanyPerk>,
+    private readonly ds: DataSource,
   ) {}
 
-  // ── Find by owner ──────────────────────────────────────
+  // ── Find by owner ──────────────────────────────────────────────────────────
   async findByOwner(ownerId: string): Promise<Company[]> {
-    return this.companyRepo.find({ where: { ownerId } });
+    return this.companyRepo.find({
+      where: { ownerId },
+      relations: ['perks'],
+    });
   }
 
   async findById(id: string): Promise<Company> {
-    const company = await this.companyRepo.findOne({ where: { id } });
+    const company = await this.companyRepo.findOne({
+      where: { id },
+      relations: ['perks'],
+    });
     if (!company) throw new NotFoundException('Company not found');
     return company;
   }
 
-  // ── Create ─────────────────────────────────────────────
-  async create(
-    ownerId: string,
-    payload: CreateCompanyPayload,
-  ): Promise<Company> {
-    // One company name per owner — matches the unique index
+  // ── Create ─────────────────────────────────────────────────────────────────
+  async create(ownerId: string, payload: CreateCompanyDto): Promise<Company> {
     const existing = await this.companyRepo.findOne({
-      where: {
-        ownerId: ownerId,
-        companyName: payload.companyName,
-      },
+      where: { ownerId, companyName: payload.companyName },
     });
-
     if (existing) {
       throw new ConflictException('You already have a company with this name');
     }
 
     try {
-      const company = this.companyRepo.create(payload);
+      const company = this.companyRepo.create({ ...payload, ownerId });
       return await this.companyRepo.save(company);
     } catch (err) {
       this.logger.error(
@@ -67,18 +63,16 @@ export class CompaniesService {
     }
   }
 
-  // ── Update ─────────────────────────────────────────────
+  // ── Update ─────────────────────────────────────────────────────────────────
   async update(
     id: string,
     ownerId: string,
-    updates: Partial<CreateCompanyPayload>,
+    updates: UpdateCompanyDto,
   ): Promise<Company> {
     const company = await this.findById(id);
-
-    // Ensure the caller owns this company
-    if (company.ownerId !== ownerId) {
-      throw new NotFoundException('Company not found'); // 404 not 403 — don't leak existence
-    }
+    // 404 not 403 — don't leak existence to other employers
+    if (company.ownerId !== ownerId)
+      throw new NotFoundException('Company not found');
 
     Object.assign(company, updates);
 
@@ -93,7 +87,28 @@ export class CompaniesService {
     }
   }
 
-  // ── Soft delete ────────────────────────────────────────
+  // ── Replace perks list (full replace — sort order = array order) ───────────
+  async updatePerks(
+    id: string,
+    ownerId: string,
+    dto: UpdatePerksDto,
+  ): Promise<CompanyPerk[]> {
+    const company = await this.findById(id);
+    if (company.ownerId !== ownerId)
+      throw new NotFoundException('Company not found');
+
+    return this.ds.transaction(async (m) => {
+      await m.delete(CompanyPerk, { companyId: id });
+      if (!dto.perks?.length) return [];
+
+      const perks: CompanyPerk[] = dto.perks.map((perk, i) =>
+        m.create(CompanyPerk, { companyId: id, perk, sortOrder: i }),
+      );
+      return m.save(CompanyPerk, perks);
+    });
+  }
+
+  // ── Soft delete ────────────────────────────────────────────────────────────
   async delete(id: string, ownerId: string): Promise<void> {
     const company = await this.findById(id);
     if (company.ownerId !== ownerId)

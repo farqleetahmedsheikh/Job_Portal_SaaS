@@ -1,4 +1,6 @@
-// auth/auth.service.ts
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+// src/modules/auth/auth.service.ts
 import {
   Injectable,
   UnauthorizedException,
@@ -15,7 +17,7 @@ import { randomInt } from 'crypto';
 import { Response } from 'express';
 
 import { UsersService } from '../users/users.service';
-import { ApplicantProfilesService } from '../applicants/applicant-profiles.service';
+import { ApplicantsService } from '../applicants/applicant.service';
 import { CompaniesService } from '../companies/companies.service';
 import { MailService } from '../mail/mail.service';
 import { CacheService } from '../cache/cache.service';
@@ -27,8 +29,9 @@ import {
 } from './dto/complete-profile.dto';
 import { UserRole } from '../../common/enums/user-role.enum';
 import type { User } from '../users/entities/user.entity';
+import { throwError } from 'rxjs';
 
-// ─── Types ────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 export interface JwtPayload {
   sub: string;
   role: UserRole;
@@ -54,12 +57,16 @@ export interface SafeApplicantProfile {
   id: string;
   jobTitle: string | null;
   experienceYears: number | null;
-  skills: string[] | null;
+  skills: string[];
   location: string | null;
+  summary: string | null;
   linkedinUrl: string | null;
   githubUrl: string | null;
   portfolioUrl: string | null;
-  summary: string | null;
+  isOpenToWork: boolean;
+  isPublic: boolean;
+  educations: unknown[];
+  experiences: unknown[];
 }
 
 export interface SafeCompany {
@@ -67,17 +74,15 @@ export interface SafeCompany {
   companyName: string;
   industry: string;
   location: string;
-  website: string | null;
+  websiteUrl: string | null;
   logoUrl: string | null;
   description: string | null;
   isVerified: boolean;
 }
 
-// ─── Constants ────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 const OTP_TTL_SECONDS = 5 * 60;
 const OTP_CACHE_PREFIX = 'otp:';
-const DUMMY_HASH =
-  '$2b$12$dummyhashusedtopreventimusertimingattacksonloginendpoint';
 
 @Injectable()
 export class AuthService {
@@ -85,7 +90,7 @@ export class AuthService {
 
   constructor(
     private readonly users: UsersService,
-    private readonly applicantProfiles: ApplicantProfilesService,
+    private readonly applicantProfiles: ApplicantsService,
     private readonly companies: CompaniesService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
@@ -93,7 +98,9 @@ export class AuthService {
     private readonly cache: CacheService,
   ) {}
 
-  // ── Register ──────────────────────────────────────────────
+  // ── Register ───────────────────────────────────────────────────────────────
+  // Collects: fullName, email, password, role
+  // isProfileComplete stays false → frontend redirects to /complete-profile
   async register(dto: RegisterDto, res: Response): Promise<SafeUser> {
     const existing = await this.users.findByEmail(dto.email);
     if (existing) throw new ConflictException('Email already registered');
@@ -109,61 +116,56 @@ export class AuthService {
     });
 
     this.setAuthCookie(res, user.id, user.role);
-    return this.toSafeUser(user);
+
+    const fullUser = await this.users.findByIdWithFullProfile(user.id);
+    return this.toSafeUser(fullUser ?? user);
   }
 
-  // ── Login ─────────────────────────────────────────────────
+  // ── Login ──────────────────────────────────────────────────────────────────
   async login(dto: LoginDto, res: Response): Promise<SafeUser> {
-    // passwordHash has select:false — must explicitly select it for login only
     const user = await this.users.findByEmailWithPassword(dto.email);
 
-    // Always run compare — prevents timing attacks that reveal valid emails
-    const hashToCompare = user?.passwordHash ?? DUMMY_HASH;
-    const isValid = await bcrypt.compare(dto.password, hashToCompare);
+    if (!user) throw new UnauthorizedException('User not found!');
 
-    if (!user || !isValid) {
-      throw new UnauthorizedException('Invalid email or password');
-    }
+    const isValid = await bcrypt.compare(dto.password, user.passwordHash);
 
-    if (!user.isActive) {
+    if (!isValid) throw new UnauthorizedException('Invalid email or password');
+    if (!user.isActive)
       throw new UnauthorizedException('Account has been deactivated');
-    }
+
     const fullUser = await this.users.findByIdWithFullProfile(user.id);
     if (!fullUser) throw new UnauthorizedException('User not found');
+
     this.setAuthCookie(res, user.id, user.role);
     return this.toSafeUser(fullUser);
   }
 
-  // ── Logout ────────────────────────────────────────────────
+  // ── Logout ─────────────────────────────────────────────────────────────────
   logout(res: Response): void {
     res.clearCookie('token', { path: '/' });
   }
 
-  // ── Me ────────────────────────────────────────────────────
+  // ── Me ─────────────────────────────────────────────────────────────────────
   async getMe(userId: string): Promise<SafeUser> {
     const user = await this.users.findByIdWithFullProfile(userId);
     if (!user) throw new UnauthorizedException('User not found');
     return this.toSafeUser(user);
   }
 
-  // ── Forgot password ───────────────────────────────────────
+  // ── Forgot password ────────────────────────────────────────────────────────
   async sendForgotPasswordOtp(email: string): Promise<{ message: string }> {
-    // Always return same message — never reveal if email exists
     const SAFE_MESSAGE = 'If that email exists, an OTP has been sent';
 
     const user = await this.users.findByEmail(email);
     if (!user) return { message: SAFE_MESSAGE };
 
-    // Invalidate previous OTP before issuing new one
     await this.cache.del(`${OTP_CACHE_PREFIX}${email}`);
-
     const otp = String(randomInt(100000, 999999));
     await this.cache.set(`${OTP_CACHE_PREFIX}${email}`, otp, OTP_TTL_SECONDS);
 
     try {
       await this.mail.sendOtp(email, otp);
     } catch (err) {
-      // Clean up OTP if mail fails — don't leave a dangling cache entry
       await this.cache.del(`${OTP_CACHE_PREFIX}${email}`);
       this.logger.error(
         `Failed to send OTP email to ${email}`,
@@ -175,32 +177,23 @@ export class AuthService {
     return { message: SAFE_MESSAGE };
   }
 
-  // ── Verify OTP ────────────────────────────────────────────
+  // ── Verify OTP ─────────────────────────────────────────────────────────────
   async verifyOtp(email: string, otp: string): Promise<{ message: string }> {
     const stored = await this.cache.get(`${OTP_CACHE_PREFIX}${email}`);
-
-    if (!stored) {
-      throw new BadRequestException('OTP expired or not requested');
-    }
-
-    // Constant-time comparison — prevents timing attacks on OTP value
-    if (!this.constantTimeEqual(otp, stored)) {
+    if (!stored) throw new BadRequestException('OTP expired or not requested');
+    if (!this.constantTimeEqual(otp, stored))
       throw new BadRequestException('Invalid OTP');
-    }
 
-    // Consume immediately — one use only
     await this.cache.del(`${OTP_CACHE_PREFIX}${email}`);
-
     return { message: 'OTP verified successfully' };
   }
 
-  // ── Reset password ────────────────────────────────────────
+  // ── Reset password ─────────────────────────────────────────────────────────
   async resetPassword(
     email: string,
     otp: string,
     newPassword: string,
   ): Promise<{ message: string }> {
-    // verifyOtp consumes the OTP — no double-use possible
     await this.verifyOtp(email, otp);
 
     const user = await this.users.findByEmail(email);
@@ -208,14 +201,14 @@ export class AuthService {
 
     const bcryptRounds = this.config.get<number>('app.bcryptRounds') ?? 12;
     const passwordHash = await bcrypt.hash(newPassword, bcryptRounds);
-
     await this.users.update(user.id, { passwordHash });
 
     return { message: 'Password reset successfully' };
   }
 
-  // ── Complete applicant profile ────────────────────────────
-  // Writes to applicant_profiles table — not the users table
+  // ── Complete applicant profile ─────────────────────────────────────────────
+  // Minimal fields collected on /complete-profile page
+  // Sets isProfileComplete = true → frontend redirects to dashboard
   async completeApplicantProfile(
     userId: string,
     dto: CompleteApplicantProfileDto,
@@ -223,26 +216,27 @@ export class AuthService {
     const user = await this.users.findById(userId);
     if (!user) throw new NotFoundException('User not found');
 
-    // Upsert profile — safe to call multiple times
+    // ✅ Use entity field names — jobTitle (not title), all nullable
     await this.applicantProfiles.upsert(userId, {
       jobTitle: dto.jobTitle ?? null,
       experienceYears: dto.experienceYears ?? null,
-      skills: dto.skills ?? null,
+      skills: dto.skills ?? [],
       location: dto.location ?? null,
       linkedinUrl: dto.linkedinUrl ?? null,
       githubUrl: dto.githubUrl ?? null,
+      summary: dto.summary ?? null,
     });
 
-    // Only flag on user row — no profile-specific data here
-    const updated = await this.users.update(userId, {
-      isProfileComplete: true,
-    });
+    await this.users.update(userId, { isProfileComplete: true });
 
-    return this.toSafeUser(updated);
+    const fullUser = await this.users.findByIdWithFullProfile(userId);
+    if (!fullUser) throw new NotFoundException('User not found');
+    return this.toSafeUser(fullUser);
   }
 
-  // ── Complete employer profile ─────────────────────────────
-  // Creates a company record — employer profile IS their company
+  // ── Complete employer profile ──────────────────────────────────────────────
+  // Minimal fields: companyName, industry, location
+  // Sets isProfileComplete = true → frontend redirects to dashboard
   async completeEmployerProfile(
     userId: string,
     dto: CompleteEmployerProfileDto,
@@ -254,78 +248,83 @@ export class AuthService {
       companyName: dto.companyName,
       location: dto.location,
       industry: dto.industry,
-      website: dto.website ?? null,
-      description: dto.description ?? null,
+      websiteUrl: dto.website ?? '',
+      description: dto.description ?? '',
     });
 
-    const updated = await this.users.update(userId, {
-      isProfileComplete: true,
-    });
+    await this.users.update(userId, { isProfileComplete: true });
 
-    return this.toSafeUser(updated);
+    const fullUser = await this.users.findByIdWithFullProfile(userId);
+    if (!fullUser) throw new NotFoundException('User not found');
+    return this.toSafeUser(fullUser);
   }
 
-  // ════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════════════
   //  Private helpers
-  // ════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════════════
 
   private setAuthCookie(res: Response, userId: string, role: UserRole): void {
     const payload: JwtPayload = { sub: userId, role };
-    const token = this.jwt.sign(payload); // expiry comes from module config
+    const token = this.jwt.sign(payload);
 
     res.cookie('token', token, {
       httpOnly: true,
       secure: this.config.get<string>('app.env') === 'production',
       sameSite: 'strict',
       path: '/',
-      maxAge: 1000 * 60 * 60 * 24 * 7,
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     });
   }
 
   private toSafeUser(user: User): SafeUser {
-    const primaryCompany = user.companies?.[0] ?? null;
+    const ap = user.applicantProfile ?? null;
+    const company = user.companies?.[0] ?? null;
 
     return {
       id: user.id,
       fullName: user.fullName,
       email: user.email,
       role: user.role,
-      avatar: user.profilePicture ?? null,
-      phone: user.phoneNumber ?? null,
+      avatar: user.avatarUrl ?? null,
+      phone: user.phone ?? null,
       bio: user.bio ?? null,
       isProfileComplete: user.isProfileComplete ?? false,
       isEmailVerified: user.isEmailVerified ?? false,
 
-      applicantProfile: user.applicantProfile
+      // ✅ Map entity field names — no invented fields
+      applicantProfile: ap
         ? {
-            id: user.applicantProfile.id,
-            jobTitle: user.applicantProfile.jobTitle ?? null,
-            experienceYears: user.applicantProfile.experienceYears ?? null,
-            skills: user.applicantProfile.skills ?? null,
-            location: user.applicantProfile.location ?? null,
-            linkedinUrl: user.applicantProfile.linkedinUrl ?? null,
-            githubUrl: user.applicantProfile.githubUrl ?? null,
-            portfolioUrl: user.applicantProfile.portfolioUrl ?? null,
-            summary: user.applicantProfile.summary ?? null,
+            id: ap.id,
+            jobTitle: ap.jobTitle ?? null,
+            experienceYears: ap.experienceYears ?? null,
+            skills: ap.skills ?? [],
+            location: ap.location ?? null,
+            summary: ap.summary ?? null,
+            linkedinUrl: ap.linkedinUrl ?? null,
+            githubUrl: ap.githubUrl ?? null,
+            portfolioUrl: ap.portfolioUrl ?? null,
+            isOpenToWork: ap.isOpenToWork ?? false,
+            isPublic: ap.isPublic ?? true,
+            educations: ap.educations ?? [],
+            experiences: ap.experiences ?? [],
           }
         : null,
 
-      company: primaryCompany
+      company: company
         ? {
-            id: primaryCompany.id,
-            companyName: primaryCompany.companyName,
-            industry: primaryCompany.industry,
-            location: primaryCompany.location,
-            website: primaryCompany.website ?? null,
-            logoUrl: primaryCompany.logoUrl ?? null,
-            description: primaryCompany.description ?? null,
-            isVerified: primaryCompany.isVerified ?? false,
+            id: company.id,
+            companyName: company.companyName,
+            industry: company.industry,
+            location: company.location,
+            websiteUrl: company.website ?? null,
+            logoUrl: company.logoUrl ?? null,
+            description: company.description ?? null,
+            isVerified: company.isVerified ?? false,
           }
         : null,
     };
   }
 
-  // Timing-safe string comparison — prevents timing attacks on OTP
   private constantTimeEqual(a: string, b: string): boolean {
     if (a.length !== b.length) return false;
     let mismatch = 0;
