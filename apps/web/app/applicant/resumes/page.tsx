@@ -16,7 +16,7 @@ import {
   Clock,
   FileCheck,
 } from "lucide-react";
-import styles from "../../styles/resumes.module.css";
+import styles from "../styles/resumes.module.css";
 
 type ResumeStatus = "ready" | "processing" | "error";
 

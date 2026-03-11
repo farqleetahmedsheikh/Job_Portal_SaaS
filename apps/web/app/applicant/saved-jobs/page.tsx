@@ -20,7 +20,7 @@ import {
   BriefcaseIcon,
   Filter,
 } from "lucide-react";
-import styles from "../../styles/saved-jobs.module.css";
+import styles from "../styles/saved-jobs.module.css";
 
 // ─── Types ────────────────────────────────────────────────
 type JobType = "full-time" | "part-time" | "contract" | "remote";

@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>HireSphere — Entity Relationship Diagram</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        body {
+            background: #0f1117;
+            font-family: 'Inter', system-ui, sans-serif;
+            color: #e2e8f0;
+            overflow: hidden
+        }
+
+        /* toolbar */
+        #toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 48px;
+            background: #161b27;
+            border-bottom: 1px solid #2a3148;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 16px;
+            z-index: 100
+        }
+
+        #toolbar h1 {
+            font-size: 13px;
+            font-weight: 700;
+            color: #e2e8f0;
+            margin-right: 8px
+        }
+
+        .tb-sep {
+            width: 1px;
+            height: 20px;
+            background: #2a3148
+        }
+
+        .tb-btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 6px;
+            border: 1px solid #2a3148;
+            background: transparent;
+            color: #94a3b8;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all .15s
+        }
+
+        .tb-btn:hover {
+            background: #1e2a40;
+            color: #e2e8f0
+        }
+
+        .tb-badge {
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 99px;
+            background: #1e3a5f;
+            color: #60a5fa;
+            font-weight: 700
+        }
+
+        #legend {
+            display: flex;
+            gap: 14px;
+            margin-left: auto;
+            align-items: center
+        }
+
+        .leg {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: #64748b
+        }
+
+        .leg-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px
+        }
+
+        /* canvas */
+        #canvas {
+            position: fixed;
+            top: 48px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            cursor: grab
+        }
+
+        #canvas:active {
+            cursor: grabbing
+        }
+
+        #world {
+            position: absolute;
+            transform-origin: 0 0
+        }
+
+        /* SVG lines */
+        #svg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            overflow: visible
+        }
+
+        /* table cards */
+        .tbl {
+            position: absolute;
+            background: #161b27;
+            border: 1.5px solid #2a3148;
+            border-radius: 10px;
+            min-width: 220px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, .4);
+            cursor: move;
+            user-select: none;
+            transition: border-color .15s, box-shadow .15s
+        }
+
+        .tbl:hover {
+            border-color: #3b5998;
+            box-shadow: 0 8px 32px rgba(59, 91, 152, .25)
+        }
+
+        .tbl.selected {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, .3)
+        }
+
+        .tbl-head {
+            padding: 10px 12px 9px;
+            border-bottom: 1px solid #2a3148;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 9px 9px 0 0
+        }
+
+        .tbl-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            flex-shrink: 0
+        }
+
+        .tbl-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: #e2e8f0;
+            flex: 1
+        }
+
+        .tbl-count {
+            font-size: 9px;
+            color: #64748b;
+            background: #1e293b;
+            padding: 1px 5px;
+            border-radius: 99px
+        }
+
+        .tbl-body {
+            padding: 4px 0
+        }
+
+        .col-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3.5px 10px;
+            font-size: 11px
+        }
+
+        .col-row:hover {
+            background: rgba(255, 255, 255, .03)
+        }
+
+        .col-key {
+            font-size: 9px;
+            font-weight: 800;
+            padding: 1px 4px;
+            border-radius: 3px;
+            flex-shrink: 0;
+            width: 18px;
+            text-align: center
+        }
+
+        .pk {
+            background: #713f12;
+            color: #fbbf24
+        }
+
+        .fk {
+            background: #1e3a5f;
+            color: #60a5fa
+        }
+
+        .col-name {
+            color: #cbd5e1;
+            flex: 1;
+            font-family: monospace
+        }
+
+        .col-type {
+            color: #64748b;
+            font-size: 10px;
+            font-family: monospace
+        }
+
+        .col-null {
+            color: #374151;
+            font-size: 9px
+        }
+
+        .col-sep {
+            height: 1px;
+            background: #1e293b;
+            margin: 3px 10px
+        }
+
+        /* zoom indicator */
+        #zoom-info {
+            position: fixed;
+            bottom: 12px;
+            right: 14px;
+            font-size: 11px;
+            color: #475569;
+            background: #161b27;
+            border: 1px solid #2a3148;
+            padding: 4px 10px;
+            border-radius: 6px;
+            z-index: 100
+        }
+
+        /* tooltip */
+        #tooltip {
+            position: fixed;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 11px;
+            color: #94a3b8;
+            pointer-events: none;
+            z-index: 200;
+            display: none;
+            max-width: 220px;
+            line-height: 1.5
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="toolbar">
+        <h1>🗄 HireSphere ERD</h1>
+        <span class="tb-badge">14 tables</span>
+        <div class="tb-sep"></div>
+        <button class="tb-btn" onclick="zoomIn()">＋ Zoom in</button>
+        <button class="tb-btn" onclick="zoomOut()">－ Zoom out</button>
+        <button class="tb-btn" onclick="resetView()">⊙ Reset view</button>
+        <div class="tb-sep"></div>
+        <button class="tb-btn" onclick="fitAll()">⤢ Fit all</button>
+        <div id="legend">
+            <div class="leg">
+                <div class="leg-dot" style="background:#713f12"></div> PK
+            </div>
+            <div class="leg">
+                <div class="leg-dot" style="background:#1e3a5f"></div> FK
+            </div>
+            <div class="leg">
+                <div class="leg-dot" style="background:#1a2e1a"></div> Core
+            </div>
+            <div class="leg">
+                <div class="leg-dot" style="background:#1e2a1e"></div> Job
+            </div>
+            <div class="leg">
+                <div class="leg-dot" style="background:#1a1a2e"></div> Hiring
+            </div>
+            <div class="leg">
+                <div class="leg-dot" style="background:#2e1a1a"></div> Social
+            </div>
+        </div>
+    </div>
+
+    <div id="canvas">
+        <div id="world">
+            <svg id="svg-layer"></svg>
+        </div>
+    </div>
+
+    <div id="zoom-info">100%</div>
+    <div id="tooltip"></div>
+
+    <script>
+        // ─── Table definitions ────────────────────────────────────────
+        const TABLES = [
+            {
+                id: "users", name: "users", color: "#1a2e1a", icon: "👤", iconBg: "#1a3a1a",
+                x: 460, y: 60,
+                cols: [
+                    { key: "PK", name: "id", type: "uuid", null: false },
+                    { key: "", name: "full_name", type: "varchar(120)", null: false },
+                    { key: "", name: "email", type: "varchar(255)", null: false },
+                    { key: "", name: "password_hash", type: "varchar(255)", null: false, note: "select:false" },
+                    { key: "", name: "role", type: "enum", null: false, note: "applicant|employer" },
+                    { key: "", name: "avatar_url", type: "text", null: true },
+                    { key: "", name: "phone", type: "varchar(30)", null: true },
+                    { key: "", name: "bio", type: "text", null: true },
+                    { key: "", name: "is_profile_complete", type: "boolean", null: false, def: "false" },
+                    { key: "", name: "is_email_verified", type: "boolean", null: false, def: "false" },
+                    { key: "", name: "is_active", type: "boolean", null: false, def: "true" },
+                    { key: "", name: "last_active_at", type: "timestamptz", null: true },
+                    { key: "", name: "created_at", type: "timestamptz", null: false },
+                    { key: "", name: "updated_at", type: "timestamptz", null: false },
+                    { key: "", name: "deleted_at", type: "timestamptz", null: true },
+                ]
+            },
+            {
+                id: "applicant_profiles", name: "applicant_profiles", color: "#1a2e1a", icon: "📋", iconBg: "#1a3a1a",
+                x: 60, y: 60,
+                cols: [
+                    { key: "PK", name: "id", type: "uuid", null: false },
+                    { key: "FK", name: "user_id", type: "uuid", null: false, ref: "users" },
+                    { key: "", name: "job_title", type: "varchar(120)", null: true },
+                    { key: "", name: "experience_years", type: "smallint", null: true },
+                    { key: "", name: "skills", type: "text[]", null: false, def: "{}" },
+                    { key: "", name: "location", type: "varchar(120)", null: true },
+                    { key: "", name: "summary", type: "text", null: true },
+                    { key: "", name: "linkedin_url", type: "text", null: true },
+                    { key: "", name: "github_url", type: "text", null: true },
+                    { key: "", name: "portfolio_url", type: "text", null: true },
+                    { key: "", name: "open_to_work", type: "boolean", null: false, def: "true" },
+                    { key: "", name: "recruiters_only", type: "boolean", null: false, def: "false" },
+                    { key: "", name: "show_email", type: "boolean", null: false },
+                    { key: "", name: "show_phone", type: "boolean", null: false },
+                    { key: "", name: "profile_visible", type: "boolean", null: false },
+                    { key: "", name: "notif_* (8 flags)", type: "boolean", null: false },
+                    { key: "", name: "created_at", type: "timestamptz", null: false },
+                    { key: "", name: "updated_at", type: "timestamptz", null: false },
+                ]
+            },
+            {
+                id: "companies", name: "companies", color: "#1a2e1a", icon: "🏢", iconBg: "#1a3a1a",
+                x: 860, y: 60,
+                cols: [
+                    { key: "PK", name: "id", type: "uuid", null: false },
+                    { key: "FK", name: "owner_id", type: "uuid", null: false, ref: "users" },
+                    { key: "", name: "company_name", type: "varchar(150)", null: false },
+                    { key: "", name: "slug", type: "varchar(160)", null: true, note: "unique" },
+                    { key: "", name: "tagline", type: "varchar(255)", null: true },
+                    { key: "", name: "about", type: "text", null: true },
+                    { key: "", name: "culture", type: "text", null: true },
+                    { key: "", name: "industry", type: "varchar(80)", null: true },
+                    { key: "", name: "size", type: "enum", null: true },
+                    { key: "", name: "location", type: "varchar(150)", null: true },
+                    { key: "", name: "founded_year", type: "smallint", null: true },
+                    { key: "", name: "website_url", type: "text", null: true },
+                    { key: "", name: "logo_url", type: "text", null: true },
+                    { key: "", name: "cover_url", type: "text", null: true },
+                    { key: "", name: "linkedin_url", type: "text", null: true },
+                    { key: "", name: "twitter_url", type: "text", null: true },
+                    { key: "", name: "is_verified", type: "boolean", null: false },
+                    { key: "", name: "active_jobs_count", type: "int", null: false, def: "0" },
+                    { key: "", name: "deleted_at", type: "timestamptz", null: true },
+                ]
+            },
+            {
+                id: "company_perks", name: "company_perks", color: "#1a2e1a", icon: "🎁", iconBg: "#1a3a1a",
+                x: 1180, y: 60,
+                cols: [
+                    { key: "PK", name: "id", type: "uuid", null: false },
+                    { key: "FK", name: "company_id", type: "uuid", null: false, ref: "companies" },
+                    { key: "", name: "perk", type: "varchar(120)", null: false },
+                    { key: "", name: "sort_order", type: "smallint", null: false, def: "0" },
+                ]
+            },
+            {
+                id: "resumes", name: "resumes", color: "#1a2e1a", icon: "📄", iconBg: "#1a3a1a",
+                x: 60, y: 480,
+                cols: [
+                    { key: "PK", name: "id", type: "uuid", null: false },
+                    { key: "FK", name: "user_id", type: "uuid", null: false, ref: "users" },
+                    { key: "", name: "name", type: "varchar(200)", null: false },
+                    { key: "", name: "file_url", type: "text", null: false },
+                    { key: "", name: "file_size", type: "int", null: false },
+                    { key: "", name: "mime_type", type: "varchar(60)", null: false },
+                    { key: "", name: "status", type: "enum", null: false, note: "processing|ready|error" },
+                    { key: "", name: "is_default", type: "boolean", null: false, def: "false" },
+                    { key: "", name: "created_at", type: "timestamptz", null: false },
+                    { key: "", name: "deleted_at", type: "timestamptz", null: true },
+                ]
+            },
+            {
+                id: "jobs", name: "jobs", color: "#1e2a1e", icon: "💼", iconBg: "#1a3020",
+                x: 460, y: 420,
+                cols: [
+                    { key: "PK", name: "id", type: "uuid", null: false },
+                    { key: "FK", name: "company_id", type: "uuid", null: false, ref: "companies" },
+                    { key: "FK", name: "posted_by_id", type: "uuid", null: false, ref: "users" },
+                    { key: "", name: "title", type: "varchar(150)", null: false },
+                    { key: "", name: "department", type: "varchar(80)", null: true },
+                    { key: "", name: "type", type: "enum", null: false },
+                    { key: "", name: "location_type", type: "enum", null: false },
+                    { key: "", name: "location", type: "varchar(150)", null: false },
+                    { key: "", name: "experience_level", type: "enum", null: true },
+                    { key: "", name: "salary_min", type: "numeric(12,2)", null: true },
+                    { key: "", name: "salary_max", type: "numeric(12,2)", null: true },
+                    { key: "", name: "salary_currency", type: "enum", null: false, def: "USD" },
+                    { key: "", name: "openings", type: "smallint", null: false, def: "1" },
+                    { key: "", name: "deadline", type: "date", null: true },
+                    { key: "", name: "status", type: "enum", null: false, note: "draft|active|paused|closed|expired" },
+                    { key: "", name: "description", type: "text", null: false },
+                    { key: "", name: "requirements", type: "text", null: true },
+                    { key: "", name: "nice_to_have", type: "text", null: true },
+                    { key: "", name: "benefits", type: "text", null: true },
+                    { key: "", name: "skills", type: "text[]", null: false },
+                    { key: "", name: "views_count", type: "int", null: false, def: "0" },
+                    { key: "", name: "applicants_count", type: "int", null: false, def: "0" },
+                    { key: "", name: "published_at", type: "timestamptz", null: true },
+                    { key: "", name: "deleted_at", type: "timestamptz", null: true },
+                ]
+            },
+            {
+                id: "job_skills", name: "job_skills", color: "#1e2a1e", icon: "🏷", iconBg: "#1a3020",
+                x: 860, y: 440,
+                cols: [
+                    { key: "PK", name: "id", type: "uuid", null: false },
+                    { key: "FK", name: "job_id", type: "uuid", null: false, ref: "jobs" },
+                    { key: "", name: "skill", type: "varchar(80)", null: false },
+                ]
+            },
+            {
+                id: "saved_jobs", name: "saved_jobs", color: "#1e2a1e", icon: "🔖", iconBg: "#1a3020",
+                x: 860, y: 600,
+                cols: [
+                    { key: "PK", name: "id", type: "uuid", null: false },
+                    { key: "FK", name: "user_id", type: "uuid", null: false, ref: "users" },
+                    { key: "FK", name: "job_id", type: "uuid", null: false, ref: "jobs" },
+                    { key: "", name: "saved_at", type: "timestamptz", null: false },
+                ]
+            },
+            {
+                id: "applications", name: "applications", color: "#1a1a2e", icon: "📨", iconBg: "#1a1a3a",
+                x: 460, y: 880,
+                cols: [
+                    { key: "PK", name: "id", type: "uuid", null: false },
+                    { key: "FK", name: "job_id", type: "uuid", null: false, ref: "jobs" },
+                    { key: "FK", name: "applicant_id", type: "uuid", null: false, ref: "users" },
+                    { key: "FK", name: "resume_id", type: "uuid", null: true, ref: "resumes" },
+                    { key: "", name: "status", type: "enum", null: false, note: "new→reviewing→interview→offered" },
+                    { key: "", name: "source", type: "enum", null: false },
+                    { key: "", name: "cover_letter", type: "text", null: true },
+                    { key: "", name: "employer_notes", type: "text", null: true },
+                    { key: "", name: "is_starred", type: "boolean", null: false, def: "false" },
+                    { key: "", name: "viewed_by_employer_at", type: "timestamptz", null: true },
+                    { key: "", name: "applied_at", type: "timestamptz", null: false },
+                    { key: "", name: "updated_at", type: "timestamptz", null: false },
+                ]
+            },
+            {
+                id: "application_status_history", name: "app_status_history", color: "#1a1a2e", icon: "📜", iconBg: "#1a1a3a",
+                x: 100, y: 900,
+                cols: [
+                    { key: "PK", name: "id", type: "uuid", null: false },
+                    { key: "FK", name: "application_id", type: "uuid", null: false, ref: "applications" },
+                    { key: "FK", name: "changed_by_id", type: "uuid", null: false, ref: "users" },
+                    { key: "", name: "from_status", type: "enum", null: true },
+                    { key: "", name: "to_status", type: "enum", null: false },
+                    { key: "", name: "note", type: "text", null: true },
+                    { key: "", name: "changed_at", type: "timestamptz", null: false },
+                ]
+            },
+            {
+                id: "interviews", name: "interviews", color: "#1a1a2e", icon: "📅", iconBg: "#1a1a3a",
+                x: 460, y: 1150,
+                cols: [
+                    { key: "PK", name: "id", type: "uuid", null: false },
+                    { key: "FK", name: "application_id", type: "uuid", null: false, ref: "applications" },
+                    { key: "FK", name: "scheduled_by_id", type: "uuid", null: false, ref: "users" },
+                    { key: "FK", name: "job_id", type: "uuid", null: false, ref: "jobs" },
+                    { key: "FK", name: "candidate_id", type: "uuid", null: false, ref: "users" },
+                    { key: "FK", name: "company_id", type: "uuid", null: false, ref: "companies" },
+                    { key: "", name: "scheduled_at", type: "timestamptz", null: false },
+                    { key: "", name: "duration_mins", type: "smallint", null: false, def: "45" },
+                    { key: "", name: "type", type: "enum", null: false, note: "video|phone|onsite" },
+                    { key: "", name: "status", type: "enum", null: false, note: "upcoming|completed|cancelled" },
+                    { key: "", name: "meet_link", type: "text", null: true },
+                    { key: "", name: "notes", type: "text", null: true },
+                    { key: "", name: "feedback", type: "text", null: true },
+                    { key: "", name: "rating", type: "smallint", null: true },
+                    { key: "", name: "cancelled_at", type: "timestamptz", null: true },
+                ]
+            },
+            {
+                id: "interview_panelists", name: "interview_panelists", color: "#1a1a2e", icon: "👥", iconBg: "#1a1a3a",
+                x: 100, y: 1200,
+                cols: [
+                    { key: "PK", name: "id", type: "uuid", null: false },
+                    { key: "FK", name: "interview_id", type: "uuid", null: false, ref: "interviews" },
+                    { key: "FK", name: "user_id", type: "uuid", null: true, ref: "users" },
+                    { key: "", name: "name", type: "varchar(120)", null: true, note: "external panelist" },
+                ]
+            },
+            {
+                id: "conversations", name: "conversations", color: "#2e1a1a", icon: "💬", iconBg: "#3a1a1a",
+                x: 860, y: 880,
+                cols: [
+                    { key: "PK", name: "id", type: "uuid", null: false },
+                    { key: "FK", name: "job_id", type: "uuid", null: true, ref: "jobs" },
+                    { key: "", name: "created_at", type: "timestamptz", null: false },
+                    { key: "", name: "updated_at", type: "timestamptz", null: false },
+                ]
+            },
+            {
+                id: "messages", name: "messages", color: "#2e1a1a", icon: "✉️", iconBg: "#3a1a1a",
+                x: 860, y: 1080,
+                cols: [
+                    { key: "PK", name: "id", type: "uuid", null: false },
+                    { key: "FK", name: "conversation_id", type: "uuid", null: false, ref: "conversations" },
+                    { key: "FK", name: "sender_id", type: "uuid", null: false, ref: "users" },
+                    { key: "", name: "text", type: "text", null: false },
+                    { key: "", name: "is_deleted", type: "boolean", null: false },
+                    { key: "", name: "created_at", type: "timestamptz", null: false },
+                ]
+            },
+        ];
+
+        // FK relationships: [fromTable, fromCol, toTable, toCol]
+        const RELATIONS = [
+            ["applicant_profiles", "user_id", "users", "id"],
+            ["companies", "owner_id", "users", "id"],
+            ["company_perks", "company_id", "companies", "id"],
+            ["resumes", "user_id", "users", "id"],
+            ["jobs", "company_id", "companies", "id"],
+            ["jobs", "posted_by_id", "users", "id"],
+            ["job_skills", "job_id", "jobs", "id"],
+            ["saved_jobs", "user_id", "users", "id"],
+            ["saved_jobs", "job_id", "jobs", "id"],
+            ["applications", "job_id", "jobs", "id"],
+            ["applications", "applicant_id", "users", "id"],
+            ["applications", "resume_id", "resumes", "id"],
+            ["application_status_history", "application_id", "applications", "id"],
+            ["application_status_history", "changed_by_id", "users", "id"],
+            ["interviews", "application_id", "applications", "id"],
+            ["interviews", "job_id", "jobs", "id"],
+            ["interviews", "candidate_id", "users", "id"],
+            ["interviews", "company_id", "companies", "id"],
+            ["interview_panelists", "interview_id", "interviews", "id"],
+            ["interview_panelists", "user_id", "users", "id"],
+            ["conversations", "job_id", "jobs", "id"],
+            ["messages", "conversation_id", "conversations", "id"],
+            ["messages", "sender_id", "users", "id"],
+        ];
+
+        // ─── State ────────────────────────────────────────────────────
+        let scale = 0.65, tx = 20, ty = 20;
+        let dragging = null, dragStart = null;
+        let panning = false, panStart = null;
+        let selectedId = null;
+        const positions = {};
+
+        const world = document.getElementById("world");
+        const canvas = document.getElementById("canvas");
+        const svg = document.getElementById("svg-layer");
+
+        // ─── Build tables ─────────────────────────────────────────────
+        function buildTable(t) {
+            positions[t.id] = { x: t.x, y: t.y };
+            const el = document.createElement("div");
+            el.className = "tbl";
+            el.id = "tbl-" + t.id;
+            el.style.left = t.x + "px";
+            el.style.top = t.y + "px";
+
+            const head = document.createElement("div");
+            head.className = "tbl-head";
+            head.style.background = t.color;
+            head.innerHTML = `
+    <div class="tbl-icon" style="background:${t.iconBg}">${t.icon}</div>
+    <span class="tbl-name">${t.name}</span>
+    <span class="tbl-count">${t.cols.length}</span>`;
+            el.appendChild(head);
+
+            const body = document.createElement("div");
+            body.className = "tbl-body";
+
+            t.cols.forEach((c, i) => {
+                if (i > 0 && t.cols[i - 1].key !== c.key && c.key === "") {
+                    const sep = document.createElement("div");
+                    sep.className = "col-sep";
+                    body.appendChild(sep);
+                }
+                const row = document.createElement("div");
+                row.className = "col-row";
+                const keyBg = c.key === "PK" ? "pk" : c.key === "FK" ? "fk" : "";
+                row.innerHTML = `
+      <span class="col-key ${keyBg}">${c.key || ""}</span>
+      <span class="col-name">${c.name}</span>
+      <span class="col-type">${c.type}</span>
+      <span class="col-null">${c.null ? "NULL" : ""}</span>`;
+                if (c.note) {
+                    row.title = c.note;
+                    row.style.cursor = "help";
+                }
+                body.appendChild(row);
+            });
+            el.appendChild(body);
+
+            // drag
+            head.addEventListener("mousedown", e => {
+                if (e.button !== 0) return;
+                e.stopPropagation();
+                dragging = { id: t.id, el };
+                dragStart = { mx: e.clientX, my: e.clientY, ox: positions[t.id].x, oy: positions[t.id].y };
+                el.classList.add("selected");
+                selectedId = t.id;
+                e.preventDefault();
+            });
+
+            world.appendChild(el);
+        }
+
+        TABLES.forEach(buildTable);
+
+        // ─── Draw SVG relations ───────────────────────────────────────
+        function getAnchor(id, side) {
+            const el = document.getElementById("tbl-" + id);
+            const p = positions[id];
+            const w = el.offsetWidth, h = el.offsetHeight;
+            if (side === "right") return { x: p.x + w, y: p.y + 28 };
+            if (side === "left") return { x: p.x, y: p.y + 28 };
+            if (side === "bottom") return { x: p.x + w / 2, y: p.y + h };
+            if (side === "top") return { x: p.x + w / 2, y: p.y };
+        }
+
+        function bestSide(from, to) {
+            const fp = positions[from], tp = positions[to];
+            const dx = tp.x - fp.x, dy = tp.y - fp.y;
+            if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? ["right", "left"] : ["left", "right"];
+            return dy > 0 ? ["bottom", "top"] : ["top", "bottom"];
+        }
+
+        function drawRelations() {
+            svg.innerHTML = "";
+            // defs for arrowhead
+            svg.innerHTML = `<defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#3b5998" opacity=".7"/>
+    </marker>
+    <marker id="arr-hi" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#60a5fa"/>
+    </marker>
+  </defs>`;
+
+            RELATIONS.forEach(([ft, fc, tt, tc]) => {
+                const [fs, ts] = bestSide(ft, tt);
+                const a = getAnchor(ft, fs);
+                const b = getAnchor(tt, ts);
+                const cp = Math.min(Math.abs(b.x - a.x), 120);
+                const cx1 = fs === "right" ? a.x + cp : a.x - cp;
+                const cx2 = ts === "left" ? b.x - cp : ts === "right" ? b.x + cp : b.x;
+                const path = `M${a.x},${a.y} C${cx1},${a.y} ${cx2},${b.y} ${b.x},${b.y}`;
+
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                line.setAttribute("d", path);
+                line.setAttribute("stroke", "#3b5998");
+                line.setAttribute("stroke-width", "1.5");
+                line.setAttribute("fill", "none");
+                line.setAttribute("stroke-opacity", "0.6");
+                line.setAttribute("marker-end", "url(#arr)");
+                line.dataset.from = ft;
+                line.dataset.to = tt;
+                svg.appendChild(line);
+            });
+        }
+
+        // ─── Zoom / pan ───────────────────────────────────────────────
+        function applyTransform() {
+            world.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
+            document.getElementById("zoom-info").textContent = Math.round(scale * 100) + "%";
+            drawRelations();
+        }
+
+        function zoomIn() { scale = Math.min(scale * 1.2, 3); applyTransform(); }
+        function zoomOut() { scale = Math.max(scale / 1.2, 0.2); applyTransform(); }
+        function resetView() { scale = 0.65; tx = 20; ty = 20; applyTransform(); }
+
+        function fitAll() {
+            const xs = TABLES.map(t => t.x), ys = TABLES.map(t => t.y);
+            const minX = Math.min(...xs), minY = Math.min(...ys);
+            const maxX = Math.max(...xs) + 250, maxY = Math.max(...ys) + 400;
+            const cw = canvas.offsetWidth, ch = canvas.offsetHeight - 0;
+            scale = Math.min(cw / (maxX - minX), (ch) / (maxY - minY)) * 0.88;
+            scale = Math.min(scale, 2);
+            tx = (cw - (maxX - minX) * scale) / 2 - minX * scale;
+            ty = 20 - minY * scale;
+            applyTransform();
+        }
+
+        // mouse wheel zoom
+        canvas.addEventListener("wheel", e => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+            const prev = scale;
+            scale = e.deltaY < 0 ? Math.min(scale * 1.12, 3) : Math.max(scale / 1.12, 0.15);
+            tx = mx - (mx - tx) * (scale / prev);
+            ty = my - (my - ty) * (scale / prev);
+            applyTransform();
+        }, { passive: false });
+
+        // pan
+        canvas.addEventListener("mousedown", e => {
+            if (e.button === 0 && !dragging) {
+                panning = true;
+                panStart = { mx: e.clientX, my: e.clientY, tx, ty };
+            }
+        });
+
+        document.addEventListener("mousemove", e => {
+            if (dragging) {
+                const dx = (e.clientX - dragStart.mx) / scale;
+                const dy = (e.clientY - dragStart.my) / scale;
+                positions[dragging.id].x = dragStart.ox + dx;
+                positions[dragging.id].y = dragStart.oy + dy;
+                dragging.el.style.left = positions[dragging.id].x + "px";
+                dragging.el.style.top = positions[dragging.id].y + "px";
+                drawRelations();
+            } else if (panning) {
+                tx = panStart.tx + (e.clientX - panStart.mx);
+                ty = panStart.ty + (e.clientY - panStart.my);
+                applyTransform();
+            }
+        });
+
+        document.addEventListener("mouseup", () => {
+            if (dragging) { dragging.el.classList.remove("selected"); dragging = null; }
+            panning = false;
+        });
+
+        // init
+        setTimeout(() => { fitAll(); }, 100);
+    </script>
+</body>
+
+</html>

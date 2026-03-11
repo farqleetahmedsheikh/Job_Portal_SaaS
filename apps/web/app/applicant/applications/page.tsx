@@ -22,7 +22,7 @@ import {
   Calendar,
   SlidersHorizontal,
 } from "lucide-react";
-import styles from "../../styles/applications.module.css";
+import styles from "../styles/applications.module.css";
 
 // ─── Types ────────────────────────────────────────────────
 type AppStatus =

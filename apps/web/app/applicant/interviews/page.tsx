@@ -18,7 +18,7 @@ import {
   Building2,
   ExternalLink,
 } from "lucide-react";
-import styles from "../../styles/interview.module.css";
+import styles from "../styles/interview.module.css";
 
 // ─── Types ────────────────────────────────────────────────
 type InterviewType = "video" | "phone" | "onsite";

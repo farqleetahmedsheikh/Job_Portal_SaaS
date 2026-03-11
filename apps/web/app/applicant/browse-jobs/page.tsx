@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import styles from "../../styles/browse-jobs.module.css";
+import styles from "../styles/browse-jobs.module.css";
 
 /* ── Types ── */
 interface Job {

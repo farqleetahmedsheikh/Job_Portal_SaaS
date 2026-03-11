@@ -1,0 +1,145 @@
+/* ===============================
+   applicant.module.css
+================================ */
+
+.page {
+    padding: 36px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+/* ── Welcome banner ── */
+.welcome {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.welcome-text h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+    margin: 0 0 4px;
+}
+
+.welcome-text p {
+    font-size: 13.5px;
+    color: var(--text-muted, #8891a8);
+    margin: 0;
+}
+
+.welcome-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 600;
+    background: var(--color-secondary);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: filter 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+    flex-shrink: 0;
+}
+
+.welcome-action:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 4px 16px rgba(var(--glow-rgb, 79, 70, 229), 0.35);
+    transform: translateY(-1px);
+}
+
+.welcome-action:active {
+    transform: translateY(0);
+}
+
+/* ── Stat cards grid ── */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+/* ── Section title ── */
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.section-link {
+    font-size: 12.5px;
+    color: var(--color-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: opacity 0.2s ease;
+}
+
+.section-link:hover {
+    opacity: 0.75;
+}
+
+/* ── Two-col layout ── */
+.two-col {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 20px;
+    align-items: start;
+}
+
+/* ── Card shell ── */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.06),
+        0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.card-body {
+    padding: 20px 24px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .two-col {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .page {
+        padding: 24px 16px;
+    }
+
+    .stats {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .welcome {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

@@ -21,7 +21,7 @@ import {
   Copy,
   MoreVertical,
 } from "lucide-react";
-import styles from "../../styles/emp-interviews.module.css";
+import styles from "../styles/emp-interviews.module.css";
 
 type InterviewType = "video" | "phone" | "onsite";
 type InterviewStatus = "upcoming" | "completed" | "cancelled";

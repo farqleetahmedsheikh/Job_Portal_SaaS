@@ -8,7 +8,7 @@ import { RecentApplications } from "../../components/ui/RecentApplications";
 import { UpcomingInterviews } from "../../components/ui/UpcomingInterviews";
 import { useUser } from "../../store/session.store";
 import { useProfileStrength } from "../../hooks/useProfileStrength";
-import styles from "../../styles/applicant.module.css";
+import styles from "../styles/applicant.module.css";
 
 // ─── Static placeholder data — replace when applications API is built ─
 const APPLICATIONS = [

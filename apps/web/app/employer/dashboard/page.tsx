@@ -22,7 +22,7 @@ import {
   MessageSquare,
   Bell,
 } from "lucide-react";
-import styles from "../../styles/emp-dashboard.module.css";
+import styles from "../styles/emp-dashboard.module.css";
 
 // ─── Mock data ────────────────────────────────────────────
 const STATS = [

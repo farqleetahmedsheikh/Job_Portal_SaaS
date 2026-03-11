@@ -28,7 +28,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useUser } from "../../store/session.store";
 import { useSessionStore } from "../../store/session.store";
-import styles from "../../styles/setting.module.css";
+import styles from "../styles/setting.module.css";
 
 // ─── Types ────────────────────────────────────────────────
 type ThemeOption = "light" | "dark" | "system";

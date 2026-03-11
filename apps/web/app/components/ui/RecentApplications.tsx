@@ -3,7 +3,7 @@
 "use client";
 
 import Link from "next/link";
-import styles from "../../styles/applicant.module.css";
+import styles from "../styles/recent-applicantion.module.css";
 
 interface Application {
   title: string;
@@ -14,9 +14,9 @@ interface Application {
 }
 
 const STATUS_CLASS: Record<Application["status"], string | undefined> = {
-  applied: styles["badge-blue"],
-  interview: styles["badge-yellow"],
-  rejected: styles["badge-red"],
+  applied: styles["badge-applied"],
+  interview: styles["badge-interview"],
+  rejected: styles["badge-rejected"],
   offered: styles["badge-green"],
 };
 

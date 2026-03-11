@@ -26,7 +26,7 @@ import { api } from "../../lib";
 import { API_BASE } from "../../constants";
 import { initials } from "../../lib";
 import type { SessionUser } from "../../store/session.store";
-import styles from "../../styles/profile.module.css";
+import styles from "../styles/profile.module.css";
 
 // ─── Types ────────────────────────────────────────────────
 interface ProfileForm {

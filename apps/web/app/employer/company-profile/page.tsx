@@ -21,7 +21,7 @@ import {
   Upload,
   Star,
 } from "lucide-react";
-import styles from "../../styles/company-profile.module.css";
+import styles from "../styles/company-profile.module.css";
 
 interface CompanyForm {
   name: string;

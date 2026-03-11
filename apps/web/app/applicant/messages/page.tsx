@@ -17,7 +17,7 @@ import {
   ArrowLeft,
   X,
 } from "lucide-react";
-import styles from "../../styles/messages.module.css";
+import styles from "../styles/messages.module.css";
 
 // ─── Types ────────────────────────────────────────────────
 interface Message {

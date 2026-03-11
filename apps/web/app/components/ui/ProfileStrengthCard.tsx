@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useUser } from "../../store/session.store";
 import { useProfileStrength } from "../../hooks/useProfileStrength";
 import { initials } from "../../lib";
-import styles from "../../styles/applicant.module.css";
+import styles from "../styles/profile-strength-card.module.css";
 
 const CIRCUMFERENCE = 2 * Math.PI * 36; // r=36 matches SVG
 

@@ -1,0 +1,125 @@
+/* ── Profile strength ── */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.06),
+        0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.profile-card {
+    padding: 24px;
+}
+
+.profile-top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.profile-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 999px;
+    background: rgba(var(--glow-rgb, 79, 70, 229), 0.12);
+    border: 2px solid rgba(var(--glow-rgb, 79, 70, 229), 0.2);
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-secondary);
+    flex-shrink: 0;
+}
+
+.profile-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 2px;
+}
+
+.profile-role {
+    font-size: 12px;
+    color: var(--text-muted, #8891a8);
+    margin: 0;
+}
+
+/* Ring + number */
+.strength-ring-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 8px 0 20px;
+    position: relative;
+}
+
+.strength-ring-wrap svg {
+    transform: rotate(-90deg);
+}
+
+.strength-label {
+    position: absolute;
+    text-align: center;
+}
+
+.strength-pct {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.strength-sub {
+    font-size: 10.5px;
+    color: var(--text-muted, #8891a8);
+}
+
+/* Checklist */
+.checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+}
+
+.check-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    font-size: 10px;
+}
+
+.check-done {
+    background: rgba(52, 217, 179, 0.12);
+    color: #34d9b3;
+    border: 1px solid rgba(52, 217, 179, 0.25);
+}
+
+.check-todo {
+    background: var(--bg-app);
+    color: var(--text-muted, #8891a8);
+    border: 1px solid var(--border);
+}
+
+.check-text-done {
+    color: var(--text-secondary);
+    text-decoration: line-through;
+    text-decoration-color: rgba(52, 217, 179, 0.4);
+}
+
+.check-text-todo {
+    color: var(--text-primary);
+    font-weight: 500;
+}

@@ -23,7 +23,7 @@ import {
   XCircle,
   Filter,
 } from "lucide-react";
-import styles from "../../styles/manage-jobs.module.css";
+import styles from "../styles/manage-jobs.module.css";
 
 type JobStatus = "active" | "paused" | "draft" | "closed" | "expired";
 

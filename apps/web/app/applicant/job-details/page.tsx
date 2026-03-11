@@ -23,7 +23,7 @@ import {
   ExternalLink,
   AlertCircle,
 } from "lucide-react";
-import styles from "../../styles/job-details.module.css";
+import styles from "../styles/job-details.module.css";
 
 // ─── Replace with real API fetch using useParams().id ─────
 const JOB = {
