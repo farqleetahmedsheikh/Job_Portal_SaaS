@@ -249,7 +249,7 @@ export class AuthService {
       location: dto.location,
       industry: dto.industry,
       websiteUrl: dto.website ?? '',
-      description: dto.description ?? '',
+      description: dto.about ?? '',
     });
 
     await this.users.update(userId, { isProfileComplete: true });

@@ -34,11 +34,6 @@ export class CompleteApplicantProfileDto {
   skills?: string[];
 
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  languages?: string[];
-
-  @IsOptional()
   @IsString()
   @MaxLength(150)
   location?: string;
@@ -85,5 +80,5 @@ export class CompleteEmployerProfileDto {
 
   @IsOptional()
   @IsString()
-  description?: string;
+  about?: string;
 }

@@ -66,11 +66,10 @@ export class UpdateUserProfileDto {
   githubUrl?: string;
 
   @IsString()
+  @IsOptional()
   summary?: any;
 
-  @IsString()
-  languages?: any;
-
   @IsBoolean()
+  @IsOptional()
   isOpenToWork?: any;
 }

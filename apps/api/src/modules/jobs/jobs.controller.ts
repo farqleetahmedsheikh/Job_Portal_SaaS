@@ -27,19 +27,6 @@ export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
 
   // ── Public ─────────────────────────────────────────────────────────────────
-  // GET /api/jobs?q=&location=&type=&page=
-  @Get()
-  browse(@Query() query: QueryJobsDto) {
-    return this.jobsService.findAll(query);
-  }
-
-  // GET /api/jobs/:id
-  @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.jobsService.findOne(id);
-  }
-
-  // ── Employer ────────────────────────────────────────────────────────────────
   // GET /api/jobs/mine  — employer's own job listings
   @Get('mine')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -61,6 +48,20 @@ export class JobsController {
   ) {
     return this.jobsService.create(user.sub, dto);
   }
+
+  // GET /api/jobs?q=&location=&type=&page=
+  @Get()
+  browse(@Query() query: QueryJobsDto) {
+    return this.jobsService.findAll(query);
+  }
+
+  // GET /api/jobs/:id
+  @Get(':id')
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.jobsService.findOne(id);
+  }
+
+  // ── Employer ────────────────────────────────────────────────────────────────
 
   // PATCH /api/jobs/:id
   @Patch(':id')

@@ -57,7 +57,7 @@ export interface Job {
   mode: WorkMode;
   salary: string;
   salaryRaw: number;
-  experience: string;
+  experience_level: string;
   description: string;
   tags: string[];
   posted: string;

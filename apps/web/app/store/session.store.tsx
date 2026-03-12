@@ -7,16 +7,39 @@ import React, {
   useReducer,
   useCallback,
 } from "react";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 export interface SafeApplicantProfile {
   id: string;
   jobTitle: string | null;
   experienceYears: number | null;
-  skills: string[] | null;
+  skills: string[];
   location: string | null;
+  summary: string | null;
   linkedinUrl: string | null;
   githubUrl: string | null;
   portfolioUrl: string | null;
-  summary: string | null;
+  isOpenToWork: boolean;
+  isPublic: boolean;
+  educations: unknown[];
+  experiences: unknown[];
+
+  // ── Visibility ──────────────────────────────────────────────────────────────
+  openToWork: boolean;
+  recruitersOnly: boolean;
+  showEmail: boolean;
+  showPhone: boolean;
+  activityVisible: boolean;
+
+  // ── Notification preferences ────────────────────────────────────────────────
+  notifEmailApplications: boolean;
+  notifEmailMessages: boolean;
+  notifEmailDigest: boolean;
+  notifEmailMarketing: boolean;
+  notifPushApplications: boolean;
+  notifPushMessages: boolean;
+  notifPushReminders: boolean;
+  notifPushJobAlerts: boolean;
 }
 
 export interface SafeCompany {
@@ -29,21 +52,22 @@ export interface SafeCompany {
   description: string | null;
   isVerified: boolean;
 }
-// ─── Types ───────────────────────────────────────────────
+
 export type SessionUser = {
   id: string;
   fullName: string;
   email: string;
   role: "applicant" | "employer";
   avatar: string | null;
-  phone: string | null; // ← add
-  bio: string | null; // ← add
+  phone: string | null;
+  bio: string | null;
   isProfileComplete: boolean;
   isEmailVerified: boolean;
   applicantProfile: SafeApplicantProfile | null;
   company: SafeCompany | null;
 };
 
+// ─── State ────────────────────────────────────────────────────────────────────
 interface SessionState {
   user: SessionUser | null;
   isLoading: boolean;
@@ -56,7 +80,6 @@ type Action =
   | { type: "SET_LOADING"; payload: boolean }
   | { type: "SET_HYDRATED"; payload: boolean };
 
-// ─── Reducer ─────────────────────────────────────────────
 const initialState: SessionState = {
   user: null,
   isLoading: false,
@@ -78,7 +101,7 @@ function sessionReducer(state: SessionState, action: Action): SessionState {
   }
 }
 
-// ─── Context ─────────────────────────────────────────────
+// ─── Context ──────────────────────────────────────────────────────────────────
 interface SessionCtx {
   state: SessionState;
   setUser: (user: SessionUser) => void;
@@ -89,7 +112,7 @@ interface SessionCtx {
 
 const SessionContext = createContext<SessionCtx | null>(null);
 
-// ─── Provider ─────────────────────────────────────────────
+// ─── Provider ─────────────────────────────────────────────────────────────────
 export function SessionStoreProvider({
   children,
 }: {
@@ -120,7 +143,7 @@ export function SessionStoreProvider({
   );
 }
 
-// ─── Hook ─────────────────────────────────────────────────
+// ─── Hooks ────────────────────────────────────────────────────────────────────
 export function useSessionStore() {
   const ctx = useContext(SessionContext);
   if (!ctx)
@@ -130,13 +153,14 @@ export function useSessionStore() {
   return ctx;
 }
 
-// ─── Typed selectors ──────────────────────────────────────
-export function useUser() {
-  return useSessionStore().state.user;
-}
-export function useIsAuthed() {
-  return !!useSessionStore().state.user;
-}
-export function useUserRole() {
-  return useSessionStore().state.user?.role ?? null;
-}
+// ─── Selectors ────────────────────────────────────────────────────────────────
+export const useUser = () => useSessionStore().state.user;
+export const useIsAuthed = () => !!useSessionStore().state.user;
+export const useUserRole = () => useSessionStore().state.user?.role ?? null;
+export const useIsApplicant = () =>
+  useSessionStore().state.user?.role === "applicant";
+export const useIsEmployer = () =>
+  useSessionStore().state.user?.role === "employer";
+export const useApplicantProfile = () =>
+  useSessionStore().state.user?.applicantProfile ?? null;
+export const useCompany = () => useSessionStore().state.user?.company ?? null;

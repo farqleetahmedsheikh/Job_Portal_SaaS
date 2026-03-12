@@ -62,8 +62,8 @@ export class InterviewsService {
         const panelists: InterviewPanelist[] = dto.panelists.map((p) =>
           m.create(InterviewPanelist, {
             interviewId: iv.id,
-            userId: p.userId ?? null,
-            name: p.name ?? null,
+            userId: p.userId ?? '',
+            name: p.name ?? '',
           }),
         );
         await m.save(InterviewPanelist, panelists);

@@ -58,3 +58,44 @@ export const initials = (name: string): string =>
 
 export const capitalize = (str: string): string =>
   str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
+// Add these to your existing app/lib/index.ts
+
+/** "10m ago", "2h ago", "Yesterday", "Mar 1" */
+export function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins  = Math.floor(diff / 60_000);
+  const hours = Math.floor(diff / 3_600_000);
+  const days  = Math.floor(diff / 86_400_000);
+
+  if (mins  < 1)   return "Just now";
+  if (mins  < 60)  return `${mins}m ago`;
+  if (hours < 24)  return `${hours}h ago`;
+  if (days  === 1) return "Yesterday";
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+/** "Mar 1, 2025" */
+export function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short", day: "numeric", year: "numeric",
+  });
+}
+
+/** "Today, 2:00 PM" or "Mar 12, 10:00 AM" */
+export function formatDateTime(iso: string): string {
+  const date  = new Date(iso);
+  const today = new Date();
+  const isToday =
+    date.getDate()     === today.getDate()     &&
+    date.getMonth()    === today.getMonth()    &&
+    date.getFullYear() === today.getFullYear();
+
+  const time = date.toLocaleTimeString("en-US", {
+    hour: "numeric", minute: "2-digit",
+  });
+
+  return isToday
+    ? `Today, ${time}`
+    : `${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${time}`;
+}

@@ -24,6 +24,7 @@ import databaseConfig from './config/database.config';
 import appConfig from './config/app.config';
 import mailConfig from './config/mail.config';
 import redisConfig from './config/redis.config';
+import { InterviewsModule } from './modules/interviews/interviews.module';
 
 @Module({
   imports: [
@@ -87,6 +88,7 @@ import redisConfig from './config/redis.config';
     ApplicationsModule,
     ApplicantProfilesModule,
     JobsModule,
+    InterviewsModule,
     NotificationsModule,
     MessagingModule,
     CodingTestsModule,
