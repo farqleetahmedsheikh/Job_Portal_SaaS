@@ -110,6 +110,13 @@ export class MessagingService {
     );
   }
 
+  async markRead(convId: string, userId: string): Promise<void> {
+    await this.partRepo.update(
+      { conversationId: convId, userId },
+      { lastReadAt: new Date() },
+    );
+  }
+
   // ── Messages in a conversation ──────────────────────────────────────────────
   async getMessages(convId: string, userId: string) {
     await this.participantOrFail(convId, userId);
