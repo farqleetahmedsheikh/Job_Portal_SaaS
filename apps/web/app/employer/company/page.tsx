@@ -306,9 +306,9 @@ export default function CompanyPage() {
             <Field
               label="Website"
               icon={<Globe size={11} />}
-              name="website"
-              value={form.website}
-              draftValue={draft.website}
+              name="websiteUrl"
+              value={form.websiteUrl}
+              draftValue={draft.websiteUrl}
               editing={editing}
               onChange={handleChange}
               type="url"

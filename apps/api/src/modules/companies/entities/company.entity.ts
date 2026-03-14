@@ -16,8 +16,6 @@ import { User } from '../../users/entities/user.entity';
 import { CompanyPerk } from './company-perk.entity';
 import { Job } from 'src/modules/jobs/entities/job.entity';
 
-// ─── Drop in: src/modules/companies/entities/company.entity.ts ───────────────
-
 @Entity('companies')
 export class Company {
   @PrimaryGeneratedColumn('uuid')
