@@ -1,0 +1,221 @@
+/** @format */
+.page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-app);
+    padding: 24px;
+}
+
+.card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 40px 36px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+}
+
+/* ── Icons ───────────────────────────────────────────────────────────────────*/
+.icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(var(--glow-rgb), .1);
+    border: 1px solid rgba(var(--glow-rgb), .2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-secondary);
+    margin-bottom: 4px;
+}
+
+.successIcon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(52, 217, 179, .1);
+    border: 1px solid rgba(52, 217, 179, .25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--status-success);
+    margin-bottom: 4px;
+}
+
+/* ── Text ────────────────────────────────────────────────────────────────────*/
+.title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -.3px;
+}
+
+.sub {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.6;
+}
+
+.sub strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.error {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(244, 63, 94, .08);
+    border: 1px solid rgba(244, 63, 94, .25);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    color: var(--status-danger);
+    text-align: left;
+}
+
+/* ── OTP inputs ──────────────────────────────────────────────────────────────*/
+.otpRow {
+    display: flex;
+    gap: 8px;
+    margin: 6px 0;
+}
+
+.otpInput {
+    width: 48px;
+    height: 56px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    background: var(--bg-app);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: center;
+    outline: none;
+    caret-color: var(--color-secondary);
+    transition: border-color .15s, box-shadow .15s;
+}
+
+.otpInput:focus {
+    border-color: rgba(var(--glow-rgb), .5);
+    box-shadow: 0 0 0 3px rgba(var(--glow-rgb), .12);
+}
+
+.otpError {
+    border-color: rgba(244, 63, 94, .5);
+}
+
+.otpError:focus {
+    border-color: var(--status-danger);
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, .12);
+}
+
+/* ── Resend ──────────────────────────────────────────────────────────────────*/
+.resendRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.resendLabel {
+    color: var(--text-muted);
+}
+
+.resendBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.resendBtn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.cooldown {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* ── Back link ───────────────────────────────────────────────────────────────*/
+.backLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color .15s;
+    margin-top: 4px;
+}
+
+.backLink:hover {
+    color: var(--text-primary);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────────*/
+.btn {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 11px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: all .15s;
+    white-space: nowrap;
+}
+
+.btnPrimary {
+    background: var(--color-secondary);
+    color: #fff;
+}
+
+.btnPrimary:hover {
+    filter: brightness(1.1);
+}
+
+.btnPrimary:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+/* ── Spinner ─────────────────────────────────────────────────────────────────*/
+.spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, .3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    display: inline-block;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

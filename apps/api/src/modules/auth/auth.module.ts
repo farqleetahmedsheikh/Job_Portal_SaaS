@@ -11,6 +11,7 @@ import { ApplicantProfilesModule } from '../applicants/applicants.module';
 import { CompaniesModule } from '../companies/companies.module';
 import { MailModule } from '../mail/mail.module';
 import { CacheModule } from '../cache/cache.modules';
+import { AnalyticsModule } from '../analytics/analytics.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { CacheModule } from '../cache/cache.modules';
     CacheModule,
     PassportModule,
     ConfigModule,
+    AnalyticsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

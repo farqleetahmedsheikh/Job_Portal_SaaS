@@ -39,7 +39,7 @@ export function RecentApplications({ applications }: Props) {
             style={{
               color: "var(--text-muted)",
               fontSize: 13,
-              padding: "12px 0",
+              padding: "12px 10px",
             }}
           >
             No applications yet.{" "}

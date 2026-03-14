@@ -54,6 +54,7 @@ export enum AppStatus {
   OFFERED = 'offered',
   REJECTED = 'rejected',
   WITHDRAWN = 'withdrawn',
+  HIRED = 'hired',
 }
 
 export enum AppSource {

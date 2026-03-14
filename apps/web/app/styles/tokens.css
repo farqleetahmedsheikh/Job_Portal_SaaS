@@ -1,38 +1,3 @@
-/* :root {
-    --color-primary: #1B2559;
-    --color-secondary: #4F46E5;
-    --color-accent: #0EA5A4;
-
-    --status-applied: #94A3B8;
-    --status-shortlisted: #3B82F6;
-    --status-interview: #D97706;
-    --status-rejected: #DC2626;
-    --status-hired: #059669;
-
-    --bg-app: #F1F5F9;
-    --bg-card: #FFFFFF;
-    --border: #E2E8F0;
-    --divider: #CBD5E1;
-
-    --text-primary: #0F172A;
-    --text-secondary: #475569;
-    --text-muted: #94A3B8;
-    --text-link: #4F46E5;
-    --white: #FFFFFF;
-
-    --radius: 10px;
-
-    --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
-    --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
-    --shadow-lg: 0 20px 40px rgba(15, 23, 42, 0.12);
-    --glow-rgb: 167,139,250;
-} */
-
-/* ===============================
-   tokens.css — Design System Tokens
-   Import once in globals.css
-================================ */
-
 :root {
   --color-primary: #2563eb;
   --color-secondary: #4f46e5;
@@ -82,4 +47,20 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.05);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08), 0 24px 48px rgba(0, 0, 0, 0.05);
+}
+
+/* Dark — mirrors :root so toggling back works */
+[data-theme="dark"] {
+  --bg-app: #0d0f14;
+  --bg-card: #13161e;
+  --bg-card-rgb: 19, 22, 30;
+  --bg-app-rgb: 13, 15, 20;
+  --text-primary: #f0f2f8;
+  --text-secondary: #a0a8c0;
+  --text-muted: #8891a8;
+  --text-link: #818cf8;
+  --border: rgba(255, 255, 255, 0.07);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.14), 0 24px 48px rgba(0, 0, 0, 0.1);
 }

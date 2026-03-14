@@ -18,6 +18,7 @@ function daysLeft(expiresAt: string | null): number | null {
 }
 
 export function ActiveJobsTable({ jobs }: Props) {
+  console.log(jobs);
   return (
     <div className={`${styles.card} ${styles.cardWide}`}>
       <div className={styles.cardHeader}>
@@ -42,7 +43,7 @@ export function ActiveJobsTable({ jobs }: Props) {
           </div>
 
           {jobs.map((j) => {
-            const dl = daysLeft(j.expiresAt);
+            const dl = daysLeft(j.deadline);
             return (
               <div key={j.id} className={styles.jobTableRow}>
                 <span className={styles.jobTitle}>{j.title}</span>
@@ -52,10 +53,12 @@ export function ActiveJobsTable({ jobs }: Props) {
                 </span>
 
                 <span className={styles.jobStat}>
-                  <Eye size={11} /> {j.views}
+                  <Eye size={11} /> {j.viewsCount}
                 </span>
 
-                <span className={styles.jobMeta}>{formatDate(j.postedAt)}</span>
+                <span className={styles.jobMeta}>
+                  {j.createdAt ? formatDate(j.createdAt) : "—"}
+                </span>
 
                 <span
                   className={styles.jobDays}

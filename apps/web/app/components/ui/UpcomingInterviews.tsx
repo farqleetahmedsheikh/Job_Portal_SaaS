@@ -21,7 +21,7 @@ export function UpcomingInterviews({ interviews }: Props) {
     <div>
       <div className={styles["section-header"]}>
         <h2 className={styles["section-title"]}>Upcoming</h2>
-        <Link href="/applicant/interviews" className={styles["section-link"]}>
+        <Link href="/employer/interviews" className={styles["section-link"]}>
           View calendar →
         </Link>
       </div>
@@ -31,7 +31,7 @@ export function UpcomingInterviews({ interviews }: Props) {
             style={{
               color: "var(--text-muted)",
               fontSize: 13,
-              padding: "12px 0",
+              padding: "12px 10px",
             }}
           >
             No upcoming interviews scheduled.

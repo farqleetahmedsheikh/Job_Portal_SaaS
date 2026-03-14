@@ -39,12 +39,6 @@ export class CompaniesController {
     return this.service.findByOwner(req.user.userId);
   }
 
-  // GET /api/companies/:id  — any authenticated user (public profile)
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.service.findById(id);
-  }
-
   // PATCH /api/companies/:id
   @Patch(':id')
   update(
@@ -52,7 +46,12 @@ export class CompaniesController {
     @Param('id') id: string,
     @Body() dto: UpdateCompanyDto,
   ) {
-    return this.service.update(id, req.user.userId, dto);
+    return this.service.update(id, req.user.sub, dto);
+  }
+  // GET /api/companies/:id  — any authenticated user (public profile)
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.service.findById(id);
   }
 
   // PATCH /api/companies/:id/perks

@@ -10,7 +10,7 @@ import {
 import { CompanySize } from '../../../common/enums/enums';
 
 export class UpdateCompanyDto {
-  @IsOptional() @IsString() @MinLength(2) name?: string;
+  @IsOptional() @IsString() @MinLength(2) companyName?: string;
   @IsOptional() @IsString() tagline?: string;
   @IsOptional() @IsString() about?: string;
   @IsOptional() @IsString() culture?: string;

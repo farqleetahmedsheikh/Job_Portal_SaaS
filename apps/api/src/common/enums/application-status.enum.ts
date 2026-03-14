@@ -1,4 +1,3 @@
-// application-status.enum.ts
 export enum ApplicationStatus {
   APPLIED = 'applied',
   SHORTLISTED = 'shortlisted',

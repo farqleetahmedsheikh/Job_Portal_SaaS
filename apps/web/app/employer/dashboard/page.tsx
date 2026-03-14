@@ -1,10 +1,8 @@
 /** @format */
-// app/employer/dashboard/page.tsx
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { Plus, Bell } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useUser } from "../../store/session.store";
 import { useEmployerDashboard } from "../../hooks/useEmployerDashboard"
 import { DashboardSkeleton } from "../../components/ui/DashboardSkeleton";
@@ -17,16 +15,16 @@ import styles from "../styles/emp-dashboard.module.css";
 
 function greeting() {
   const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  return "Good evening";
+  if (h < 12) return "Good Morning";
+  if (h < 17) return "Good Afternoon";
+  return "Good Evening";
 }
 
 export default function EmployerDashboardPage() {
   const user = useUser();
   const { data, loading, error } = useEmployerDashboard();
 
-  const companyName = user?.company?.companyName ?? "there";
+  const companyName = user?.company?.companyName ?? user?.fullName;
 
   if (loading) return <DashboardSkeleton />;
 
@@ -52,7 +50,7 @@ export default function EmployerDashboardPage() {
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>
-            {greeting()}, {companyName} 👋
+            {greeting()}, {companyName}
           </h1>
           <p className={styles.subtitle}>
             Here&apos;s what&apos;s happening with your hiring today.
@@ -60,9 +58,6 @@ export default function EmployerDashboardPage() {
         </div>
 
         <div className={styles.headerActions}>
-          <button className={`${styles.btn} ${styles.btnGhost}`}>
-            <Bell size={15} /> Alerts <span className={styles.alertDot} />
-          </button>
           <Link
             href="/employer/jobs/new"
             className={`${styles.btn} ${styles.btnPrimary}`}

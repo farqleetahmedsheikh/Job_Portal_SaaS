@@ -109,6 +109,24 @@ export class ApplicationsService {
     });
   }
 
+  findByJob(
+    jobId: string,
+    opts: { limit?: number; sort?: 'recent' | 'match' } = {},
+  ) {
+    const qb = this.appRepo
+      .createQueryBuilder('app')
+      .leftJoinAndSelect('app.applicant', 'u')
+      .leftJoinAndSelect('u.applicantProfile', 'p')
+      .where('app.job_id = :jobId', { jobId });
+
+    if (opts.sort === 'recent' || !opts.sort) {
+      qb.orderBy('app.appliedAt', 'DESC');
+    }
+    if (opts.limit) qb.take(opts.limit);
+
+    return qb.getMany();
+  }
+
   // ── Employer: Bulk status update ────────────────────────────────────────────
   async bulkChangeStatus(userId: string, dto: BulkStatusUpdateDto) {
     // ✅ Guard against undefined/empty array before passing to In()

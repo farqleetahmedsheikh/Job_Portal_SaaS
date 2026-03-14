@@ -11,6 +11,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard, Roles } from '../../common/guards/role.guard';
@@ -60,6 +61,22 @@ export class ApplicationsController {
     @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
   ) {
     return this.svc.withdraw(id, user.sub);
+  }
+
+  // GET /api/applications?jobId=<uuid>&limit=5&sort=recent
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.EMPLOYER)
+  findAll(
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+    @Query('jobId') jobId: string,
+    @Query('limit') limit?: string,
+    @Query('sort') sort?: string,
+  ) {
+    return this.svc.findByJob(jobId, {
+      limit: limit ? Number(limit) : undefined,
+      sort: sort as 'recent' | 'match' | undefined,
+    });
   }
 
   // ── Shared ──────────────────────────────────────────────────────────────────

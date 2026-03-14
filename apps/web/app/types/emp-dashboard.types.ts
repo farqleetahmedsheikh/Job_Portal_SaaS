@@ -1,5 +1,4 @@
 /** @format */
-// app/employer/dashboard/emp-dashboard.types.ts
 
 export interface EmployerStats {
   activeJobs: number;
@@ -38,9 +37,9 @@ export interface ActiveJob {
   id: string;
   title: string;
   applicants: number;
-  views: number;
-  postedAt: string; // ISO date string
-  expiresAt: string | null;
+  viewsCount: number;
+  createdAt: string; // ISO date string
+  deadline: string | null;
   status: "active" | "paused" | "closed";
 }
 

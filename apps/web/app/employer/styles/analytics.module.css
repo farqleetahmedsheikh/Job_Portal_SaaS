@@ -1,0 +1,555 @@
+/** @format */
+
+/* ── Page ────────────────────────────────────────────────────────────────────*/
+.page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────────*/
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.headerLeft h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 4px;
+    letter-spacing: -.4px;
+}
+
+.headerLeft p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* ── Range picker ────────────────────────────────────────────────────────────*/
+.rangePicker {
+    display: flex;
+    gap: 2px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+}
+
+.rangeBtn {
+    padding: 6px 14px;
+    border-radius: calc(var(--radius-sm) - 2px);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+}
+
+.rangeBtn:hover {
+    color: var(--text-primary);
+}
+
+.rangeBtnActive {
+    background: rgba(var(--glow-rgb), .15);
+    color: var(--color-secondary);
+    font-weight: 600;
+}
+
+/* ── Stat cards grid ─────────────────────────────────────────────────────────*/
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+.statCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.statCard::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at top left, rgba(var(--card-rgb), .06) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.statCard:hover {
+    border-color: rgba(var(--glow-rgb), .2);
+    box-shadow: var(--shadow-md);
+}
+
+.statTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.statIcon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.statDelta {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 7px;
+    border-radius: 99px;
+}
+
+.deltaPos {
+    background: rgba(52, 217, 179, .1);
+    color: var(--status-success);
+}
+
+.deltaNeg {
+    background: rgba(244, 63, 94, .1);
+    color: var(--status-danger);
+}
+
+.deltaNeut {
+    background: rgba(var(--glow-rgb), .08);
+    color: var(--text-muted);
+}
+
+.statValue {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -.6px;
+    line-height: 1;
+}
+
+.statLabel {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.statSub {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* ── Two-col layout ──────────────────────────────────────────────────────────*/
+.row {
+    display: grid;
+    gap: 14px;
+}
+
+.row2 {
+    grid-template-columns: 1fr 340px;
+}
+
+.row3 {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+/* ── Card base ───────────────────────────────────────────────────────────────*/
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 14px;
+}
+
+.cardTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.cardSub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 4px 0 0;
+}
+
+.cardBody {
+    padding: 0 20px 20px;
+}
+
+/* ── Line / bar chart ────────────────────────────────────────────────────────*/
+.chartWrap {
+    position: relative;
+    height: 220px;
+    padding: 0 4px;
+}
+
+.chartSvg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.chartGrid line {
+    stroke: var(--border);
+    stroke-dasharray: 4 4;
+}
+
+.chartAxisLabel {
+    font-size: 10px;
+    fill: var(--text-muted);
+    font-family: inherit;
+}
+
+/* Legend */
+.chartLegend {
+    display: flex;
+    gap: 16px;
+    padding: 10px 20px 16px;
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.legendDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Tooltip */
+.tooltip {
+    position: absolute;
+    background: var(--bg-card);
+    border: 1px solid rgba(var(--glow-rgb), .25);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--text-primary);
+    pointer-events: none;
+    box-shadow: var(--shadow-md);
+    white-space: nowrap;
+    z-index: 10;
+    transition: opacity .1s;
+}
+
+.tooltipLabel {
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--text-secondary);
+}
+
+.tooltipRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tooltipDot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* ── Funnel ──────────────────────────────────────────────────────────────────*/
+.funnelList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0 20px 20px;
+}
+
+.funnelItem {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.funnelTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.funnelStage {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.funnelCount {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.funnelTrack {
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.funnelFill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width .6s var(--ease-spring);
+}
+
+.funnelPct {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* ── Top jobs table ──────────────────────────────────────────────────────────*/
+.jobsTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.jobsTableHead th {
+    padding: 10px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.jobsTableRow {
+    border-bottom: 1px solid var(--border);
+    transition: background .12s;
+}
+
+.jobsTableRow:last-child {
+    border-bottom: none;
+}
+
+.jobsTableRow:hover {
+    background: rgba(var(--glow-rgb), .03);
+}
+
+.jobsTableRow td {
+    padding: 11px 12px;
+    font-size: 13px;
+    color: var(--text-primary);
+    vertical-align: middle;
+}
+
+.jobTitle2 {
+    font-weight: 600;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.jobStatusChip {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 99px;
+}
+
+.statusActive {
+    background: rgba(52, 217, 179, .1);
+    color: var(--status-success);
+}
+
+.statusPaused {
+    background: rgba(249, 115, 22, .1);
+    color: var(--status-warning);
+}
+
+.statusClosed {
+    background: rgba(var(--glow-rgb), .08);
+    color: var(--text-muted);
+}
+
+/* ── Source breakdown ────────────────────────────────────────────────────────*/
+.sourceList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 20px 20px;
+}
+
+.sourceItem {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.sourceTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sourceName {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.sourceCount {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.sourceTrack {
+    height: 5px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.sourceFill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width .6s var(--ease-spring);
+}
+
+/* ── Skeleton ────────────────────────────────────────────────────────────────*/
+.skeleton {
+    background: linear-gradient(90deg, var(--border) 25%, rgba(255, 255, 255, .04) 50%, var(--border) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: var(--radius-sm);
+}
+
+@keyframes shimmer {
+    to {
+        background-position: -200% 0;
+    }
+}
+
+.skeletonGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+.skeletonCard {
+    height: 120px;
+    border-radius: var(--radius);
+}
+
+.skeletonChart {
+    height: 280px;
+    border-radius: var(--radius);
+}
+
+.skeletonRow {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 14px;
+}
+
+.skeletonHalf {
+    height: 260px;
+    border-radius: var(--radius);
+}
+
+/* ── Empty / error ───────────────────────────────────────────────────────────*/
+.errorMsg {
+    color: var(--status-danger);
+    font-size: 14px;
+    text-align: center;
+    padding: 60px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────────*/
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: all .15s;
+    white-space: nowrap;
+}
+
+.btnGhost {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+.btnGhost:hover {
+    background: rgba(var(--glow-rgb), .05);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────────*/
+@media (max-width: 900px) {
+    .statsGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .row2 {
+        grid-template-columns: 1fr;
+    }
+
+    .row3 {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .statsGrid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .row3 {
+        grid-template-columns: 1fr;
+    }
+
+    .page {
+        padding: 16px;
+    }
+}
