@@ -13,7 +13,7 @@ export interface Company {
   companyName: string;
   industry: string;
   location: string;
-  website: string | null;
+  websiteUrl: string | null;
   logoUrl: string | null;
   coverUrl: string | null;
   description: string | null;
@@ -32,7 +32,7 @@ export interface CompanyForm {
   companyName: string;
   industry: string;
   location: string;
-  website: string;
+  websiteUrl: string;
   description: string;
   tagline: string;
   culture: string;

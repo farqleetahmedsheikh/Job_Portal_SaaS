@@ -4,6 +4,7 @@
 
 import Link from "next/link";
 import styles from "../styles/recent-applicantion.module.css";
+import { useSession } from "../../hooks/useSession";
 
 interface Application {
   title: string;
@@ -25,11 +26,12 @@ interface Props {
 }
 
 export function RecentApplications({ applications }: Props) {
+  const { user } = useSession();
   return (
     <div>
       <div className={styles["section-header"]}>
         <h2 className={styles["section-title"]}>Recent Applications</h2>
-        <Link href="applicant/applications" className={styles["section-link"]}>
+        <Link href="jobs" className={styles["section-link"]}>
           View all →
         </Link>
       </div>
@@ -43,9 +45,11 @@ export function RecentApplications({ applications }: Props) {
             }}
           >
             No applications yet.{" "}
-            <Link href="/jobs" style={{ color: "var(--color-secondary)" }}>
-              Browse jobs →
-            </Link>
+            {user?.role === "applicant" && (
+              <Link href="/jobs" style={{ color: "var(--color-secondary)" }}>
+                Browse jobs →
+              </Link>
+            )}
           </p>
         ) : (
           <div className={styles["job-list"]}>

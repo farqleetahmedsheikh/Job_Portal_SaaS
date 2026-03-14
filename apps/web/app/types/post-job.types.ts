@@ -1,5 +1,4 @@
 /** @format */
-// app/employer/jobs/new/post-job.types.ts
 
 export interface JobForm {
   title: string;
