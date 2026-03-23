@@ -18,6 +18,7 @@ import { MessagingModule } from './modules/messages/messages.module';
 import { ApplicationsModule } from './modules/applications/applications.module';
 import { CodingTestsModule } from './modules/coding-tests/coding-tests.module';
 import { CompaniesModule } from './modules/companies/companies.module';
+import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
 
 import { validate } from './config/env.validations';
 import databaseConfig from './config/database.config';
@@ -93,6 +94,7 @@ import { InterviewsModule } from './modules/interviews/interviews.module';
     MessagingModule,
     CodingTestsModule,
     CompaniesModule,
+    CloudinaryModule,
   ],
 
   providers: [

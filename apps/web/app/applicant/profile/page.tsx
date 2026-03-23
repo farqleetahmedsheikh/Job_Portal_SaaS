@@ -13,8 +13,6 @@ import { SkillsField } from "../../components/ui/SkillsField";
 import { DangerZone } from "../../components/ui/DangerZone";
 import { StatusBanners } from "../../components/ui/StatusBanners";
 import styles from "../styles/profile.module.css";
-import { NotificationsSettings } from "../../components/ui/NotificationsSettings";
-import { PrivacySettings } from "../../components/ui/PrivacySettings";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -29,10 +27,6 @@ export default function ProfilePage() {
   const {
     form,
     draft,
-    privacy,
-    handlePrivacyToggle,
-    notifications,
-    handleNotifToggle,
     editing,
     saving,
     saved,
@@ -86,17 +80,6 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
-
-      {/* ── Privacy & Notifications — applicant only, toggles auto-save ─── */}
-      {isApplicant && (
-        <>
-          <PrivacySettings privacy={privacy} onToggle={handlePrivacyToggle} />
-          <NotificationsSettings
-            notifications={notifications}
-            onToggle={handleNotifToggle}
-          />
-        </>
-      )}
 
       <DangerZone />
     </div>

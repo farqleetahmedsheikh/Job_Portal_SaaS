@@ -604,6 +604,152 @@
     margin: 0;
 }
 
+.matchRing {
+    width: 44px;
+    height: 44px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.matchSvg {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    inset: 0;
+}
+
+.matchPct {
+    font-size: 10px;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+}
+
+/* ── Skill tags ──────────────────────────────────────────────────────────────*/
+.skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 8px 0 4px;
+}
+
+.skill-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: rgba(var(--glow-rgb), .08);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+.skill-tag-match {
+    background: rgba(52, 217, 179, .1);
+    color: var(--status-success);
+    border-color: rgba(52, 217, 179, .25);
+    font-weight: 600;
+}
+
+/* ── Match hint ──────────────────────────────────────────────────────────────*/
+.matchHint {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--status-success);
+    margin: 4px 0 0;
+}
+
+/* ── Match banner ────────────────────────────────────────────────────────────*/
+.matchBanner {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    background: rgba(52, 217, 179, .06);
+    border: 1px solid rgba(52, 217, 179, .2);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    color: var(--status-success);
+}
+
+.matchBannerSkill {
+    padding: 2px 8px;
+    background: rgba(52, 217, 179, .12);
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* ── Job posted date ─────────────────────────────────────────────────────────*/
+.job-posted {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* ── Skeleton ────────────────────────────────────────────────────────────────*/
+.skeleton {
+    background: linear-gradient(90deg, var(--border) 25%, rgba(255, 255, 255, .04) 50%, var(--border) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 6px;
+}
+
+@keyframes shimmer {
+    to {
+        background-position: -200% 0;
+    }
+}
+
+/* ── Pagination ──────────────────────────────────────────────────────────────*/
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+}
+
+.pageBtn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all .15s;
+}
+
+.pageBtn:hover {
+    border-color: rgba(var(--glow-rgb), .3);
+    color: var(--text-primary);
+}
+
+.pageBtn:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+.pageBtnActive {
+    background: var(--color-secondary);
+    border-color: var(--color-secondary);
+    color: #fff;
+}
+
 /* ── Responsive ── */
 @media (max-width: 1024px) {
     .filters {

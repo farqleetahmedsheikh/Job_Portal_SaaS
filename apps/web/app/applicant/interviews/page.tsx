@@ -1,4 +1,9 @@
-/** @format */
+/**
+ * eslint-disable @typescript-eslint/no-explicit-any
+ *
+ * @format
+ */
+
 "use client";
 
 import { useState } from "react";
@@ -10,149 +15,61 @@ import {
   Clock,
   Calendar,
   ChevronRight,
-  Plus,
   Bell,
   CheckCircle2,
   XCircle,
-  AlertCircle,
   Building2,
   ExternalLink,
 } from "lucide-react";
+import { useInterviews } from "../../hooks/useInterviews";
+import type { Interview, FilterTab } from "../../types/interviews.types";
+import { TYPE_META, STATUS_META } from "../../types/interviews.types";
 import styles from "../styles/interview.module.css";
 
-// ─── Types ────────────────────────────────────────────────
-type InterviewType = "video" | "phone" | "onsite";
-type InterviewStatus = "upcoming" | "completed" | "cancelled" | "pending";
+// ─── Date / time helpers ──────────────────────────────────────────────────────
 
-interface Interview {
-  id: string;
-  role: string;
-  company: string;
-  logo: string;
-  date: string;
-  time: string;
-  duration: string;
-  type: InterviewType;
-  status: InterviewStatus;
-  round: string;
-  interviewer: string;
-  link?: string;
-  notes?: string;
-  location?: string;
+function formatDate(iso: string): string {
+  const date = new Date(iso);
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1);
+  if (date.toDateString() === now.toDateString()) return "Today";
+  if (date.toDateString() === tomorrow.toDateString()) return "Tomorrow";
+  return date.toLocaleDateString("en-PK", { month: "short", day: "numeric" });
 }
 
-// ─── Mock data — replace with API ─────────────────────────
-const INTERVIEWS: Interview[] = [
-  {
-    id: "1",
-    role: "Senior Frontend Engineer",
-    company: "Stripe",
-    logo: "ST",
-    date: "Today",
-    time: "10:00 AM",
-    duration: "45 min",
-    type: "video",
-    status: "upcoming",
-    round: "Technical Round",
-    interviewer: "Sarah Chen",
-    link: "https://meet.google.com/abc-defg-hij",
-    notes: "Focus on system design and React performance",
-  },
-  {
-    id: "2",
-    role: "Full Stack Developer",
-    company: "Vercel",
-    logo: "VC",
-    date: "Tomorrow",
-    time: "2:30 PM",
-    duration: "60 min",
-    type: "video",
-    status: "upcoming",
-    round: "HR Screening",
-    interviewer: "James Park",
-    link: "https://zoom.us/j/123456789",
-  },
-  {
-    id: "3",
-    role: "React Developer",
-    company: "Linear",
-    logo: "LN",
-    date: "Mar 12",
-    time: "11:00 AM",
-    duration: "30 min",
-    type: "phone",
-    status: "upcoming",
-    round: "Initial Screening",
-    interviewer: "Maya Johnson",
-  },
-  {
-    id: "4",
-    role: "UI Engineer",
-    company: "Figma",
-    logo: "FG",
-    date: "Mar 8",
-    time: "3:00 PM",
-    duration: "90 min",
-    type: "onsite",
-    status: "completed",
-    round: "Final Round",
-    interviewer: "Alex Torres",
-    location: "San Francisco, CA",
-    notes: "Great interview — awaiting feedback",
-  },
-  {
-    id: "5",
-    role: "Frontend Lead",
-    company: "Notion",
-    logo: "NT",
-    date: "Mar 5",
-    time: "10:00 AM",
-    duration: "45 min",
-    type: "video",
-    status: "cancelled",
-    round: "Technical Round",
-    interviewer: "Priya Nair",
-    notes: "Rescheduled — waiting for new slot",
-  },
-];
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString("en-PK", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
-// ─── Config maps ──────────────────────────────────────────
-const TYPE_CONFIG: Record<
-  InterviewType,
-  { icon: React.ReactNode; label: string }
-> = {
-  video: { icon: <Video size={13} />, label: "Video Call" },
-  phone: { icon: <Phone size={13} />, label: "Phone Call" },
-  onsite: { icon: <MapPin size={13} />, label: "On-site" },
+function formatDuration(mins: number): string {
+  if (mins < 60) return `${mins} min`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m ? `${h}h ${m}m` : `${h}h`;
+}
+
+function isToday(iso: string): boolean {
+  return new Date(iso).toDateString() === new Date().toDateString();
+}
+
+// ─── Format icon map ──────────────────────────────────────────────────────────
+
+const FORMAT_ICON: Record<string, React.ReactNode> = {
+  video: <Video size={13} />,
+  phone: <Phone size={13} />,
+  onsite: <MapPin size={13} />,
+  async: <Clock size={13} />,
 };
 
-const STATUS_CONFIG: Record<
-  InterviewStatus,
-  { label: string; icon: React.ReactNode; cls: string }
-> = {
-  upcoming: {
-    label: "Upcoming",
-    icon: <Clock size={11} />,
-    cls: "status-upcoming",
-  },
-  completed: {
-    label: "Completed",
-    icon: <CheckCircle2 size={11} />,
-    cls: "status-completed",
-  },
-  cancelled: {
-    label: "Cancelled",
-    icon: <XCircle size={11} />,
-    cls: "status-cancelled",
-  },
-  pending: {
-    label: "Pending",
-    icon: <AlertCircle size={11} />,
-    cls: "status-pending",
-  },
+const STATUS_ICON: Record<string, React.ReactNode> = {
+  upcoming: <Clock size={11} />,
+  completed: <CheckCircle2 size={11} />,
+  cancelled: <XCircle size={11} />,
 };
-
-type FilterTab = "all" | InterviewStatus;
 
 const TABS: { key: FilterTab; label: string }[] = [
   { key: "all", label: "All" },
@@ -161,19 +78,31 @@ const TABS: { key: FilterTab; label: string }[] = [
   { key: "cancelled", label: "Cancelled" },
 ];
 
-// ─── Interview Card ───────────────────────────────────────
+// ─── Interview card ───────────────────────────────────────────────────────────
+
 function InterviewCard({ interview }: { interview: Interview }) {
   const [expanded, setExpanded] = useState(false);
-  const type = TYPE_CONFIG[interview.type];
-  const status = STATUS_CONFIG[interview.status];
+
+  const typeMeta = TYPE_META[interview.format];
+  const statusMeta = STATUS_META[interview.status];
   const isUpcoming = interview.status === "upcoming";
+
+  // Primary interviewer — prefer interviewers[] then panelists[]
+  const primaryInterviewer =
+    interview.interviewers[0] ?? interview.panelists[0]?.name ?? "—";
+
+  const extraInterviewers = [
+    ...interview.interviewers.slice(1),
+    ...interview.panelists
+      .slice(interview.interviewers.length > 0 ? 0 : 1)
+      .map((p: { name: any }) => p.name),
+  ];
 
   return (
     <div
       className={`${styles["interview-card"]} ${styles[`card-${interview.status}`]}`}
       onClick={() => setExpanded((p) => !p)}
     >
-      {/* Left accent bar */}
       <div
         className={`${styles["card-accent"]} ${styles[`accent-${interview.status}`]}`}
       />
@@ -181,19 +110,35 @@ function InterviewCard({ interview }: { interview: Interview }) {
       <div className={styles["card-inner"]}>
         {/* Row 1 — logo + info + status */}
         <div className={styles["card-top"]}>
-          <div className={styles["card-logo"]}>{interview.logo}</div>
+          <div className={styles["card-logo"]}>
+            {interview.companyLogoUrl ? (
+              <img
+                src={interview.companyLogoUrl}
+                alt={interview.company}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  borderRadius: 6,
+                }}
+              />
+            ) : (
+              interview.companyLogo
+            )}
+          </div>
 
           <div className={styles["card-info"]}>
-            <div className={styles["card-role"]}>{interview.role}</div>
+            <div className={styles["card-role"]}>{interview.jobTitle}</div>
             <div className={styles["card-company"]}>
-              <Building2 size={11} />
-              {interview.company}
+              <Building2 size={11} /> {interview.company}
             </div>
           </div>
 
           <div className={styles["card-right"]}>
-            <span className={`${styles["status-badge"]} ${styles[status.cls]}`}>
-              {status.icon} {status.label}
+            <span
+              className={`${styles["status-badge"]} ${styles[statusMeta.cls]}`}
+            >
+              {STATUS_ICON[interview.status]} {statusMeta.label}
             </span>
             <ChevronRight
               size={15}
@@ -205,15 +150,19 @@ function InterviewCard({ interview }: { interview: Interview }) {
         {/* Row 2 — meta */}
         <div className={styles["card-meta"]}>
           <span className={styles["meta-item"]}>
-            <Calendar size={11} /> {interview.date}
+            <Calendar size={11} /> {formatDate(interview.scheduledAt)}
           </span>
           <span className={styles["meta-item"]}>
-            <Clock size={11} /> {interview.time} · {interview.duration}
+            <Clock size={11} /> {formatTime(interview.scheduledAt)} ·{" "}
+            {formatDuration(interview.duration)}
           </span>
           <span className={styles["meta-item"]}>
-            {type.icon} {type.label}
+            {FORMAT_ICON[interview.format]} {typeMeta.label}
           </span>
-          <span className={styles["meta-round"]}>{interview.round}</span>
+          <span className={styles["meta-round"]}>
+            {interview.type.charAt(0).toUpperCase() + interview.type.slice(1)}{" "}
+            Round
+          </span>
         </div>
 
         {/* Expanded details */}
@@ -223,9 +172,19 @@ function InterviewCard({ interview }: { interview: Interview }) {
               <div className={styles["detail-item"]}>
                 <span className={styles["detail-label"]}>Interviewer</span>
                 <span className={styles["detail-value"]}>
-                  {interview.interviewer}
+                  {primaryInterviewer}
                 </span>
               </div>
+
+              {extraInterviewers.length > 0 && (
+                <div className={styles["detail-item"]}>
+                  <span className={styles["detail-label"]}>Also joining</span>
+                  <span className={styles["detail-value"]}>
+                    {extraInterviewers.join(", ")}
+                  </span>
+                </div>
+              )}
+
               {interview.location && (
                 <div className={styles["detail-item"]}>
                   <span className={styles["detail-label"]}>Location</span>
@@ -234,6 +193,7 @@ function InterviewCard({ interview }: { interview: Interview }) {
                   </span>
                 </div>
               )}
+
               {interview.notes && (
                 <div
                   className={`${styles["detail-item"]} ${styles["detail-full"]}`}
@@ -248,16 +208,15 @@ function InterviewCard({ interview }: { interview: Interview }) {
 
             {/* Actions */}
             <div className={styles["card-actions"]}>
-              {isUpcoming && interview.link && (
+              {isUpcoming && interview.meetLink && (
                 <a
-                  href={interview.link}
+                  href={interview.meetLink}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`${styles.btn} ${styles["btn-primary"]}`}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <Video size={13} /> Join Meeting
-                  <ExternalLink size={11} />
+                  <Video size={13} /> Join Meeting <ExternalLink size={11} />
                 </a>
               )}
               {isUpcoming && (
@@ -283,16 +242,73 @@ function InterviewCard({ interview }: { interview: Interview }) {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────
-export default function InterviewsPage() {
-  const [activeTab, setActiveTab] = useState<FilterTab>("all");
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
 
-  const filtered = INTERVIEWS.filter(
-    (i) => activeTab === "all" || i.status === activeTab,
+function PageSkeleton() {
+  return (
+    <div className={styles.page}>
+      <div className={styles.header}>
+        <div>
+          <div
+            style={{
+              height: 24,
+              width: 140,
+              background: "var(--surface)",
+              borderRadius: 6,
+              marginBottom: 8,
+            }}
+          />
+          <div
+            style={{
+              height: 14,
+              width: 180,
+              background: "var(--surface)",
+              borderRadius: 4,
+            }}
+          />
+        </div>
+      </div>
+      <div className={styles.list}>
+        {[1, 2, 3].map((n) => (
+          <div
+            key={n}
+            style={{
+              height: 88,
+              borderRadius: 12,
+              marginBottom: 10,
+              background: "var(--surface)",
+              backgroundImage:
+                "linear-gradient(90deg,var(--surface) 25%,var(--surface-hover,rgba(0,0,0,.03)) 50%,var(--surface) 75%)",
+              backgroundSize: "200% 100%",
+              animation: "shimmer 1.4s infinite",
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function InterviewsPage() {
+  const { filtered, counts, loading, error, filter, setFilter } = useInterviews(
+    { mode: "applicant" },
   );
 
-  const upcoming = INTERVIEWS.filter((i) => i.status === "upcoming");
-  const todayList = upcoming.filter((i) => i.date === "Today");
+  if (loading) return <PageSkeleton />;
+
+  if (error) {
+    return (
+      <div className={styles.page}>
+        <p style={{ color: "var(--status-danger)", fontSize: 13 }}>⚠ {error}</p>
+      </div>
+    );
+  }
+
+  const todayList = filtered.filter(
+    (i) => i.status === "upcoming" && isToday(i.scheduledAt),
+  );
 
   return (
     <div className={styles.page}>
@@ -301,30 +317,27 @@ export default function InterviewsPage() {
         <div>
           <h1 className={styles.title}>Interviews</h1>
           <p className={styles.subtitle}>
-            {upcoming.length > 0
-              ? `${upcoming.length} upcoming · ${todayList.length} today`
+            {counts.upcoming > 0
+              ? `${counts.upcoming} upcoming · ${todayList.length} today`
               : "No upcoming interviews"}
           </p>
         </div>
-        <button className={`${styles.btn} ${styles["btn-primary"]}`}>
-          <Plus size={14} /> Schedule Interview
-        </button>
       </div>
 
       {/* Today banner */}
-      {todayList.length > 0 && (
+      {todayList[0] && (
         <div className={styles["today-banner"]}>
           <div className={styles["today-pulse"]} />
           <div>
             <p className={styles["today-label"]}>Today</p>
             <p className={styles["today-text"]}>
-              {todayList[0]?.time} · {todayList[0]?.role} at{" "}
-              {todayList[0]?.company}
+              {formatTime(todayList[0].scheduledAt)} · {todayList[0].jobTitle}{" "}
+              at {todayList[0].company}
             </p>
           </div>
-          {todayList[0]?.link && (
+          {todayList[0].meetLink && (
             <a
-              href={todayList[0]?.link}
+              href={todayList[0].meetLink}
               target="_blank"
               rel="noopener noreferrer"
               className={`${styles.btn} ${styles["btn-primary"]} ${styles["btn-sm"]}`}
@@ -338,35 +351,28 @@ export default function InterviewsPage() {
       {/* Stats row */}
       <div className={styles["stats-row"]}>
         {[
-          {
-            label: "Total",
-            value: INTERVIEWS.length,
-            color: "var(--text-primary)",
-          },
+          { label: "Total", value: counts.all, color: "var(--text-primary)" },
           {
             label: "Upcoming",
-            value: INTERVIEWS.filter((i) => i.status === "upcoming").length,
+            value: counts.upcoming,
             color: "var(--color-secondary)",
           },
           {
             label: "Completed",
-            value: INTERVIEWS.filter((i) => i.status === "completed").length,
+            value: counts.completed,
             color: "var(--status-success)",
           },
           {
             label: "Cancelled",
-            value: INTERVIEWS.filter((i) => i.status === "cancelled").length,
+            value: counts.cancelled,
             color: "var(--status-danger)",
           },
-        ].map((stat) => (
-          <div key={stat.label} className={styles["stat-pill"]}>
-            <span
-              className={styles["stat-value"]}
-              style={{ color: stat.color }}
-            >
-              {stat.value}
+        ].map((s) => (
+          <div key={s.label} className={styles["stat-pill"]}>
+            <span className={styles["stat-value"]} style={{ color: s.color }}>
+              {s.value}
             </span>
-            <span className={styles["stat-label"]}>{stat.label}</span>
+            <span className={styles["stat-label"]}>{s.label}</span>
           </div>
         ))}
       </div>
@@ -376,20 +382,16 @@ export default function InterviewsPage() {
         {TABS.map((tab) => (
           <button
             key={tab.key}
-            className={`${styles.tab} ${activeTab === tab.key ? styles["tab-active"] : ""}`}
-            onClick={() => setActiveTab(tab.key)}
+            className={`${styles.tab} ${filter === tab.key ? styles["tab-active"] : ""}`}
+            onClick={() => setFilter(tab.key)}
           >
             {tab.label}
-            <span className={styles["tab-count"]}>
-              {tab.key === "all"
-                ? INTERVIEWS.length
-                : INTERVIEWS.filter((i) => i.status === tab.key).length}
-            </span>
+            <span className={styles["tab-count"]}>{counts[tab.key]}</span>
           </button>
         ))}
       </div>
 
-      {/* Interview list */}
+      {/* List */}
       <div className={styles.list}>
         {filtered.length === 0 ? (
           <div className={styles.empty}>
@@ -397,13 +399,11 @@ export default function InterviewsPage() {
               size={32}
               style={{ color: "var(--text-muted)", marginBottom: 12 }}
             />
-            <p>No {activeTab === "all" ? "" : activeTab} interviews</p>
-            <span>Schedule an interview to see it here</span>
+            <p>No {filter === "all" ? "" : filter} interviews</p>
+            <span>Your scheduled interviews will appear here</span>
           </div>
         ) : (
-          filtered.map((interview) => (
-            <InterviewCard key={interview.id} interview={interview} />
-          ))
+          filtered.map((iv) => <InterviewCard key={iv.id} interview={iv} />)
         )}
       </div>
     </div>

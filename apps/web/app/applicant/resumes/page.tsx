@@ -1,7 +1,7 @@
 /** @format */
 "use client";
 
-import { useState, useRef } from "react";
+import { useRef, useState } from "react";
 import {
   Upload,
   FileText,
@@ -16,51 +16,12 @@ import {
   Clock,
   FileCheck,
 } from "lucide-react";
+import { useResumes } from "../../hooks/useResumes";
 import styles from "../styles/resumes.module.css";
 
-type ResumeStatus = "ready" | "processing" | "error";
-
-interface Resume {
-  id: string;
-  name: string;
-  size: string;
-  uploaded: string;
-  isDefault: boolean;
-  status: ResumeStatus;
-  usedIn: number;
-}
-
-const INITIAL: Resume[] = [
-  {
-    id: "1",
-    name: "Resume_2026.pdf",
-    size: "342 KB",
-    uploaded: "Mar 1, 2026",
-    isDefault: true,
-    status: "ready",
-    usedIn: 8,
-  },
-  {
-    id: "2",
-    name: "Resume_Stripe_Custom.pdf",
-    size: "289 KB",
-    uploaded: "Feb 20, 2026",
-    isDefault: false,
-    status: "ready",
-    usedIn: 3,
-  },
-  {
-    id: "3",
-    name: "Resume_Frontend_Lead.pdf",
-    size: "310 KB",
-    uploaded: "Feb 10, 2026",
-    isDefault: false,
-    status: "ready",
-    usedIn: 1,
-  },
-];
-
 const MAX = 5;
+
+// ─── Card ─────────────────────────────────────────────────────────────────────
 
 function ResumeCard({
   resume,
@@ -68,7 +29,7 @@ function ResumeCard({
   onSetDefault,
   canDelete,
 }: {
-  resume: Resume;
+  resume: import("../../types/resumes.types").Resume;
   onDelete: (id: string) => void;
   onSetDefault: (id: string) => void;
   canDelete: boolean;
@@ -92,13 +53,18 @@ function ResumeCard({
         </div>
 
         <div className={styles.cardInfo}>
-          <p className={styles.cardName}>{resume.name}</p>
+          <p className={styles.cardName}>{resume.originalName}</p>
           <div className={styles.cardMeta}>
             <span>
-              <Clock size={10} /> {resume.uploaded}
+              <Clock size={10} />{" "}
+              {new Date(resume.uploadedAt).toLocaleDateString("en-PK", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })}
             </span>
-            <span>{resume.size}</span>
-            {resume.usedIn > 0 && (
+            <span>{(resume.sizeBytes / 1024).toFixed(0)} KB</span>
+            {(resume.usedIn ?? 0) > 0 && (
               <span className={styles.usedIn}>
                 <FileCheck size={10} /> {resume.usedIn} application
                 {resume.usedIn !== 1 ? "s" : ""}
@@ -106,21 +72,9 @@ function ResumeCard({
             )}
           </div>
           <div className={styles.statusRow}>
-            {resume.status === "ready" && (
-              <span className={styles.statusReady}>
-                <CheckCircle2 size={10} /> Ready
-              </span>
-            )}
-            {resume.status === "processing" && (
-              <span className={styles.statusProcessing}>
-                <Clock size={10} /> Processing…
-              </span>
-            )}
-            {resume.status === "error" && (
-              <span className={styles.statusError}>
-                <AlertTriangle size={10} /> Upload failed
-              </span>
-            )}
+            <span className={styles.statusReady}>
+              <CheckCircle2 size={10} /> Ready
+            </span>
           </div>
         </div>
       </div>
@@ -135,12 +89,23 @@ function ResumeCard({
             <StarOff size={14} />
           </button>
         )}
-        <button className={styles.actionBtn} title="Preview">
+        <a
+          href={resume.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.actionBtn}
+          title="Preview"
+        >
           <Eye size={14} />
-        </button>
-        <button className={styles.actionBtn} title="Download">
+        </a>
+        <a
+          href={resume.url}
+          download={resume.originalName}
+          className={styles.actionBtn}
+          title="Download"
+        >
           <Download size={14} />
-        </button>
+        </a>
 
         {canDelete && !confirm && (
           <button
@@ -173,62 +138,73 @@ function ResumeCard({
   );
 }
 
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function ResumesPage() {
-  const [resumes, setResumes] = useState<Resume[]>(INITIAL);
+  const {
+    resumes,
+    loading,
+    error,
+    upload,
+    uploadResume,
+    setDefault,
+    deleteResume,
+    resetUpload,
+  } = useResumes();
+
   const [dragging, setDragging] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [toast, setToast] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 3000);
-  };
+  const canUpload = resumes.length < MAX;
+  const totalApps = resumes.reduce((a, r) => a + (r.usedIn ?? 0), 0);
 
-  const handleFiles = (file: File) => {
-    if (resumes.length >= MAX) return;
-    setUploading(true);
-    const newResume: Resume = {
-      id: Date.now().toString(),
-      name: file.name.endsWith(".pdf") ? file.name : `${file.name}.pdf`,
-      size: `${Math.round(file.size / 1024)} KB`,
-      uploaded: "Just now",
-      isDefault: resumes.length === 0,
-      status: "processing",
-      usedIn: 0,
-    };
-    setResumes((p) => [newResume, ...p]);
-    setTimeout(() => {
-      setResumes((p) =>
-        p.map((r) => (r.id === newResume.id ? { ...r, status: "ready" } : r)),
-      );
-      setUploading(false);
-      showToast("Resume uploaded successfully");
-    }, 1800);
-  };
+  // derive toast from upload status
+  const toast =
+    upload.status === "success"
+      ? "Resume uploaded successfully"
+      : upload.status === "error"
+        ? upload.error
+        : "";
 
-  const handleDrop = (e: React.DragEvent) => {
+  function handleFiles(file: File) {
+    if (!canUpload || upload.status === "uploading") return;
+    if (!file.name.match(/\.(pdf|doc|docx)$/i))
+      return alert("Only PDF / DOC / DOCX files are accepted.");
+    if (file.size > 5 * 1024 * 1024) return alert("File must be under 5 MB.");
+    uploadResume(file);
+  }
+
+  function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     setDragging(false);
     const file = e.dataTransfer.files[0];
     if (file) handleFiles(file);
-  };
+  }
 
-  const handleDelete = (id: string) => {
-    const resume = resumes.find((r) => r.id === id);
-    setResumes((p) => {
-      const next = p.filter((r) => r.id !== id);
-      if (resume?.isDefault && next.length > 0) next[0].isDefault = true;
-      return next;
-    });
-    showToast("Resume deleted");
-  };
+  if (loading) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.header}>
+          <div className={styles.skeletonTitle} />
+        </div>
+        <div className={styles.list}>
+          {[1, 2, 3].map((n) => (
+            <div key={n} className={styles.skeletonCard} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
-  const handleSetDefault = (id: string) =>
-    setResumes((p) => p.map((r) => ({ ...r, isDefault: r.id === id })));
-
-  const canUpload = resumes.length < MAX;
-  const totalApps = resumes.reduce((a, r) => a + r.usedIn, 0);
+  if (error) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.limitBanner}>
+          <AlertTriangle size={14} /> {error}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -237,13 +213,15 @@ export default function ResumesPage() {
         <div>
           <h1 className={styles.title}>Resume Manager</h1>
           <p className={styles.subtitle}>
-            {resumes.length} / {MAX} resumes · used in {totalApps} applications
+            {resumes.length} / {MAX} resumes · used in {totalApps} application
+            {totalApps !== 1 ? "s" : ""}
           </p>
         </div>
         {canUpload && (
           <button
             className={`${styles.btn} ${styles.btnPrimary}`}
             onClick={() => fileRef.current?.click()}
+            disabled={upload.status === "uploading"}
           >
             <Plus size={14} /> Upload resume
           </button>
@@ -256,14 +234,33 @@ export default function ResumesPage() {
           onChange={(e) => {
             const f = e.target.files?.[0];
             if (f) handleFiles(f);
+            e.target.value = "";
           }}
         />
       </div>
 
       {/* Toast */}
       {toast && (
-        <div className={styles.toast} role="status">
-          <CheckCircle2 size={13} /> {toast}
+        <div
+          className={
+            upload.status === "error" ? styles.limitBanner : styles.toast
+          }
+          role="status"
+          style={{ cursor: upload.status === "error" ? "pointer" : undefined }}
+          onClick={upload.status === "error" ? resetUpload : undefined}
+        >
+          {upload.status === "error" ? (
+            <>
+              <AlertTriangle size={13} /> {toast}{" "}
+              <span style={{ marginLeft: "auto", fontSize: 11 }}>
+                ✕ Dismiss
+              </span>
+            </>
+          ) : (
+            <>
+              <CheckCircle2 size={13} /> {toast}
+            </>
+          )}
         </div>
       )}
 
@@ -281,7 +278,7 @@ export default function ResumesPage() {
         ))}
       </div>
 
-      {/* Drop zone */}
+      {/* Drop zone / limit banner */}
       {canUpload ? (
         <div
           className={`${styles.dropZone} ${dragging ? styles.dropZoneActive : ""}`}
@@ -299,11 +296,33 @@ export default function ResumesPage() {
             <Upload size={22} />
           </div>
           <p className={styles.dropTitle}>
-            {dragging ? "Release to upload" : "Drag & drop your resume here"}
+            {upload.status === "uploading"
+              ? `Uploading… ${upload.progress}%`
+              : dragging
+                ? "Release to upload"
+                : "Drag & drop your resume here"}
           </p>
-          <p className={styles.dropSub}>
-            or <span>click to browse</span> · PDF, DOC, DOCX · Max 5 MB
-          </p>
+          {upload.status === "uploading" ? (
+            <div style={{ width: "100%", maxWidth: 280, margin: "8px auto 0" }}>
+              <div
+                style={{ height: 3, background: "#e8e2dc", borderRadius: 2 }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${upload.progress}%`,
+                    background: "#c8922a",
+                    borderRadius: 2,
+                    transition: "width .2s",
+                  }}
+                />
+              </div>
+            </div>
+          ) : (
+            <p className={styles.dropSub}>
+              or <span>click to browse</span> · PDF, DOC, DOCX · Max 5 MB
+            </p>
+          )}
           <span className={styles.dropLimit}>
             {MAX - resumes.length} upload{MAX - resumes.length !== 1 ? "s" : ""}{" "}
             remaining
@@ -353,8 +372,8 @@ export default function ResumesPage() {
             <ResumeCard
               key={r.id}
               resume={r}
-              onDelete={handleDelete}
-              onSetDefault={handleSetDefault}
+              onDelete={deleteResume}
+              onSetDefault={setDefault}
               canDelete={resumes.length > 1}
             />
           ))

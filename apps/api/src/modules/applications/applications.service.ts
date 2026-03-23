@@ -192,6 +192,12 @@ export class ApplicationsService {
     return app;
   }
 
+  // ADD to src/modules/applications/applications.service.ts
+  async hasApplied(applicantId: string, jobId: string): Promise<boolean> {
+    const row = await this.appRepo.findOneBy({ applicantId, jobId });
+    return !!row;
+  }
+
   // ── Private ─────────────────────────────────────────────────────────────────
   private async appOrFail(appId: string): Promise<Application> {
     const app = await this.appRepo.findOneBy({ id: appId });

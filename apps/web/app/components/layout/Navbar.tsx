@@ -34,7 +34,7 @@ export function Navbar() {
       {/* Logo */}
       <Link href="/" className={styles.logo}>
         <span className={styles["logo-text"]}>
-          Hire<span>Sphere</span>
+          Hiring<span>Fly</span>
         </span>
       </Link>
 

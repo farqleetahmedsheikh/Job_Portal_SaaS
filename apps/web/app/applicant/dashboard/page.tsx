@@ -8,74 +8,89 @@ import { RecentApplications } from "../../components/ui/RecentApplications";
 import { UpcomingInterviews } from "../../components/ui/UpcomingInterviews";
 import { useUser } from "../../store/session.store";
 import { useProfileStrength } from "../../hooks/useProfileStrength";
+import { useApplicantDashboard } from "../../hooks/useApplicantDashboard";
 import styles from "../styles/applicant.module.css";
 
-// ─── Static placeholder data — replace when applications API is built ─
-const APPLICATIONS = [
-  {
-    title: "Frontend Developer",
-    company: "Acme Corp",
-    logo: "AC",
-    time: "2d ago",
-    status: "applied" as const,
-  },
-  {
-    title: "React Engineer",
-    company: "TechCo",
-    logo: "TC",
-    time: "5d ago",
-    status: "interview" as const,
-  },
-  {
-    title: "UI Developer",
-    company: "StartupXYZ",
-    logo: "SX",
-    time: "1w ago",
-    status: "rejected" as const,
-  },
-];
-
-const INTERVIEWS = [
-  {
-    title: "Technical Round — Acme Corp",
-    sub: "Video call · 45 min",
-    time: "Tomorrow, 10:00 AM",
-    color: "dot-blue",
-  },
-  {
-    title: "HR Round — TechCo",
-    sub: "Phone call · 30 min",
-    time: "Friday, 2:00 PM",
-    color: "dot-green",
-  },
-];
-
-// ─── Greeting based on time of day ────────────────────────
+// ─── Greeting based on time of day ────────────────────────────────────────────
 function getGreeting(): string {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
+  if (hour < 12) return "Good Morning";
+  if (hour < 18) return "Good Afternoon";
+  return "Good Evening";
 }
 
-// ─── Page ─────────────────────────────────────────────────
+// ─── Trend helpers ────────────────────────────────────────────────────────────
+function deltaTrend(delta: number): "up" | "down" | "neutral" {
+  if (delta > 0) return "up";
+  if (delta < 0) return "down";
+  return "neutral";
+}
+
+function deltaLabel(delta: number, suffix = "Change"): string {
+  if (delta === 0) return `Nothing ${suffix}`;
+  const sign = delta > 0 ? "+" : "";
+  return `${sign}${delta}% ${suffix}`;
+}
+
+// ─── Skeleton placeholder while loading ──────────────────────────────────────
+function DashboardSkeleton() {
+  return (
+    <div
+      className={styles.page}
+      aria-busy="true"
+      aria-label="Loading dashboard"
+    >
+      <div className={styles.welcome}>
+        <div className={styles["welcome-text"]}>
+          <div className={styles.skeletonTitle} />
+          <div className={styles.skeletonSubtitle} />
+        </div>
+      </div>
+      <div className={styles.stats}>
+        {[1, 2, 3].map((n) => (
+          <div key={n} className={styles.skeletonCard} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function ApplicantDashboard() {
   const user = useUser();
-  const { data: strengthData } = useProfileStrength(); // ← add this
+  const { data: strengthData } = useProfileStrength();
+
+  // Hook returns flat values — no data wrapper, no refetch
+  const { stats, applications, interviews, loading, error, responseRateLabel } =
+    useApplicantDashboard();
+
   const firstName = user?.fullName?.split(" ")[0] ?? "there";
   const greeting = getGreeting();
-  const strength = strengthData?.strength ?? 0; // ← replace the hardcoded line
+  const strength = strengthData?.strength ?? 0;
+
+  if (loading) return <DashboardSkeleton />;
+
+  if (error) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.errorBanner}>
+          <p>⚠️ {error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
-      {/* Welcome */}
+      {/* Welcome ──────────────────────────────────────────────────────────── */}
       <div className={styles.welcome}>
         <div className={styles["welcome-text"]}>
           <h1>
             {greeting}, {firstName} 👋
           </h1>
           <p>
-            You have {APPLICATIONS.length} active applications this week. Keep
+            You have {stats?.activeApplications ?? 0} active application
+            {(stats?.activeApplications ?? 0) !== 1 ? "s" : ""} this week. Keep
             going!
           </p>
         </div>
@@ -87,27 +102,29 @@ export default function ApplicantDashboard() {
         </Link>
       </div>
 
-      {/* Stat cards */}
+      {/* Stat cards ───────────────────────────────────────────────────────── */}
       <div className={styles.stats}>
         <Card
           title="Applications"
-          value={String(APPLICATIONS.length)}
+          value={String(stats?.totalApplications ?? 0)}
           icon="briefcase"
-          trend="up"
-          trendLabel="12% this week"
+          trend={deltaTrend(stats?.weeklyDelta ?? 0)}
+          trendLabel={deltaLabel(stats?.weeklyDelta ?? 0)}
         />
+
         <Card
           title="Response Rate"
-          value="38%"
+          value={`${stats?.responseRate ?? 0}%`}
           icon="trending-up"
-          trend="down"
-          trendLabel="4% drop"
+          trend={deltaTrend(stats?.responseRateDelta ?? 0)}
+          trendLabel={deltaLabel(stats?.responseRateDelta ?? 0, "change")}
         >
-          Below average — follow up on pending apps
+          {responseRateLabel}
         </Card>
+
         <Card
           title="Profile Strength"
-          value={`${strength}%`} // ← was stats.profileStrength
+          value={`${strength}%`}
           icon="user"
           trend={strength >= 80 ? "up" : strength >= 50 ? "neutral" : "down"}
           trendLabel={
@@ -126,12 +143,26 @@ export default function ApplicantDashboard() {
         </Card>
       </div>
 
-      {/* Two-col layout */}
+      {/* Two-col layout ───────────────────────────────────────────────────── */}
       <div className={styles["two-col"]}>
         {/* Left: Applications + Interviews */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <RecentApplications applications={APPLICATIONS} />
-          <UpcomingInterviews interviews={INTERVIEWS} />
+          {applications.length > 0 ? (
+            <RecentApplications applications={applications} />
+          ) : (
+            <div className={styles.emptyState}>
+              <p>No applications yet.</p>
+              <Link href="/applicant/browse-jobs">Browse jobs →</Link>
+            </div>
+          )}
+
+          {interviews.length > 0 ? (
+            <UpcomingInterviews interviews={interviews} />
+          ) : (
+            <div className={styles.emptyState}>
+              <p>No upcoming interviews.</p>
+            </div>
+          )}
         </div>
 
         {/* Right: Profile strength */}

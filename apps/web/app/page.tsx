@@ -20,7 +20,7 @@ export default function Home(): JSX.Element {
             </h1>
 
             <p className={styles["hero-subtitle"]}>
-              HireSphere connects companies and candidates through structured
+              HiringFly connects companies and candidates through structured
               pipelines, in-app messaging, coding assessments, and interview
               workflows — without emails or external tools.
             </p>
@@ -107,7 +107,7 @@ export default function Home(): JSX.Element {
         <div className={styles.container + " " + styles["cta-box"]}>
           <h2>Transform the Way You Hire</h2>
           <p>
-            Join forward-thinking teams using HireSphere to streamline
+            Join forward-thinking teams using HiringFly to streamline
             recruitment.
           </p>
           <Link href="/register" className={styles["btn-primary"]}>
@@ -120,13 +120,13 @@ export default function Home(): JSX.Element {
       <footer className={styles["footer"]}>
         <div className={styles["container footer-grid"]}>
           <div>
-            <h4>HireSphere</h4>
+            <h4>HiringFly</h4>
             <p>Modern hiring infrastructure for growing teams.</p>
           </div>
         </div>
 
         <div className={styles["footer-bottom"]}>
-          © {new Date().getFullYear()} HireSphere. All rights reserved.
+          © {new Date().getFullYear()} HiringFly. All rights reserved.
         </div>
       </footer>
     </main>

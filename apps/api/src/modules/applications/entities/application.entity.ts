@@ -40,7 +40,7 @@ export class Application {
   status?: AppStatus;
 
   // Where the applicant came from (for analytics)
-  @Column({ type: 'enum', enum: AppSource, default: AppSource.HIRESPHERE })
+  @Column({ type: 'enum', enum: AppSource, default: AppSource.HIRINGFLY })
   source?: AppSource;
 
   @Column({ name: 'cover_letter', type: 'text', nullable: true })

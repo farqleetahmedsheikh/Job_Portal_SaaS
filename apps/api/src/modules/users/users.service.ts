@@ -16,6 +16,7 @@ import {
   ProfileStrengthResponse,
   ProfileStrengthItem,
 } from './dto/profile-strength.dto';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 interface CreateUserPayload {
   email: string;
@@ -62,6 +63,7 @@ export class UsersService {
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     private readonly ds: DataSource,
+    private readonly cloudinary: CloudinaryService,
   ) {}
 
   // ── Find by email (no password) ────────────────────────────────────────────
@@ -280,15 +282,17 @@ export class UsersService {
   private async getApplicantStats(userId: string) {
     const rows = await this.ds.query(
       `SELECT
-         COUNT(*)::int                                             AS total_applications,
-         COUNT(*) FILTER (WHERE status IN ('reviewing','shortlisted','interview'))::int
-                                                                  AS active_applications,
-         (SELECT COUNT(*)::int FROM saved_jobs  WHERE user_id = $1) AS saved_jobs,
+         COUNT(*)::int                                                          AS total_applications,
+         COUNT(*) FILTER (WHERE a.status::text IN ('reviewing','shortlisted','interview'))::int
+                                                                               AS active_applications,
+         (SELECT COUNT(*)::int FROM saved_jobs
+          WHERE user_id = $1)                                                  AS saved_jobs,
          (SELECT COUNT(*)::int FROM interviews
-          WHERE candidate_id = $1 AND status = 'upcoming')        AS upcoming_interviews`,
+          WHERE candidate_id = $1 AND status::text = 'upcoming')               AS upcoming_interviews
+       FROM applications a
+       WHERE a.applicant_id = $1`,
       [userId],
     );
-
     const r = rows[0];
     return {
       totalApplications: r.total_applications,
@@ -330,5 +334,34 @@ export class UsersService {
       newApplications: r.new_applications,
       upcomingInterviews: r.upcoming_interviews,
     };
+  }
+
+  // ── Avatar upload ─────────────────────────────────────────────────────────────
+
+  async updateAvatar(userId: string, file: Express.Multer.File) {
+    const user = await this.userRepo.findOneOrFail({ where: { id: userId } });
+
+    // Upload new image — if user already has one, overwrite in-place by reusing publicId
+    const result = await this.cloudinary.uploadAvatar(
+      file.buffer,
+      user.avatarPublicId ?? undefined,
+    );
+
+    user.avatarUrl = result.url;
+    user.avatarPublicId = result.publicId;
+
+    return this.userRepo.save(user);
+  }
+
+  async deleteAvatar(userId: string): Promise<void> {
+    const user = await this.userRepo.findOneOrFail({ where: { id: userId } });
+    if (!user.avatarPublicId) return;
+
+    await this.cloudinary.delete(user.avatarPublicId, 'image');
+
+    user.avatarUrl = '';
+    user.avatarPublicId = '';
+
+    await this.userRepo.save(user);
   }
 }

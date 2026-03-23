@@ -64,7 +64,7 @@ export enum AppSource {
   ANGELLIST = 'angellist',
   INDEED = 'indeed',
   GLASSDOOR = 'glassdoor',
-  HIRESPHERE = 'hiresphere',
+  HIRINGFLY = 'hiringFly',
   OTHER = 'other',
 }
 
@@ -93,7 +93,6 @@ export enum SalaryCurrency {
   CAD = 'CAD',
   AUD = 'AUD',
   PKR = 'PKR',
-  INR = 'INR',
 }
 
 export enum NotifType {

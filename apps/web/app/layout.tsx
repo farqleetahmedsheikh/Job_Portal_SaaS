@@ -10,7 +10,7 @@ import { SessionProvider } from "./components/providers/SessionProvider";
 const THEME_SCRIPT = `
 (function(){
   try {
-    var t = localStorage.getItem('hiresphere-theme');
+    var t = localStorage.getItem('HiringFly-theme');
     var p = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', t || p);
   } catch(e){}

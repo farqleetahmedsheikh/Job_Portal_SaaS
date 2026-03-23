@@ -39,7 +39,7 @@ export default function RegisterPage() {
   return (
     <AuthForm
       title="Create account"
-      subtitle="Join HireSphere today"
+      subtitle="Join HiringFly today"
       onSubmit={handleSubmit(onSubmit)}
       loading={isLoading}
       submitLabel="Create account"

@@ -1,6 +1,6 @@
-# HireSphere Monorepo
+# HiringFly Monorepo
 
-**HireSphere** is a modern, all-in-one hiring platform connecting companies with top talent.  
+**HiringFly** is a modern, all-in-one hiring platform connecting companies with top talent.  
 This monorepo uses [Turborepo](https://turborepo.dev/) to manage multiple apps and shared packages, enabling rapid development and consistent tooling.
 
 ---
@@ -20,7 +20,7 @@ This monorepo uses [Turborepo](https://turborepo.dev/) to manage multiple apps a
 
 ## About
 
-HireSphere is a **premium SaaS platform** for:
+HiringFly is a **premium SaaS platform** for:
 
 - Job posting and applicant tracking  
 - Messaging and interview management  
@@ -42,9 +42,9 @@ This Turborepo includes the following **apps** and **packages**:
 
 ### Packages
 
-- `@hireSphere/ui` – Shared React components library  
-- `@hireSphere/eslint-config` – ESLint configuration with `eslint-config-next` & `prettier`  
-- `@hireSphere/ts-config` – TypeScript configuration used across all apps  
+- `@hiringFly/ui` – Shared React components library  
+- `@hiringFly/eslint-config` – ESLint configuration with `eslint-config-next` & `prettier`  
+- `@hiringFly/ts-config` – TypeScript configuration used across all apps  
 
 ---
 
@@ -54,7 +54,7 @@ Clone the repository and install dependencies:
 
 ```bash
 git clone <repo-url>
-cd hireSphere-monorepo
+cd hiringFly-monorepo
 pnpm install
 
 Running Apps

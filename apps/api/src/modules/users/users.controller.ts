@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Controller,
@@ -9,6 +11,12 @@ import {
   NotFoundException,
   HttpCode,
   HttpStatus,
+  FileTypeValidator,
+  MaxFileSizeValidator,
+  ParseFilePipe,
+  Req,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -17,6 +25,8 @@ import type { JwtPayload } from '../auth/auth.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { UpdateUserProfileDto } from './dto/update-profile.dto';
 import { ApplicantsService } from '../applicants/applicant.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -91,5 +101,30 @@ export class UsersController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteAccount(@CurrentUser() currentUser: JwtPayload) {
     await this.users.deleteAccount(currentUser.sub);
+  }
+
+  // PATCH /users/me/avatar
+  @Patch('me/avatar')
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+  uploadAvatar(
+    @Req() req: any,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 3 * 1024 * 1024 }), // 3 MB
+          new FileTypeValidator({ fileType: /image\/(jpeg|png|webp)/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    return this.users.updateAvatar(req.user.sub, file);
+  }
+
+  // DELETE /users/me/avatar
+  @Delete('me/avatar')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteAvatar(@Req() req: any) {
+    return this.users.deleteAvatar(req.user.sub);
   }
 }

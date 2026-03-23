@@ -5,12 +5,19 @@ import {
   Body,
   Controller,
   Delete,
+  FileTypeValidator,
   Get,
+  HttpCode,
+  HttpStatus,
+  MaxFileSizeValidator,
   Param,
+  ParseFilePipe,
   Patch,
   Post,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UserRole } from 'src/common/enums/enums';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -20,6 +27,8 @@ import { UpdatePerksDto } from './dto/update-perks.dto';
 import { UpdateCompanyDto } from './dto/update-compnay.dto';
 import { CreateCompanyDto } from './dto/company.dto';
 import { CompaniesService } from './companies.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.EMPLOYER)
@@ -68,5 +77,33 @@ export class CompaniesController {
   @Delete(':id')
   delete(@Req() req: any, @Param('id') id: string) {
     return this.service.delete(id, req.user.userId);
+  }
+
+  // PATCH /companies/:id/logo
+  @Patch(':id/logo')
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+  uploadLogo(
+    @Req() req: any,
+    @Param('id') id: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 3 * 1024 * 1024 }),
+          new FileTypeValidator({
+            fileType: /image\/(jpeg|png|webp|svg\+xml)/,
+          }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    return this.service.updateLogo(req.user.sub, id, file);
+  }
+
+  // DELETE /companies/:id/logo
+  @Delete(':id/logo')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteLogo(@Req() req: any, @Param('id') id: string) {
+    return this.service.deleteLogo(req.user.sub, id);
   }
 }

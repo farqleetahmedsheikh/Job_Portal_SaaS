@@ -3,7 +3,7 @@
 "use client";
 
 import { ReactNode, useState } from "react";
-import { User } from "../../types/user";
+import { User } from "../../types/user.types";
 import { Navbar } from "./Navbar";
 import { Sidebar } from "./Sidebar";
 import styles from "../../styles/dashboard.module.css";

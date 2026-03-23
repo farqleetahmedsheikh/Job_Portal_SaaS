@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Controller,
   Get,
@@ -47,6 +49,17 @@ export class JobsController {
     @Body() dto: CreateJobDto,
   ) {
     return this.jobsService.create(user.sub, dto);
+  }
+
+  // ── Saved jobs (applicant) ──────────────────────────────────────────────────
+  // GET /api/jobs/saved
+  @Get('saved')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.APPLICANT)
+  getSaved(
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+  ) {
+    return this.jobsService.getSavedJobs(user.sub);
   }
 
   // GET /api/jobs?q=&location=&type=&page=
@@ -122,14 +135,16 @@ export class JobsController {
   }
 
   // ── Saved jobs (applicant) ──────────────────────────────────────────────────
-  // GET /api/jobs/saved
-  @Get('saved')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.APPLICANT)
-  getSaved(
+
+  // GET /api/jobs/:id/saved-status  — check if current user has saved this job
+  @Get(':id/saved-status')
+  @UseGuards(JwtAuthGuard)
+  async getSavedStatus(
+    @Param('id', ParseUUIDPipe) id: string,
     @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
   ) {
-    return this.jobsService.getSavedJobs(user.sub);
+    const saved = await this.jobsService.isSaved(id, user.sub);
+    return { saved };
   }
 
   // POST /api/jobs/:id/save

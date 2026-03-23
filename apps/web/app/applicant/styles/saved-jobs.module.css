@@ -497,6 +497,14 @@
     border-color: rgba(239, 68, 68, .2);
 }
 
+/* Matched skill tag */
+.tagMatch {
+    background: rgba(52, 217, 179, .1);
+    color: var(--status-success);
+    border-color: rgba(52, 217, 179, .25);
+    font-weight: 600;
+}
+
 @media (max-width: 640px) {
     .statRow {
         grid-template-columns: repeat(2, 1fr);

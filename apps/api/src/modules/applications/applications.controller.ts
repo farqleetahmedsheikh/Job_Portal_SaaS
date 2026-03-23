@@ -144,4 +144,15 @@ export class ApplicationsController {
   markViewed(@Param('id', ParseUUIDPipe) id: string) {
     return this.svc.markViewed(id);
   }
+  // GET /api/applications/status?jobId=<uuid>
+  @Get('status')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.APPLICANT)
+  async getApplicationStatus(
+    @Query('jobId') jobId: string,
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+  ) {
+    const applied = await this.svc.hasApplied(user.sub, jobId);
+    return { applied };
+  }
 }

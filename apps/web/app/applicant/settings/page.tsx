@@ -466,7 +466,7 @@ function AccountSection() {
 
       {/* Logout */}
       <button className={styles["logout-btn"]} onClick={handleLogout}>
-        <LogOut size={15} /> Sign out of HireSphere
+        <LogOut size={15} /> Sign out of HiringFly
       </button>
 
       {/* Delete confirm modal */}

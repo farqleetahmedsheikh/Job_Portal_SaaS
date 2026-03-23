@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /** @format */
-// src/modules/jobs/dto/index.ts
 
 import {
   IsString,

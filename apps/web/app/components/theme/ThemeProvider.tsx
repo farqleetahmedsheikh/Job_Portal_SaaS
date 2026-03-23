@@ -21,7 +21,7 @@ const ThemeContext = createContext<ThemeCtx>({
   toggle: () => {},
 });
 
-const KEY = "hiresphere-theme";
+const KEY = "hiringFly-theme";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("dark");

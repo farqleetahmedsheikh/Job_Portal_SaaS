@@ -41,6 +41,9 @@ export class Resume {
   @Column({ name: 'mime_type', length: 60, default: 'application/pdf' })
   mimeType!: string;
 
+  @Column({ name: 'public_id', type: 'text', nullable: true })
+  publicId!: string;
+
   // processing → ready → error  (set by file processing job)
   @Column({
     type: 'enum',

@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Building2,
   BarChart2,
+  FileIcon,
   type LucideIcon,
 } from "lucide-react";
 import styles from "../../styles/sidebar.module.css";
@@ -47,7 +48,8 @@ const NAVIGATION: Record<"applicant" | "employer", NavSection[]> = {
           icon: Briefcase,
           href: "/applicant/applications",
         },
-        { label: "Saved Jobs", icon: Bookmark, href: "/applicant/saved" },
+        { label: "Saved Jobs", icon: Bookmark, href: "/applicant/saved-jobs" },
+        { label: "Resumes", icon: FileIcon, href: "/applicant/resumes" },
       ],
     },
     {

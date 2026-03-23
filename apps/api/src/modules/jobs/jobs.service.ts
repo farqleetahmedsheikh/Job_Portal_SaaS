@@ -181,9 +181,9 @@ export class JobsService {
     if (companyId) qb.andWhere('j.company_id = :companyId', { companyId });
     if (skills?.length) qb.andWhere('j.skills @> :skills', { skills });
 
-    if (sort === 'salary') qb.orderBy('j.salary_max', 'DESC', 'NULLS LAST');
-    else if (sort === 'relevance') qb.orderBy('j.applicants_count', 'ASC');
-    else qb.orderBy('j.published_at', 'DESC');
+    if (sort === 'salary') qb.orderBy('j.salaryMax', 'DESC', 'NULLS LAST');
+    else if (sort === 'relevance') qb.orderBy('j.applicantsCount', 'ASC');
+    else qb.orderBy('j.publishedAt', 'DESC');
 
     const [items, total] = await qb
       .skip((page - 1) * limit)
@@ -267,6 +267,11 @@ export class JobsService {
   async isJobSaved(userId: string, jobId: string): Promise<boolean> {
     const count = await this.savedJobRepo.count({ where: { userId, jobId } });
     return count > 0;
+  }
+
+  async isSaved(jobId: string, userId: string): Promise<boolean> {
+    const row = await this.savedJobRepo.findOneBy({ jobId, userId });
+    return !!row;
   }
 
   // ── Private ──────────────────────────────────────────────────────────────────

@@ -34,7 +34,7 @@ export default function LoginPage() {
   return (
     <AuthForm
       title="Welcome back"
-      subtitle="Sign in to your HireSphere account"
+      subtitle="Sign in to your HiringFly account"
       onSubmit={handleSubmit(onSubmit)}
       loading={isLoading}
       submitLabel="Sign in"

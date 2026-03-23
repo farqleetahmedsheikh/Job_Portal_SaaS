@@ -1,5 +1,4 @@
 /** @format */
-// src/modules/jobs/dto/index.ts
 
 import {
   IsString,

@@ -1,9 +1,9 @@
 /** @format */
 "use client";
 
-import { ShieldCheck } from "lucide-react";
 import type { FieldConfig } from "../../config/profile.config";
 import styles from "../../applicant/styles/profile.module.css";
+import { EmailVerifiedBadge } from "./EmailVerifyBadge";
 
 interface Props {
   config: FieldConfig;
@@ -22,8 +22,17 @@ export function ProfileField({
   editing,
   onChange,
 }: Props) {
-  const { name, label, type, placeholder, span, textarea, icon, readOnly } =
-    config;
+  const {
+    name,
+    label,
+    type,
+    placeholder,
+    span,
+    textarea,
+    icon,
+    readOnly,
+    isEmailVerified,
+  } = config;
 
   return (
     <div
@@ -66,12 +75,12 @@ export function ProfileField({
             .join(" ")}
         >
           {name === "email" && value ? (
-            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               {value}
-              <span className={`${styles.badge} ${styles["badge-verified"]}`}>
-                <ShieldCheck size={11} aria-hidden /> Verified
+              <span style={{ fontSize: "10px" }}>
+                <EmailVerifiedBadge isVerified={isEmailVerified} />
               </span>
-            </span>
+            </div>
           ) : name === "experienceYears" && value ? (
             `${value} years`
           ) : (

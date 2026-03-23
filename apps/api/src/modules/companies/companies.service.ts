@@ -12,6 +12,7 @@ import { UpdatePerksDto } from './dto/update-perks.dto';
 import { UpdateCompanyDto } from './dto/update-compnay.dto';
 import { CreateCompanyDto } from './dto/company.dto';
 import { CompanyPerk } from './entities/company-perk.entity';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Injectable()
 export class CompaniesService {
@@ -23,6 +24,7 @@ export class CompaniesService {
     @InjectRepository(CompanyPerk)
     private readonly perkRepo: Repository<CompanyPerk>,
     private readonly ds: DataSource,
+    private readonly cloudinary: CloudinaryService,
   ) {}
 
   // ── Find by owner ──────────────────────────────────────────────────────────
@@ -106,6 +108,40 @@ export class CompaniesService {
       );
       return m.save(CompanyPerk, perks);
     });
+  }
+
+  async updateLogo(
+    userId: string,
+    companyId: string,
+    file: Express.Multer.File,
+  ) {
+    const company = await this.companyRepo.findOneOrFail({
+      where: { id: companyId, ownerId: userId },
+    });
+
+    const result = await this.cloudinary.uploadCompanyLogo(
+      file.buffer,
+      company.logoPublicId ?? undefined,
+    );
+
+    company.logoUrl = result.url;
+    company.logoPublicId = result.publicId;
+
+    return this.companyRepo.save(company);
+  }
+
+  async deleteLogo(userId: string, companyId: string): Promise<void> {
+    const company = await this.companyRepo.findOneOrFail({
+      where: { id: companyId, ownerId: userId },
+    });
+    if (!company.logoPublicId) return;
+
+    await this.cloudinary.delete(company.logoPublicId, 'image');
+
+    company.logoUrl = '';
+    company.logoPublicId = '';
+
+    await this.companyRepo.save(company);
   }
 
   // ── Soft delete ────────────────────────────────────────────────────────────

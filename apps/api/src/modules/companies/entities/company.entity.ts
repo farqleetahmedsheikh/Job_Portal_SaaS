@@ -57,8 +57,14 @@ export class Company {
   @Column({ name: 'logo_url', type: 'text', nullable: true })
   logoUrl?: string;
 
+  @Column({ name: 'logo_public_id', type: 'text', nullable: true })
+  logoPublicId!: string;
+
   @Column({ name: 'cover_url', type: 'text', nullable: true })
   coverUrl?: string;
+
+  @Column({ name: 'cover_public_id', type: 'text', nullable: true })
+  coverPublicId!: string;
 
   @Column({ name: 'linkedin_url', type: 'text', nullable: true })
   linkedinUrl?: string;

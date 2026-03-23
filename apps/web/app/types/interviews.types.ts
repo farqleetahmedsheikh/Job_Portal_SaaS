@@ -1,19 +1,40 @@
 /** @format */
 
-export type InterviewType = "video" | "phone" | "onsite";
 export type InterviewStatus = "upcoming" | "completed" | "cancelled";
+export type InterviewType = "technical" | "hr" | "panel" | "cultural" | "final";
+export type InterviewFormat = "video" | "phone" | "onsite" | "async";
+export type FilterTab = "all" | InterviewStatus;
+
+export interface Panelist {
+  name: string;
+  role: string;
+  avatarUrl?: string;
+}
 
 export interface Interview {
   id: string;
+  // job info
+  jobId: string;
+  jobTitle: string;
+  company: string;
+  companyLogo?: string; // initials fallback
+  companyLogoUrl?: string;
+  // candidate info
   candidate: string;
   avatarUrl: string | null;
-  role: string;
-  scheduledAt: string; // ISO — replaces separate date + time strings
-  duration: number; // minutes
+  role: string; // candidate's applied role
+  // schedule
+  scheduledAt: string; // ISO
+  duration: number; // minutes — single source of truth
+  format: InterviewFormat;
   type: InterviewType;
-  status: InterviewStatus;
-  meetLink: string | null;
+  location?: string; // onsite only
+  meetLink: string | null; // video only
+  // people
   interviewers: string[];
+  panelists: Panelist[];
+  // meta
+  status: InterviewStatus;
   notes: string | null;
 }
 
@@ -24,7 +45,7 @@ export interface ScheduleForm {
   date: string;
   time: string;
   duration: string;
-  type: InterviewType;
+  type: InterviewFormat;
   interviewers: string;
   notes: string;
 }
@@ -41,12 +62,15 @@ export const SCHEDULE_INIT: ScheduleForm = {
   notes: "",
 };
 
-export const TYPE_META: Record<InterviewType, { label: string; cls: string }> =
-  {
-    video: { label: "Video", cls: "typeVideo" },
-    phone: { label: "Phone", cls: "typePhone" },
-    onsite: { label: "On-site", cls: "typeOnsite" },
-  };
+export const TYPE_META: Record<
+  InterviewFormat,
+  { label: string; cls: string }
+> = {
+  video: { label: "Video", cls: "typeVideo" },
+  phone: { label: "Phone", cls: "typePhone" },
+  onsite: { label: "On-site", cls: "typeOnsite" },
+  async: { label: "Async", cls: "typeAsync" }, // was missing
+};
 
 export const STATUS_META: Record<
   InterviewStatus,

@@ -18,7 +18,7 @@ export class MailService {
 
   constructor(private readonly config: ConfigService) {
     this.fromAddress =
-      this.config.get<string>('mail.from') ?? 'noreply@hiresphere.com';
+      this.config.get<string>('mail.from') ?? 'noreply@HiringFly.com';
 
     this.transporter = nodemailer.createTransport({
       host: this.config.get<string>('mail.host'),
@@ -35,7 +35,7 @@ export class MailService {
   async sendOtp(to: string, otp: string): Promise<void> {
     await this.send({
       to,
-      subject: 'Your HireSphere verification code',
+      subject: 'Your HiringFly verification code',
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
           <h2>Your verification code</h2>
@@ -57,7 +57,7 @@ export class MailService {
   async sendWelcome(to: string, fullName: string): Promise<void> {
     await this.send({
       to,
-      subject: 'Welcome to HireSphere!',
+      subject: 'Welcome to HiringFly!',
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
           <h2>Welcome, ${fullName}!</h2>

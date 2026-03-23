@@ -1,7 +1,7 @@
 /** @format */
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
   Briefcase,
@@ -14,166 +14,24 @@ import {
   BookmarkCheck,
   Send,
   Eye,
-  XCircle,
   CheckCircle2,
   AlertCircle,
   Filter,
   Building2,
   Calendar,
   SlidersHorizontal,
+  XCircle,
+  AlertTriangle,
 } from "lucide-react";
+import { useApplications } from "../../hooks/useApplications";
+import type { Application, AppStatus } from "../../types/applications.types";
 import styles from "../styles/applications.module.css";
 
-// ─── Types ────────────────────────────────────────────────
-type AppStatus =
-  | "applied"
-  | "reviewing"
-  | "interview"
-  | "offered"
-  | "rejected"
-  | "withdrawn";
+// ─── Config ───────────────────────────────────────────────────────────────────
 
-type JobType = "full-time" | "part-time" | "contract" | "remote";
-
-interface Application {
-  id: string;
-  role: string;
-  company: string;
-  logo: string;
-  location: string;
-  type: JobType;
-  salary: string;
-  appliedDate: string;
-  lastUpdate: string;
-  status: AppStatus;
-  source: string;
-  notes?: string;
-  jobUrl?: string;
-}
-
-// ─── Mock data — replace with API ─────────────────────────
-const APPLICATIONS: Application[] = [
-  {
-    id: "1",
-    role: "Senior Frontend Engineer",
-    company: "Stripe",
-    logo: "ST",
-    location: "Remote",
-    type: "remote",
-    salary: "$160k–$200k",
-    appliedDate: "Mar 6, 2026",
-    lastUpdate: "2 days ago",
-    status: "interview",
-    source: "LinkedIn",
-    jobUrl: "#",
-    notes: "Technical round scheduled for Mar 10",
-  },
-  {
-    id: "2",
-    role: "React Developer",
-    company: "Vercel",
-    logo: "VC",
-    location: "San Francisco, CA",
-    type: "full-time",
-    salary: "$140k–$170k",
-    appliedDate: "Mar 4, 2026",
-    lastUpdate: "4 days ago",
-    status: "reviewing",
-    source: "Company Site",
-  },
-  {
-    id: "3",
-    role: "UI Engineer",
-    company: "Linear",
-    logo: "LN",
-    location: "Remote",
-    type: "remote",
-    salary: "$130k–$160k",
-    appliedDate: "Mar 1, 2026",
-    lastUpdate: "1 week ago",
-    status: "applied",
-    source: "Referral",
-  },
-  {
-    id: "4",
-    role: "Frontend Lead",
-    company: "Figma",
-    logo: "FG",
-    location: "New York, NY",
-    type: "full-time",
-    salary: "$170k–$210k",
-    appliedDate: "Feb 24, 2026",
-    lastUpdate: "2 weeks ago",
-    status: "offered",
-    source: "LinkedIn",
-    notes: "Offer received — deadline Mar 15",
-  },
-  {
-    id: "5",
-    role: "Full Stack Engineer",
-    company: "Notion",
-    logo: "NT",
-    location: "Remote",
-    type: "remote",
-    salary: "$120k–$150k",
-    appliedDate: "Feb 20, 2026",
-    lastUpdate: "2 weeks ago",
-    status: "rejected",
-    source: "AngelList",
-    notes: "Position filled internally",
-  },
-  {
-    id: "6",
-    role: "Software Engineer II",
-    company: "Loom",
-    logo: "LM",
-    location: "San Francisco, CA",
-    type: "full-time",
-    salary: "$135k–$165k",
-    appliedDate: "Feb 15, 2026",
-    lastUpdate: "3 weeks ago",
-    status: "withdrawn",
-    source: "Company Site",
-    notes: "Withdrew — accepted another offer",
-  },
-  {
-    id: "7",
-    role: "React Native Developer",
-    company: "Shopify",
-    logo: "SH",
-    location: "Remote",
-    type: "remote",
-    salary: "$140k–$175k",
-    appliedDate: "Mar 7, 2026",
-    lastUpdate: "1 day ago",
-    status: "applied",
-    source: "LinkedIn",
-  },
-  {
-    id: "8",
-    role: "Frontend Architect",
-    company: "Airbnb",
-    logo: "AB",
-    location: "San Francisco, CA",
-    type: "full-time",
-    salary: "$180k–$220k",
-    appliedDate: "Feb 28, 2026",
-    lastUpdate: "1 week ago",
-    status: "reviewing",
-    source: "Referral",
-    notes: "Referred by John Smith (Senior Eng)",
-  },
-];
-
-// ─── Config ───────────────────────────────────────────────
 const STATUS_CONFIG: Record<
   AppStatus,
-  {
-    label: string;
-    icon: React.ReactNode;
-    cls: string;
-    step: number;
-  }
+  { label: string; icon: React.ReactNode; cls: string; step: number }
 > = {
   applied: {
     label: "Applied",
@@ -225,17 +83,23 @@ const STATUS_FILTERS = [
   { key: "withdrawn", label: "Withdrawn" },
 ] as const;
 
-type FilterKey = (typeof STATUS_FILTERS)[number]["key"];
+// ─── Application row ──────────────────────────────────────────────────────────
 
-// ─── Application Row ──────────────────────────────────────
-function ApplicationRow({ app }: { app: Application }) {
+function ApplicationRow({
+  app,
+  onWithdraw,
+  onRemove,
+}: {
+  app: Application;
+  onWithdraw: (id: string) => void;
+  onRemove: (id: string) => void;
+}) {
   const [expanded, setExpanded] = useState(false);
   const cfg = STATUS_CONFIG[app.status];
   const inPipeline = app.status !== "rejected" && app.status !== "withdrawn";
 
   return (
     <div className={`${styles.row} ${expanded ? styles["row-open"] : ""}`}>
-      {/* Main row */}
       <div
         className={styles["row-main"]}
         onClick={() => setExpanded((p) => !p)}
@@ -243,10 +107,8 @@ function ApplicationRow({ app }: { app: Application }) {
         tabIndex={0}
         onKeyDown={(e) => e.key === "Enter" && setExpanded((p) => !p)}
       >
-        {/* Logo */}
         <div className={styles["row-logo"]}>{app.logo}</div>
 
-        {/* Info */}
         <div className={styles["row-info"]}>
           <div className={styles["row-role"]}>{app.role}</div>
           <div className={styles["row-meta"]}>
@@ -262,10 +124,8 @@ function ApplicationRow({ app }: { app: Application }) {
           </div>
         </div>
 
-        {/* Salary */}
         <div className={styles["row-salary"]}>{app.salary}</div>
 
-        {/* Date */}
         <div className={styles["row-date"]}>
           <span>{app.appliedDate}</span>
           <span className={styles["row-update"]}>
@@ -273,46 +133,35 @@ function ApplicationRow({ app }: { app: Application }) {
           </span>
         </div>
 
-        {/* Status */}
         <div className={styles["row-status"]}>
           <span className={`${styles["status-chip"]} ${styles[cfg.cls]}`}>
             {cfg.icon} {cfg.label}
           </span>
         </div>
 
-        {/* Chevron */}
         <ChevronDown
           size={14}
           className={`${styles.chevron} ${expanded ? styles["chevron-up"] : ""}`}
         />
       </div>
 
-      {/* Expanded */}
       {expanded && (
         <div className={styles["row-expanded"]}>
-          {/* Pipeline tracker — only for active apps */}
           {inPipeline && (
             <div className={styles.pipeline}>
               {PIPELINE_STEPS.map((step, i) => {
                 const stepNum = i + 1;
-                const current = STATUS_CONFIG[app.status].step;
-                const isDone = stepNum < current;
-                const isActive = stepNum === current;
+                const isDone = stepNum < cfg.step;
+                const isActive = stepNum === cfg.step;
                 return (
                   <div key={step} className={styles["pipeline-step"]}>
                     <div
-                      className={`${styles["step-dot"]}
-                      ${isDone ? styles["dot-done"] : ""}
-                      ${isActive ? styles["dot-active"] : ""}
-                    `}
+                      className={`${styles["step-dot"]} ${isDone ? styles["dot-done"] : ""} ${isActive ? styles["dot-active"] : ""}`}
                     >
                       {isDone ? <CheckCircle2 size={12} /> : stepNum}
                     </div>
                     <span
-                      className={`${styles["step-label"]}
-                      ${isActive ? styles["step-active"] : ""}
-                      ${isDone ? styles["step-done"] : ""}
-                    `}
+                      className={`${styles["step-label"]} ${isActive ? styles["step-active"] : ""} ${isDone ? styles["step-done"] : ""}`}
                     >
                       {step}
                     </span>
@@ -328,7 +177,6 @@ function ApplicationRow({ app }: { app: Application }) {
           )}
 
           <div className={styles["expanded-body"]}>
-            {/* Details grid */}
             <div className={styles["detail-grid"]}>
               <div className={styles["detail-item"]}>
                 <span className={styles["detail-label"]}>Source</span>
@@ -352,18 +200,15 @@ function ApplicationRow({ app }: { app: Application }) {
               )}
             </div>
 
-            {/* Actions */}
             <div className={styles["row-actions"]}>
               {app.jobUrl && (
-                <a
+                <Link
                   href={app.jobUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className={`${styles.btn} ${styles["btn-ghost"]}`}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <ExternalLink size={12} /> View Job
-                </a>
+                </Link>
               )}
               {app.status === "interview" && (
                 <Link
@@ -379,7 +224,25 @@ function ApplicationRow({ app }: { app: Application }) {
                   <CheckCircle2 size={12} /> Respond to Offer
                 </button>
               )}
-              <button className={`${styles.btn} ${styles["btn-danger-ghost"]}`}>
+              {app.status !== "withdrawn" && (
+                <button
+                  className={`${styles.btn} ${styles["btn-danger-ghost"]}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onWithdraw(app.id);
+                  }}
+                >
+                  <AlertCircle size={12} /> Withdraw
+                </button>
+              )}
+              <button
+                className={`${styles.btn} ${styles["btn-danger-ghost"]}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (confirm(`Remove "${app.role}" at ${app.company}?`))
+                    onRemove(app.id);
+                }}
+              >
                 <Trash2 size={12} /> Remove
               </button>
             </div>
@@ -390,51 +253,100 @@ function ApplicationRow({ app }: { app: Application }) {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
+function PageSkeleton() {
+  return (
+    <div className={styles.page}>
+      <div className={styles.header}>
+        <div>
+          <div
+            style={{
+              height: 28,
+              width: 180,
+              background: "var(--surface)",
+              borderRadius: 6,
+              marginBottom: 8,
+            }}
+          />
+          <div
+            style={{
+              height: 16,
+              width: 120,
+              background: "var(--surface)",
+              borderRadius: 4,
+            }}
+          />
+        </div>
+      </div>
+      <div className={styles["stat-row"]}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <div
+            key={n}
+            className={styles["stat-card"]}
+            style={{ height: 64, background: "var(--surface)" }}
+          />
+        ))}
+      </div>
+      <div className={styles.list}>
+        {[1, 2, 3, 4].map((n) => (
+          <div
+            key={n}
+            style={{
+              height: 72,
+              borderRadius: 10,
+              background: "var(--surface)",
+              marginBottom: 8,
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function ApplicationsPage() {
-  const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<"date" | "status" | "company">("date");
+  const {
+    filtered,
+    stats,
+    counts,
+    loading,
+    error,
+    activeFilter,
+    setActiveFilter,
+    search,
+    setSearch,
+    sortBy,
+    setSortBy,
+    withdrawApplication,
+    removeApplication,
+  } = useApplications();
+
   const [showSort, setShowSort] = useState(false);
 
-  // Stats
-  const stats = useMemo(
-    () => ({
-      total: APPLICATIONS.length,
-      active: APPLICATIONS.filter(
-        (a) => !["rejected", "withdrawn"].includes(a.status),
-      ).length,
-      interview: APPLICATIONS.filter((a) => a.status === "interview").length,
-      offered: APPLICATIONS.filter((a) => a.status === "offered").length,
-      rejected: APPLICATIONS.filter((a) => a.status === "rejected").length,
-    }),
-    [],
-  );
+  if (loading) return <PageSkeleton />;
 
-  // Filter + search + sort
-  const filtered = useMemo(() => {
-    let list = APPLICATIONS;
-
-    if (activeFilter !== "all") {
-      list = list.filter((a) => a.status === activeFilter);
-    }
-
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (a) =>
-          a.role.toLowerCase().includes(q) ||
-          a.company.toLowerCase().includes(q) ||
-          a.location.toLowerCase().includes(q),
-      );
-    }
-
-    return [...list].sort((a, b) => {
-      if (sortBy === "company") return a.company.localeCompare(b.company);
-      if (sortBy === "status") return a.status.localeCompare(b.status);
-      return 0; // date — keep original order (newest first from API)
-    });
-  }, [activeFilter, search, sortBy]);
+  if (error) {
+    return (
+      <div className={styles.page}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            color: "var(--status-danger)",
+            padding: "14px 18px",
+            background: "rgba(239,68,68,0.06)",
+            borderRadius: 10,
+          }}
+        >
+          <AlertTriangle size={14} /> {error}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -503,7 +415,6 @@ export default function ApplicationsPage() {
 
       {/* Toolbar */}
       <div className={styles.toolbar}>
-        {/* Search */}
         <div className={styles["search-wrap"]}>
           <Search size={13} className={styles["search-icon"]} />
           <input
@@ -513,8 +424,6 @@ export default function ApplicationsPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-
-        {/* Sort */}
         <div className={styles["sort-wrap"]}>
           <button
             className={`${styles.btn} ${styles["btn-ghost"]}`}
@@ -541,8 +450,6 @@ export default function ApplicationsPage() {
             </div>
           )}
         </div>
-
-        {/* Filter icon (mobile) */}
         <button
           className={`${styles.btn} ${styles["btn-ghost"]} ${styles["filter-btn"]}`}
         >
@@ -552,24 +459,18 @@ export default function ApplicationsPage() {
 
       {/* Status filter tabs */}
       <div className={styles["filter-tabs"]}>
-        {STATUS_FILTERS.map((f) => {
-          const count =
-            f.key === "all"
-              ? APPLICATIONS.length
-              : APPLICATIONS.filter((a) => a.status === f.key).length;
-          return (
-            <button
-              key={f.key}
-              className={`${styles["filter-tab"]} ${activeFilter === f.key ? styles["filter-tab-active"] : ""}`}
-              onClick={() => setActiveFilter(f.key)}
-            >
-              {f.label}
-              {count > 0 && (
-                <span className={styles["filter-count"]}>{count}</span>
-              )}
-            </button>
-          );
-        })}
+        {STATUS_FILTERS.map((f) => (
+          <button
+            key={f.key}
+            className={`${styles["filter-tab"]} ${activeFilter === f.key ? styles["filter-tab-active"] : ""}`}
+            onClick={() => setActiveFilter(f.key)}
+          >
+            {f.label}
+            {(counts[f.key] ?? 0) > 0 && (
+              <span className={styles["filter-count"]}>{counts[f.key]}</span>
+            )}
+          </button>
+        ))}
       </div>
 
       {/* Table header */}
@@ -608,14 +509,20 @@ export default function ApplicationsPage() {
             )}
           </div>
         ) : (
-          filtered.map((app) => <ApplicationRow key={app.id} app={app} />)
+          filtered.map((app) => (
+            <ApplicationRow
+              key={app.id}
+              app={app}
+              onWithdraw={withdrawApplication}
+              onRemove={removeApplication}
+            />
+          ))
         )}
       </div>
 
-      {/* Footer count */}
       {filtered.length > 0 && (
         <p className={styles["list-footer"]}>
-          Showing {filtered.length} of {APPLICATIONS.length} applications
+          Showing {filtered.length} of {stats.total} applications
         </p>
       )}
     </div>
