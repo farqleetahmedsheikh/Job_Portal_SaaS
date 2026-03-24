@@ -30,12 +30,12 @@ export const Avatar = ({ name, src, size = 40 }: AvatarProps) => {
       }}
     >
       {src ? (
-        <Image
+        <img
           src={src}
           alt={name}
           width={size}
           height={size}
-          className={styles["avatar-img"]}
+          className={styles["avatar"]}
         />
       ) : (
         <span className={styles["avatar-fallback"]}>{initials}</span>

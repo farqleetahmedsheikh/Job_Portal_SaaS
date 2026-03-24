@@ -23,10 +23,30 @@ function buildForm(c: Company): CompanyForm {
   };
 }
 
+// ── Shared multipart uploader ─────────────────────────────────────────────────
+async function uploadImage(url: string, file: File): Promise<Company> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(url, {
+    method: "PATCH",
+    credentials: "include", // httpOnly JWT cookie
+    body: formData, // browser sets Content-Type + boundary automatically
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message ?? "Upload failed");
+  }
+
+  return res.json() as Promise<Company>;
+}
+
 export function useCompany() {
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -35,10 +55,18 @@ export function useCompany() {
   const [form, setForm] = useState<CompanyForm | null>(null);
   const [draft, setDraft] = useState<CompanyForm | null>(null);
 
-  // Perks — managed separately (full replace on save)
+  // Perks
   const [perks, setPerks] = useState<string[]>([]);
   const [perkInput, setPerkInput] = useState("");
   const [perkSaving, setPerkSaving] = useState(false);
+
+  // Logo upload
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+
+  // Cover upload
+  const [coverUploading, setCoverUploading] = useState(false);
+  const [coverError, setCoverError] = useState<string | null>(null);
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -131,6 +159,50 @@ export function useCompany() {
     }
   }, [company, draft]);
 
+  // ── Logo upload ───────────────────────────────────────────────────────────
+  const handleLogoUpload = useCallback(
+    async (file: File) => {
+      if (!company) return;
+      setLogoUploading(true);
+      setLogoError(null);
+      try {
+        const updated = await uploadImage(
+          `${API_BASE}/companies/${company.id}/logo`,
+          file,
+        );
+        setCompany(updated);
+      } catch (err) {
+        setLogoError(err instanceof Error ? err.message : "Logo upload failed");
+      } finally {
+        setLogoUploading(false);
+      }
+    },
+    [company],
+  );
+
+  // ── Cover upload ──────────────────────────────────────────────────────────
+  const handleCoverUpload = useCallback(
+    async (file: File) => {
+      if (!company) return;
+      setCoverUploading(true);
+      setCoverError(null);
+      try {
+        const updated = await uploadImage(
+          `${API_BASE}/companies/${company.id}/cover`,
+          file,
+        );
+        setCompany(updated);
+      } catch (err) {
+        setCoverError(
+          err instanceof Error ? err.message : "Cover upload failed",
+        );
+      } finally {
+        setCoverUploading(false);
+      }
+    },
+    [company],
+  );
+
   // ── Perks ─────────────────────────────────────────────────────────────────
   const addPerk = useCallback(() => {
     const p = perkInput.trim();
@@ -173,6 +245,14 @@ export function useCompany() {
     handleEdit,
     handleCancel,
     handleSave,
+    // logo
+    logoUploading,
+    logoError,
+    handleLogoUpload,
+    // cover
+    coverUploading,
+    coverError,
+    handleCoverUpload,
     // perks
     perks,
     perkInput,

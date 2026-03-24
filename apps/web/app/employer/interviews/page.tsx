@@ -23,15 +23,17 @@ import {
   STATUS_META,
   SCHEDULE_INIT,
   type Interview,
-  type InterviewType,
+  type InterviewFormat, // ← was InterviewType — TYPE_ICON keys are formats
   type ScheduleForm,
 } from "../../types/interviews.types";
 import styles from "../styles/emp-interviews.module.css";
 
-const TYPE_ICON: Record<InterviewType, React.ReactNode> = {
+// format → icon (video/phone/onsite/async — InterviewFormat, not InterviewType)
+const TYPE_ICON: Record<InterviewFormat, React.ReactNode> = {
   video: <Video size={13} />,
   phone: <Phone size={13} />,
   onsite: <Building2 size={13} />,
+  async: <Clock size={13} />,
 };
 
 function isToday(iso: string) {
@@ -53,7 +55,7 @@ function InterviewCard({
   onCancel: (id: string) => void;
 }) {
   const [showMenu, setShowMenu] = useState(false);
-  const typeMeta = TYPE_META[iv.type];
+  const typeMeta = TYPE_META[iv.format]; // ← iv.format (video/phone/…), not iv.type
   const statusMeta = STATUS_META[iv.status];
   const today = isToday(iv.scheduledAt);
 
@@ -83,7 +85,7 @@ function InterviewCard({
           </div>
         </div>
         <span className={`${styles.typeChip} ${styles[typeMeta.cls]}`}>
-          {TYPE_ICON[iv.type]} {typeMeta.label}
+          {TYPE_ICON[iv.format]} {typeMeta.label}
         </span>
         <div className={styles.interviewers}>
           {iv.interviewers.map((name) => (
@@ -338,7 +340,7 @@ export default function EmployerInterviewsPage() {
     counts,
     handleCancel,
     handleSchedule,
-  } = useInterviews();
+  } = useInterviews({ mode: "employer" }); // ← was missing
 
   if (loading)
     return (

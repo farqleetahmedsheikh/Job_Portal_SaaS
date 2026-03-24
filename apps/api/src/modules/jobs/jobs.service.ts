@@ -13,7 +13,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 
-// ── Entity classes — NOT strings ─────────────────────────────────────────────
 import { Job } from './entities/job.entity';
 import { Company } from '../companies/entities/company.entity';
 import { Application } from '../applications/entities/application.entity';
@@ -28,7 +27,6 @@ import { ChangeJobStatusDto } from './dto/change-job-status.dto';
 @Injectable()
 export class JobsService {
   constructor(
-    // ✅ Entity class passed to @InjectRepository — never a string
     @InjectRepository(Job) private readonly jobRepo: Repository<Job>,
     @InjectRepository(JobSkill)
     private readonly skillRepo: Repository<JobSkill>,
@@ -48,18 +46,15 @@ export class JobsService {
       throw new ForbiddenException('No company profile found for this account');
 
     return this.dataSource.transaction(async (manager) => {
-      // ✅ manager.create(EntityClass, data) — NOT manager.create<T>("string", data)
       const job = manager.create(Job, {
         ...dto,
         companyId: company.id,
         postedById: userId,
         publishedAt: dto.status === JobStatus.ACTIVE ? new Date() : null,
       });
-      // ✅ manager.save(EntityClass, entity) — two-arg form avoids type inference issues
       await manager.save(Job, job);
 
       if (dto.skills?.length) {
-        // ✅ Build the flat array first, then save — NOT save(array.map(...))
         const skillEntities: JobSkill[] = dto.skills.map((s) =>
           manager.create(JobSkill, { jobId: job.id, skill: s.toLowerCase() }),
         );
@@ -114,7 +109,6 @@ export class JobsService {
   async duplicate(jobId: string, userId: string): Promise<Job> {
     const job = await this.findOwnedOrFail(jobId, userId);
 
-    // Strip identity + auto-managed fields before copying
     const {
       id: _id,
       createdAt: _ca,
@@ -123,8 +117,8 @@ export class JobsService {
       expiresAt: _ea,
       viewsCount: _vc,
       applicantsCount: _ac,
-      company: _company, // loaded relation — don't copy
-      jobSkills: _js, // loaded relation — don't copy
+      company: _company,
+      jobSkills: _js,
       ...rest
     } = job as any;
 
@@ -133,6 +127,8 @@ export class JobsService {
       title: `${job.title} (copy)`,
       status: JobStatus.DRAFT,
       publishedAt: null,
+      deadline: null, // clear deadline on duplicate — employer sets a new one
+      expiresAt: null,
     } as Job);
 
     return this.jobRepo.save(copy);
@@ -160,11 +156,17 @@ export class JobsService {
       sort = 'newest',
     } = query;
 
+    const now = new Date();
+    const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
+
     const qb = this.jobRepo
       .createQueryBuilder('j')
       .innerJoinAndSelect('j.company', 'c')
       .where('j.status = :status', { status: JobStatus.ACTIVE })
-      .andWhere('j.deleted_at IS NULL');
+      .andWhere('j.deleted_at IS NULL')
+      // ── Exclude past-deadline jobs even if status hasn't been updated yet ──
+      .andWhere('(j.deadline IS NULL OR j.deadline >= :today)', { today })
+      .andWhere('(j.expires_at IS NULL OR j.expires_at > :now)', { now });
 
     if (q)
       qb.andWhere('(j.title ILIKE :q OR j.skills::text ILIKE :q)', {
@@ -201,7 +203,6 @@ export class JobsService {
     });
     if (!job) throw new NotFoundException('Job not found');
 
-    // increment without triggering @BeforeUpdate hooks
     await this.jobRepo.increment({ id: jobId }, 'viewsCount', 1);
 
     return job;
@@ -249,12 +250,10 @@ export class JobsService {
     return this.savedJobRepo.save(this.savedJobRepo.create({ userId, jobId }));
   }
 
-  // ── Applicant: Unsave ────────────────────────────────────────────────────────
   async unsaveJob(userId: string, jobId: string): Promise<void> {
     await this.savedJobRepo.delete({ userId, jobId });
   }
 
-  // ── Applicant: Get all saved jobs ────────────────────────────────────────────
   async getSavedJobs(userId: string): Promise<SavedJob[]> {
     return this.savedJobRepo.find({
       where: { userId },
@@ -263,7 +262,6 @@ export class JobsService {
     });
   }
 
-  // ── Applicant: Check saved status ────────────────────────────────────────────
   async isJobSaved(userId: string, jobId: string): Promise<boolean> {
     const count = await this.savedJobRepo.count({ where: { userId, jobId } });
     return count > 0;

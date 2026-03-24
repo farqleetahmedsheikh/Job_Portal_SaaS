@@ -1,5 +1,4 @@
 /** @format */
-// app/applicant/profile/page.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -20,7 +19,8 @@ export default function ProfilePage() {
   const { setUser } = useSessionStore();
 
   if (!user) {
-    router.replace("/login");
+    console.log("User-------> ", user);
+    router.push("/login");
     return null;
   }
 
@@ -35,6 +35,9 @@ export default function ProfilePage() {
     handleEdit,
     handleCancel,
     handleSave,
+    avatarUploading,
+    avatarError,
+    handleAvatarUpload,
   } = useProfileForm({ user, setUser });
 
   const isApplicant = user.role === "applicant";
@@ -52,9 +55,19 @@ export default function ProfilePage() {
 
       <StatusBanners saved={saved} serverError={serverError} />
 
+      {avatarError && (
+        <div className={styles["banner-error"]}>⚠ {avatarError}</div>
+      )}
+
       {/* ── Personal info ────────────────────────────────────────────────── */}
       <div className={styles.card}>
-        <ProfileAvatar user={user} fullName={form.fullName} editing={editing} />
+        <ProfileAvatar
+          user={user}
+          fullName={form.fullName}
+          editing={editing}
+          uploading={avatarUploading}
+          onAvatarChange={handleAvatarUpload}
+        />
 
         <div className={styles["card-body"]}>
           <div className={styles["form-grid"]}>
@@ -69,17 +82,30 @@ export default function ProfilePage() {
               />
             ))}
           </div>
+        </div>
+      </div>
 
-          {isApplicant && (
+      {/* ── Skills ───────────────────────────────────────────────────────── */}
+      {isApplicant && (
+        <div className={styles.card}>
+          <div className={styles["card-header"]}>
+            <h2 className={styles["card-title"]}>Skills</h2>
+            {!editing && (
+              <span className={styles["card-count"]}>
+                {user.applicantProfile?.skills?.length ?? 0} added
+              </span>
+            )}
+          </div>
+          <div className={styles["card-body"]}>
             <SkillsField
               editing={editing}
               draftValue={draft.skills}
               skills={user.applicantProfile?.skills}
               onChange={handleChange}
             />
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       <DangerZone />
     </div>

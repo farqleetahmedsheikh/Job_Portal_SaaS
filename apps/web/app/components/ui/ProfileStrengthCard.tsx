@@ -18,6 +18,15 @@ export function ProfileStrengthCard() {
   const checklist = data?.checklist ?? [];
   const userInitials = initials(user?.fullName ?? "U");
 
+  const isApplicant = user?.role === "applicant";
+
+  // Role-aware sub-label and CTA path
+  const roleLabel = isApplicant
+    ? (user?.applicantProfile?.jobTitle ?? "Applicant")
+    : (user?.companies?.companyName ?? "Employer"); // was: user.company (wrong field name)
+
+  const profileHref = isApplicant ? "/applicant/profile" : "/employer/profile"; // was: hardcoded to applicant
+
   if (loading) {
     return (
       <div className={styles.card}>
@@ -36,9 +45,9 @@ export function ProfileStrengthCard() {
         {/* Top — avatar + name */}
         <div className={styles["profile-top"]}>
           <div className={styles["profile-avatar"]}>
-            {user?.avatar ? (
+            {user?.avatarUrl ? ( // was: user.avatar (wrong field name)
               <img
-                src={user.avatar}
+                src={user.avatarUrl}
                 alt={user.fullName}
                 style={{
                   width: "100%",
@@ -53,11 +62,7 @@ export function ProfileStrengthCard() {
           </div>
           <div>
             <p className={styles["profile-name"]}>{user?.fullName ?? "—"}</p>
-            <p className={styles["profile-role"]}>
-              {user?.role === "applicant"
-                ? (user.applicantProfile?.jobTitle ?? "Applicant")
-                : (user?.company?.companyName ?? "Employer")}
-            </p>
+            <p className={styles["profile-role"]}>{roleLabel}</p>
           </div>
         </div>
 
@@ -100,7 +105,7 @@ export function ProfileStrengthCard() {
           </div>
         </div>
 
-        {/* Checklist — show top 5, collapsible */}
+        {/* Checklist */}
         <div className={styles.checklist}>
           {checklist.map((item) => (
             <div key={item.label} className={styles["check-item"]}>
@@ -118,7 +123,6 @@ export function ProfileStrengthCard() {
               >
                 {item.label}
               </span>
-              {/* Show weight only for incomplete items */}
               {!item.done && (
                 <span
                   style={{
@@ -134,10 +138,10 @@ export function ProfileStrengthCard() {
           ))}
         </div>
 
-        {/* CTA — only if incomplete */}
+        {/* CTA */}
         {strength < 100 && (
           <Link
-            href="/applicant/profile"
+            href={profileHref}
             style={{ display: "block", marginTop: 20 }}
             className={styles["welcome-action"]}
           >

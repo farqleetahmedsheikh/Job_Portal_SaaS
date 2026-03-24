@@ -6,7 +6,7 @@ import { ShieldCheck, ShieldAlert } from "lucide-react";
 import styles from "../../employer/styles/profile.module.css";
 
 interface Props {
-  isVerified: boolean;
+  isVerified: boolean | undefined;
 }
 
 export function EmailVerifiedBadge({ isVerified }: Props) {

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Injectable,
   NotFoundException,
@@ -72,7 +74,6 @@ export class CompaniesService {
     updates: UpdateCompanyDto,
   ): Promise<Company> {
     const company = await this.findById(id);
-    // 404 not 403 — don't leak existence to other employers
     if (company.ownerId !== ownerId)
       throw new NotFoundException('Company not found');
 
@@ -89,7 +90,7 @@ export class CompaniesService {
     }
   }
 
-  // ── Replace perks list (full replace — sort order = array order) ───────────
+  // ── Replace perks (full replace — sort order = array order) ───────────────
   async updatePerks(
     id: string,
     ownerId: string,
@@ -110,11 +111,12 @@ export class CompaniesService {
     });
   }
 
+  // ── Logo ───────────────────────────────────────────────────────────────────
   async updateLogo(
     userId: string,
     companyId: string,
     file: Express.Multer.File,
-  ) {
+  ): Promise<Company> {
     const company = await this.companyRepo.findOneOrFail({
       where: { id: companyId, ownerId: userId },
     });
@@ -140,6 +142,42 @@ export class CompaniesService {
 
     company.logoUrl = '';
     company.logoPublicId = '';
+
+    await this.companyRepo.save(company);
+  }
+
+  // ── Cover ──────────────────────────────────────────────────────────────────
+  async updateCover(
+    userId: string,
+    companyId: string,
+    file: Express.Multer.File,
+  ): Promise<Company> {
+    const company = await this.companyRepo.findOneOrFail({
+      where: { id: companyId, ownerId: userId },
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const result = await this.cloudinary.uploadCompanyCover(
+      file.buffer,
+      company.coverPublicId ?? undefined,
+    );
+
+    company.coverUrl = result.url;
+    company.coverPublicId = result.publicId;
+
+    return this.companyRepo.save(company);
+  }
+
+  async deleteCover(userId: string, companyId: string): Promise<void> {
+    const company = await this.companyRepo.findOneOrFail({
+      where: { id: companyId, ownerId: userId },
+    });
+    if (!company.coverPublicId) return;
+
+    await this.cloudinary.delete(company.coverPublicId, 'image');
+
+    company.coverUrl = '';
+    company.coverPublicId = '';
 
     await this.companyRepo.save(company);
   }

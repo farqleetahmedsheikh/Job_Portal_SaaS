@@ -39,13 +39,19 @@ export class CompaniesController {
   // POST /api/companies
   @Post()
   create(@Req() req: any, @Body() dto: CreateCompanyDto) {
-    return this.service.create(req.user.userId, dto);
+    return this.service.create(req.user.sub, dto);
   }
 
-  // GET /api/companies/me
+  // GET /api/companies/me  ← static before :id
   @Get('me')
   getMyCompany(@Req() req: any) {
-    return this.service.findByOwner(req.user.userId);
+    return this.service.findByOwner(req.user.sub);
+  }
+
+  // GET /api/companies/:id
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.service.findById(id);
   }
 
   // PATCH /api/companies/:id
@@ -57,29 +63,25 @@ export class CompaniesController {
   ) {
     return this.service.update(id, req.user.sub, dto);
   }
-  // GET /api/companies/:id  — any authenticated user (public profile)
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.service.findById(id);
+
+  // DELETE /api/companies/:id
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  delete(@Req() req: any, @Param('id') id: string) {
+    return this.service.delete(id, req.user.sub);
   }
 
-  // PATCH /api/companies/:id/perks
+  // PATCH /api/companies/:id/perks  ← static sub-route before bare :id actions
   @Patch(':id/perks')
   updatePerks(
     @Req() req: any,
     @Param('id') id: string,
     @Body() dto: UpdatePerksDto,
   ) {
-    return this.service.updatePerks(id, req.user.userId, dto);
+    return this.service.updatePerks(id, req.user.sub, dto);
   }
 
-  // DELETE /api/companies/:id
-  @Delete(':id')
-  delete(@Req() req: any, @Param('id') id: string) {
-    return this.service.delete(id, req.user.userId);
-  }
-
-  // PATCH /companies/:id/logo
+  // PATCH /api/companies/:id/logo
   @Patch(':id/logo')
   @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
   uploadLogo(
@@ -100,10 +102,36 @@ export class CompaniesController {
     return this.service.updateLogo(req.user.sub, id, file);
   }
 
-  // DELETE /companies/:id/logo
+  // DELETE /api/companies/:id/logo
   @Delete(':id/logo')
   @HttpCode(HttpStatus.NO_CONTENT)
   deleteLogo(@Req() req: any, @Param('id') id: string) {
     return this.service.deleteLogo(req.user.sub, id);
+  }
+
+  // PATCH /api/companies/:id/cover
+  @Patch(':id/cover')
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+  uploadCover(
+    @Req() req: any,
+    @Param('id') id: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /image\/(jpeg|png|webp)/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    return this.service.updateCover(req.user.sub, id, file);
+  }
+
+  // DELETE /api/companies/:id/cover
+  @Delete(':id/cover')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteCover(@Req() req: any, @Param('id') id: string) {
+    return this.service.deleteCover(req.user.sub, id);
   }
 }

@@ -206,11 +206,12 @@ export class UsersService {
   // ── Profile strength ───────────────────────────────────────────────────────
   calculateProfileStrength(user: User): ProfileStrengthResponse {
     const isApplicant = user.role === UserRole.APPLICANT;
-    const profile = user.applicantProfile;
-    const company = user.companies?.[0];
+    const profile = user.applicantProfile; // OneToOne — direct, no [0]
+    const company = user.companies; // OneToOne — was wrongly [0]
 
     const checklist: ProfileStrengthItem[] = isApplicant
       ? [
+          // ── User fields ────────────────────────────────────────────────────
           { label: 'Full name set', done: !!user.fullName, weight: 10 },
           {
             label: 'Profile photo uploaded',
@@ -219,10 +220,11 @@ export class UsersService {
           },
           { label: 'Phone number added', done: !!user.phone, weight: 10 },
           { label: 'Bio written', done: !!user.bio, weight: 10 },
+          // ── ApplicantProfile fields ────────────────────────────────────────
           { label: 'Job title set', done: !!profile?.jobTitle, weight: 15 },
           {
             label: 'Skills added',
-            done: !!profile?.skills?.length,
+            done: (profile?.skills?.length ?? 0) > 0,
             weight: 15,
           },
           {
@@ -239,6 +241,7 @@ export class UsersService {
           { label: 'GitHub connected', done: !!profile?.githubUrl, weight: 5 },
         ]
       : [
+          // ── User fields ────────────────────────────────────────────────────
           { label: 'Full name set', done: !!user.fullName, weight: 10 },
           {
             label: 'Profile photo uploaded',
@@ -247,6 +250,7 @@ export class UsersService {
           },
           { label: 'Phone number added', done: !!user.phone, weight: 10 },
           { label: 'Bio written', done: !!user.bio, weight: 10 },
+          // ── Company fields — field names from Company entity ───────────────
           {
             label: 'Company name set',
             done: !!company?.companyName,
@@ -262,14 +266,13 @@ export class UsersService {
             done: !!company?.location,
             weight: 10,
           },
-          { label: 'Website added', done: !!company?.website, weight: 10 },
-          {
-            label: 'Company description',
-            done: !!company?.description,
-            weight: 10,
-          },
+          { label: 'Website added', done: !!company?.websiteUrl, weight: 10 }, // was: website
+          { label: 'Company description', done: !!company?.about, weight: 10 }, // was: description
+          { label: 'Logo uploaded', done: !!company?.logoUrl, weight: 5 },
+          { label: 'Tagline written', done: !!company?.tagline, weight: 5 },
         ];
 
+    // Weights now sum to 100 for both roles — no normalisation needed
     const strength = checklist.reduce(
       (sum, item) => sum + (item.done ? item.weight : 0),
       0,

@@ -76,11 +76,48 @@ export function useProfileForm({ user, setUser }: Options) {
   const [saved, setSaved] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
+  // Avatar-specific state
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+
   // ── Text field changes ─────────────────────────────────────────────────────
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setDraft((prev) => ({ ...prev, [e.target.name]: e.target.value })),
     [],
+  );
+
+  // ── Avatar upload — multipart, not JSON ───────────────────────────────────
+  const handleAvatarUpload = useCallback(
+    async (file: File) => {
+      setAvatarUploading(true);
+      setAvatarError(null);
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        // Must use raw fetch — api() sends JSON which breaks multipart
+        const res = await fetch(`${API_BASE}/users/me/avatar`, {
+          method: "PATCH",
+          credentials: "include", // sends httpOnly JWT cookie
+          body: formData, // browser sets Content-Type + boundary automatically
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err?.message ?? "Avatar upload failed");
+        }
+
+        const updated: SessionUser = await res.json();
+        setUser(updated);
+      } catch (err) {
+        setAvatarError(err instanceof Error ? err.message : "Upload failed");
+      } finally {
+        setAvatarUploading(false);
+      }
+    },
+    [setUser],
   );
 
   // ── Toggle changes — optimistic, saves immediately ─────────────────────────
@@ -92,13 +129,10 @@ export function useProfileForm({ user, setUser }: Options) {
         const updated = await api<SessionUser>(
           `${API_BASE}/users/me`,
           "PATCH",
-          {
-            [name]: next,
-          },
+          { [name]: next },
         );
         setUser(updated);
       } catch {
-        // Rollback on failure
         setPrivacy((prev) => ({ ...prev, [name]: !next }));
       }
     },
@@ -113,9 +147,7 @@ export function useProfileForm({ user, setUser }: Options) {
         const updated = await api<SessionUser>(
           `${API_BASE}/users/me`,
           "PATCH",
-          {
-            [name]: next,
-          },
+          { [name]: next },
         );
         setUser(updated);
       } catch {
@@ -187,6 +219,10 @@ export function useProfileForm({ user, setUser }: Options) {
     handleEdit,
     handleCancel,
     handleSave,
+    // Avatar
+    avatarUploading,
+    avatarError,
+    handleAvatarUpload,
     // Booleans
     privacy,
     handlePrivacyToggle,

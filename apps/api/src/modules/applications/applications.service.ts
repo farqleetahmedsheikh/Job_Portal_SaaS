@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, In } from 'typeorm';
@@ -11,7 +12,7 @@ import { Application } from './entities/application.entity';
 import { Job } from '../jobs/entities/job.entity';
 import { ApplicationStatusHistory } from './entities/application-status-history.entity';
 import { CreateApplicationDto } from './dto/create-application.dto';
-import { AppStatus } from 'src/common/enums/enums';
+import { AppStatus, JobStatus } from 'src/common/enums/enums';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { BulkStatusUpdateDto } from './dto/bulk-status-update.dto';
 import { UpdateEmployerNotesDto } from './dto/update-employer-notes.dto';
@@ -19,12 +20,12 @@ import { UpdateEmployerNotesDto } from './dto/update-employer-notes.dto';
 @Injectable()
 export class ApplicationsService {
   constructor(
-    // ✅ Entity classes — not strings
     @InjectRepository(Application)
     private readonly appRepo: Repository<Application>,
     @InjectRepository(ApplicationStatusHistory)
     private readonly historyRepo: Repository<ApplicationStatusHistory>,
-    @InjectRepository(Job) private readonly jobRepo: Repository<Job>,
+    @InjectRepository(Job)
+    private readonly jobRepo: Repository<Job>,
     private readonly ds: DataSource,
   ) {}
 
@@ -33,6 +34,31 @@ export class ApplicationsService {
     const job = await this.jobRepo.findOneBy({ id: dto.jobId });
     if (!job) throw new NotFoundException('Job not found');
 
+    // ── Expiry / status guards ──────────────────────────────────────────────
+    if (job.status !== JobStatus.ACTIVE) {
+      throw new BadRequestException(
+        `This job is no longer accepting applications (status: ${job.status})`,
+      );
+    }
+
+    const now = new Date();
+    const today = new Date(now.toISOString().split('T')[0]); // midnight UTC
+
+    if (job.deadline) {
+      const deadline = new Date(job.deadline);
+      deadline.setHours(23, 59, 59, 999); // end of deadline day
+      if (now > deadline) {
+        throw new BadRequestException(
+          'The application deadline for this job has passed',
+        );
+      }
+    }
+
+    if (job.expiresAt && now > new Date(job.expiresAt)) {
+      throw new BadRequestException('This job listing has expired');
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     const existing = await this.appRepo.findOneBy({
       jobId: dto.jobId,
       applicantId,
@@ -40,7 +66,6 @@ export class ApplicationsService {
     if (existing) throw new ConflictException('Already applied to this job');
 
     return this.ds.transaction(async (m) => {
-      // ✅ m.create(EntityClass, data) — two args, no generic string
       const app = m.create(Application, {
         ...dto,
         applicantId,
@@ -119,9 +144,8 @@ export class ApplicationsService {
       .leftJoinAndSelect('u.applicantProfile', 'p')
       .where('app.job_id = :jobId', { jobId });
 
-    if (opts.sort === 'recent' || !opts.sort) {
+    if (opts.sort === 'recent' || !opts.sort)
       qb.orderBy('app.appliedAt', 'DESC');
-    }
     if (opts.limit) qb.take(opts.limit);
 
     return qb.getMany();
@@ -129,7 +153,6 @@ export class ApplicationsService {
 
   // ── Employer: Bulk status update ────────────────────────────────────────────
   async bulkChangeStatus(userId: string, dto: BulkStatusUpdateDto) {
-    // ✅ Guard against undefined/empty array before passing to In()
     if (!dto.applicationIds?.length) return;
 
     const apps = await this.appRepo.findBy({ id: In(dto.applicationIds) });
@@ -192,7 +215,6 @@ export class ApplicationsService {
     return app;
   }
 
-  // ADD to src/modules/applications/applications.service.ts
   async hasApplied(applicantId: string, jobId: string): Promise<boolean> {
     const row = await this.appRepo.findOneBy({ applicantId, jobId });
     return !!row;

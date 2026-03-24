@@ -28,6 +28,7 @@ export interface FieldConfig {
   icon: React.ReactNode;
   readOnly?: boolean;
   applicantOnly?: boolean;
+  isEmailVerified?: boolean;
 }
 
 export interface ToggleConfig<T> {
@@ -36,9 +37,10 @@ export interface ToggleConfig<T> {
   desc: string;
 }
 
-// ── Text / number fields ───────────────────────────────────────────────────────
+// ── Text / number fields ──────────────────────────────────────────────────────
+// NOTE: skills is intentionally excluded — it has its own card section in the page
 export const FIELDS: FieldConfig[] = [
-  // User table
+  // ── User table (both roles) ───────────────────────────────────────────────
   {
     name: "fullName",
     label: "Full Name",
@@ -69,7 +71,7 @@ export const FIELDS: FieldConfig[] = [
     textarea: true,
   },
 
-  // Applicant profile
+  // ── ApplicantProfile fields ───────────────────────────────────────────────
   {
     name: "jobTitle",
     label: "Job Title",
@@ -165,7 +167,6 @@ export const PRIVACY_TOGGLES: ToggleConfig<PrivacyForm>[] = [
 
 // ── Notification toggles ───────────────────────────────────────────────────────
 export const NOTIFICATION_TOGGLES: ToggleConfig<NotificationsForm>[] = [
-  // Email
   {
     name: "notifEmailApplications",
     label: "Application Updates",
@@ -186,7 +187,6 @@ export const NOTIFICATION_TOGGLES: ToggleConfig<NotificationsForm>[] = [
     label: "Tips & Promotions",
     desc: "Occasional product updates and career tips",
   },
-  // Push
   {
     name: "notifPushApplications",
     label: "Push: Applications",

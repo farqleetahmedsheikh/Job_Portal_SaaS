@@ -64,7 +64,7 @@ export type SessionUser = {
   isProfileComplete: boolean;
   isEmailVerified: boolean;
   applicantProfile: SafeApplicantProfile | null;
-  company: SafeCompany | null;
+  companies: SafeCompany | null;
 };
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -163,4 +163,4 @@ export const useIsEmployer = () =>
   useSessionStore().state.user?.role === "employer";
 export const useApplicantProfile = () =>
   useSessionStore().state.user?.applicantProfile ?? null;
-export const useCompany = () => useSessionStore().state.user?.company ?? null;
+export const useCompany = () => useSessionStore().state.user?.companies ?? null;

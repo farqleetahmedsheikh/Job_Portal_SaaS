@@ -1,6 +1,7 @@
 /** @format */
 "use client";
 
+import { useRef } from "react";
 import {
   Building2,
   MapPin,
@@ -17,13 +18,15 @@ import {
   Camera,
   ShieldCheck,
   Plus,
+  Loader,
 } from "lucide-react";
 import { useCompany } from "../../hooks/useCompany";
 import { StatusBanners } from "../../components/ui/StatusBanners";
+import { ProfileHeader } from "../../components/ui/ProfileHeader";
 import { COMPANY_SIZES, INDUSTRIES } from "../../types/company.types";
 import styles from "../styles/company.module.css";
 
-// ── Inline helpers — single use ───────────────────────────────────────────────
+// ── Inline field — company page uses company.module.css, not profile ──────────
 function Field({
   label,
   icon,
@@ -93,6 +96,9 @@ function Field({
 }
 
 export default function CompanyPage() {
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
   const {
     company,
     form,
@@ -107,6 +113,12 @@ export default function CompanyPage() {
     handleEdit,
     handleCancel,
     handleSave,
+    logoUploading,
+    logoError,
+    handleLogoUpload,
+    coverUploading,
+    coverError,
+    handleCoverUpload,
     perks,
     perkInput,
     setPerkInput,
@@ -115,7 +127,8 @@ export default function CompanyPage() {
     removePerk,
     savePerks,
   } = useCompany();
-
+  console.log("PERKS---------->", perks);
+  // ── Loading / error / empty states ───────────────────────────────────────
   if (loading)
     return (
       <div className={styles.page}>
@@ -150,64 +163,76 @@ export default function CompanyPage() {
   return (
     <div className={styles.page}>
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className={styles["page-header"]}>
-        <div>
-          <h1 className={styles["page-title"]}>Company Profile</h1>
-          <p className={styles["page-subtitle"]}>
-            Manage your company information visible to candidates
-          </p>
-        </div>
-        <div className={styles["form-actions"]}>
-          {editing ? (
-            <>
-              <button
-                className={`${styles.btn} ${styles["btn-ghost"]}`}
-                onClick={handleCancel}
-                disabled={saving}
-              >
-                <X size={14} /> Cancel
-              </button>
-              <button
-                className={`${styles.btn} ${styles["btn-primary"]}`}
-                onClick={handleSave}
-                disabled={saving}
-                aria-busy={saving}
-              >
-                {saving ? (
-                  <>
-                    <span className={styles.spinner} /> Saving...
-                  </>
-                ) : (
-                  <>
-                    <Check size={14} /> Save Changes
-                  </>
-                )}
-              </button>
-            </>
-          ) : (
-            <button
-              className={`${styles.btn} ${styles["btn-primary"]}`}
-              onClick={handleEdit}
-            >
-              <Edit2 size={14} /> Edit Profile
-            </button>
-          )}
-        </div>
-      </div>
+      <ProfileHeader
+        editing={editing}
+        saving={saving}
+        onEdit={handleEdit}
+        onSave={handleSave}
+        onCancel={handleCancel}
+        // title="Company Profile"
+        // subtitle="Manage your company information visible to candidates"
+      />
 
       <StatusBanners saved={saved} serverError={serverError} />
+
+      {/* Upload errors */}
+      {logoError && <div className={styles["banner-error"]}>⚠ {logoError}</div>}
+      {coverError && (
+        <div className={styles["banner-error"]}>⚠ {coverError}</div>
+      )}
+
+      {/* Hidden file inputs */}
+      <input
+        ref={logoInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        style={{ display: "none" }}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleLogoUpload(file);
+          e.target.value = "";
+        }}
+      />
+      <input
+        ref={coverInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        style={{ display: "none" }}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleCoverUpload(file);
+          e.target.value = "";
+        }}
+      />
 
       {/* ── Cover + Logo ────────────────────────────────────────────────────── */}
       <div className={styles.card}>
         <div className={styles.coverWrap}>
           {company.coverUrl ? (
-            <img src={company.coverUrl} alt="Cover" className={styles.cover} />
+            <img
+              src={company.coverUrl}
+              alt="Cover"
+              className={`${styles.cover} ${coverUploading ? styles["uploading"] : ""}`}
+            />
           ) : (
             <div className={styles.coverPlaceholder} />
           )}
           {editing && (
-            <button className={styles.coverEditBtn} aria-label="Change cover">
-              <Camera size={13} /> Change cover
+            <button
+              className={styles.coverEditBtn}
+              aria-label="Change cover"
+              disabled={coverUploading}
+              onClick={() => coverInputRef.current?.click()}
+            >
+              {coverUploading ? (
+                <>
+                  <Loader size={13} className={styles.spin} /> Uploading…
+                </>
+              ) : (
+                <>
+                  <Camera size={13} /> Change cover
+                </>
+              )}
             </button>
           )}
         </div>
@@ -218,7 +243,7 @@ export default function CompanyPage() {
               <img
                 src={company.logoUrl}
                 alt={form.companyName}
-                className={styles.logo}
+                className={`${styles.logo} ${logoUploading ? styles["uploading"] : ""}`}
               />
             ) : (
               <div className={styles.logoFallback}>
@@ -226,11 +251,21 @@ export default function CompanyPage() {
               </div>
             )}
             {editing && (
-              <button className={styles.logoEditBtn} aria-label="Change logo">
-                <Camera size={11} />
+              <button
+                className={styles.logoEditBtn}
+                aria-label="Change logo"
+                disabled={logoUploading}
+                onClick={() => logoInputRef.current?.click()}
+              >
+                {logoUploading ? (
+                  <Loader size={11} className={styles.spin} />
+                ) : (
+                  <Camera size={11} />
+                )}
               </button>
             )}
           </div>
+
           <div className={styles.logoMeta}>
             <h2 className={styles.companyName}>
               {form.companyName}
@@ -302,7 +337,6 @@ export default function CompanyPage() {
               editing={editing}
               onChange={handleChange}
             />
-
             <Field
               label="Website"
               icon={<Globe size={11} />}
@@ -314,7 +348,7 @@ export default function CompanyPage() {
               type="url"
             />
 
-            {/* Company Size — select when editing */}
+            {/* Company size — select when editing */}
             <div className={styles.field}>
               <label className={styles.label} htmlFor="size">
                 <Users size={11} /> Company Size
@@ -354,7 +388,6 @@ export default function CompanyPage() {
               onChange={handleChange}
               type="number"
             />
-
             <Field
               label="Tagline"
               name="tagline"
@@ -365,7 +398,6 @@ export default function CompanyPage() {
               span
               hint="A short catchy line shown on your public profile"
             />
-
             <Field
               label="About"
               name="description"
@@ -377,7 +409,6 @@ export default function CompanyPage() {
               span
               hint="Describe your company mission and what you do"
             />
-
             <Field
               label="Culture & Values"
               name="culture"
@@ -445,8 +476,8 @@ export default function CompanyPage() {
         <div className={styles["card-body"]}>
           <div className={styles.perkTags}>
             {perks.map((p) => (
-              <span key={p} className={styles.perkTag}>
-                {p}
+              <span key={p.id} className={styles.perkTag}>
+                {p.perk}
                 <button
                   className={styles.perkRemove}
                   onClick={() => removePerk(p)}

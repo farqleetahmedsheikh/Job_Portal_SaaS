@@ -2,8 +2,8 @@
 "use client";
 
 import type { FieldConfig } from "../../config/profile.config";
-import styles from "../../applicant/styles/profile.module.css";
 import { EmailVerifiedBadge } from "./EmailVerifyBadge";
+import styles from "../../applicant/styles/profile.module.css";
 
 interface Props {
   config: FieldConfig;
@@ -82,7 +82,17 @@ export function ProfileField({
               </span>
             </div>
           ) : name === "experienceYears" && value ? (
-            `${value} years`
+            `${value} year${value === "1" ? "" : "s"}`
+          ) : type === "url" && value ? (
+            <a
+              href={value}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.link}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {value.replace(/^https?:\/\//, "")}
+            </a>
           ) : (
             value || "Not set"
           )}

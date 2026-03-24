@@ -7,13 +7,16 @@ import { JobsController } from './jobs.controller';
 import { JobsService } from './jobs.service';
 import { JobSkill } from './entities/job-skill.entity';
 import { SavedJob } from './entities/saved-job.entity';
+import { ScheduleModule } from '@nestjs/schedule';
+import { JobsExpiryTask } from './jobs-expiry.task';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Job, JobSkill, SavedJob, Company, Application]),
+    ScheduleModule.forRoot(),
   ],
   controllers: [JobsController],
-  providers: [JobsService],
+  providers: [JobsService, JobsExpiryTask],
   exports: [JobsService],
 })
 export class JobsModule {}

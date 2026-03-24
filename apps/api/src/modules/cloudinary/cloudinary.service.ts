@@ -17,7 +17,7 @@ export interface CloudinaryUploadResult {
 // ─── Per-resource folder + transformation config ──────────────────────────────
 
 const UPLOAD_PRESETS: Record<
-  'avatar' | 'companyLogo' | 'resume' | 'jobImage',
+  'avatar' | 'companyLogo' | 'resume' | 'jobImage' | 'companyCover',
   {
     folder: string;
     allowedFormats: string[];
@@ -50,6 +50,19 @@ const UPLOAD_PRESETS: Record<
       height: 400,
       crop: 'pad',
       background: 'white',
+      quality: 'auto',
+      fetch_format: 'auto',
+    },
+  },
+  companyCover: {
+    folder: 'Hiringfly/company-covers',
+    allowedFormats: ['jpg', 'jpeg', 'png', 'webp'],
+    maxBytes: 5 * 1024 * 1024, // 5 MB
+    resourceType: 'image' as const,
+    transformation: {
+      width: 1500,
+      height: 500,
+      crop: 'fill',
       quality: 'auto',
       fetch_format: 'auto',
     },
@@ -160,5 +173,9 @@ export class CloudinaryService {
 
   uploadJobImage(buffer: Buffer, existingPublicId?: string) {
     return this.upload(buffer, 'jobImage', { publicId: existingPublicId });
+  }
+
+  uploadCompanyCover(buffer: Buffer, existingPublicId?: string) {
+    return this.upload(buffer, 'companyCover', { publicId: existingPublicId });
   }
 }
