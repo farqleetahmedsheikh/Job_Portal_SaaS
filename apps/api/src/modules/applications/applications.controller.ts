@@ -30,7 +30,6 @@ export class ApplicationsController {
 
   // ── Applicant ───────────────────────────────────────────────────────────────
 
-  // POST /api/applications
   @Post()
   @Roles(UserRole.APPLICANT)
   @UseGuards(RolesGuard)
@@ -41,7 +40,6 @@ export class ApplicationsController {
     return this.svc.apply(user.sub, dto);
   }
 
-  // GET /api/applications/mine
   @Get('mine')
   @Roles(UserRole.APPLICANT)
   @UseGuards(RolesGuard)
@@ -51,7 +49,17 @@ export class ApplicationsController {
     return this.svc.getMyApplications(user.sub);
   }
 
-  // DELETE /api/applications/:id/withdraw
+  @Get('status')
+  @Roles(UserRole.APPLICANT)
+  @UseGuards(RolesGuard)
+  async getApplicationStatus(
+    @Query('jobId') jobId: string,
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+  ) {
+    const applied = await this.svc.hasApplied(user.sub, jobId);
+    return { applied };
+  }
+
   @Delete(':id/withdraw')
   @Roles(UserRole.APPLICANT)
   @UseGuards(RolesGuard)
@@ -63,38 +71,36 @@ export class ApplicationsController {
     return this.svc.withdraw(id, user.sub);
   }
 
-  // GET /api/applications?jobId=<uuid>&limit=5&sort=recent
+  // ── Employer ────────────────────────────────────────────────────────────────
+
   @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.EMPLOYER)
+  @UseGuards(RolesGuard)
   findAll(
     @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
-    @Query('jobId') jobId: string,
+    @Query('jobId') jobId?: string,
     @Query('limit') limit?: string,
     @Query('sort') sort?: string,
   ) {
-    return this.svc.findByJob(jobId, {
+    const opts = {
       limit: limit ? Number(limit) : undefined,
       sort: sort as 'recent' | 'match' | undefined,
-    });
+    };
+    return jobId
+      ? this.svc.findByJob(jobId, opts)
+      : this.svc.findAllByEmployer(user.sub, opts); // ← was missing
   }
 
-  // ── Shared ──────────────────────────────────────────────────────────────────
-
-  // GET /api/applications/:id
-  @Get(':id')
-  findOne(
-    @Param('id', ParseUUIDPipe) id: string,
+  @Patch('bulk-status')
+  @Roles(UserRole.EMPLOYER)
+  @UseGuards(RolesGuard)
+  bulkStatus(
     @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+    @Body() dto: BulkStatusUpdateDto,
   ) {
-    // Service-level ownership check not done here — both employer + applicant
-    // can view their own; service returns the full object, caller decides rendering
-    return this.svc.findOne(id);
+    return this.svc.bulkChangeStatus(user.sub, dto);
   }
 
-  // ── Employer ────────────────────────────────────────────────────────────────
-
-  // PATCH /api/applications/:id/status
   @Patch(':id/status')
   @Roles(UserRole.EMPLOYER)
   @UseGuards(RolesGuard)
@@ -106,18 +112,6 @@ export class ApplicationsController {
     return this.svc.changeStatus(id, user.sub, dto);
   }
 
-  // PATCH /api/applications/bulk-status
-  @Patch('bulk-status')
-  @Roles(UserRole.EMPLOYER)
-  @UseGuards(RolesGuard)
-  bulkStatus(
-    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
-    @Body() dto: BulkStatusUpdateDto,
-  ) {
-    return this.svc.bulkChangeStatus(user.sub, dto);
-  }
-
-  // PATCH /api/applications/:id/star
   @Patch(':id/star')
   @Roles(UserRole.EMPLOYER)
   @UseGuards(RolesGuard)
@@ -125,7 +119,6 @@ export class ApplicationsController {
     return this.svc.toggleStar(id);
   }
 
-  // PATCH /api/applications/:id/notes
   @Patch(':id/notes')
   @Roles(UserRole.EMPLOYER)
   @UseGuards(RolesGuard)
@@ -136,7 +129,6 @@ export class ApplicationsController {
     return this.svc.updateNotes(id, dto);
   }
 
-  // POST /api/applications/:id/view
   @Post(':id/view')
   @Roles(UserRole.EMPLOYER)
   @UseGuards(RolesGuard)
@@ -144,15 +136,11 @@ export class ApplicationsController {
   markViewed(@Param('id', ParseUUIDPipe) id: string) {
     return this.svc.markViewed(id);
   }
-  // GET /api/applications/status?jobId=<uuid>
-  @Get('status')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.APPLICANT)
-  async getApplicationStatus(
-    @Query('jobId') jobId: string,
-    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
-  ) {
-    const applied = await this.svc.hasApplied(user.sub, jobId);
-    return { applied };
+
+  // ── Shared (last — catches any :id) ─────────────────────────────────────────
+
+  @Get(':id')
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.svc.findOne(id);
   }
 }

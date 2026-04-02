@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -18,121 +19,49 @@ import {
   Mail,
   Clock,
   CheckCircle2,
-  ChevronRight,
   XCircle,
   ExternalLink,
   FileText,
   Award,
   Building2,
-  BarChart2,
 } from "lucide-react";
 import styles from "../../styles/applicant-profile.module.css";
-
-// ─── Mock — replace with API fetch ────────────────────────
-const APPLICANT = {
-  id: "1",
-  name: "Alex Rivera",
-  avatar: "AR",
-  title: "Senior React Engineer",
-  location: "San Francisco, CA",
-  email: "alex.rivera@email.com",
-  phone: "+1 (415) 555-0192",
-  linkedin: "linkedin.com/in/alexrivera",
-  github: "github.com/alexrivera",
-  portfolio: "alexrivera.dev",
-  experience: "6 years",
-  appliedAt: "2 hours ago",
-  status: "reviewing" as const,
-  match: 94,
-  starred: true,
-  summary:
-    "Passionate frontend engineer with 6 years building high-performance React applications at scale. I specialize in TypeScript, design systems, and web performance. Currently at Acme Corp, leading a team of 4 engineers.",
-  skills: [
-    "React",
-    "TypeScript",
-    "CSS Modules",
-    "GraphQL",
-    "Next.js",
-    "Testing Library",
-    "Performance",
-    "Figma",
-  ],
-  experience_items: [
-    {
-      role: "Senior Frontend Engineer",
-      company: "Acme Corp",
-      period: "2022–Present",
-      duration: "2 yrs",
-      desc: "Led migration from legacy codebase to React + TypeScript. Built design system used by 12 product teams. Improved Lighthouse score from 64 to 96.",
-    },
-    {
-      role: "Frontend Developer",
-      company: "Tech Startup",
-      period: "2020–2022",
-      duration: "2 yrs",
-      desc: "Architected React frontend from scratch. Implemented CI/CD pipeline, reduced deploy time by 60%.",
-    },
-    {
-      role: "Junior Developer",
-      company: "Agency",
-      period: "2018–2020",
-      duration: "2 yrs",
-      desc: "Built client websites using React and Vue. Maintained design system and component library.",
-    },
-  ],
-  education: [
-    {
-      degree: "B.Sc. Computer Science",
-      school: "UC Berkeley",
-      year: "2018",
-      gpa: "3.8",
-    },
-  ],
-  certifications: [
-    "AWS Certified Developer",
-    "Google Professional Cloud Architect",
-  ],
-  resumeUrl: "#",
-  coverLetter:
-    "I am very excited about the opportunity to join your team. With 6 years of React experience and a passion for building products that millions use, I believe I am a strong fit for this role...",
-  previousApplications: 0,
-  notes: "",
-};
-
-type Status =
-  | "new"
-  | "reviewing"
-  | "shortlisted"
-  | "interview"
-  | "offered"
-  | "rejected";
-
-const STATUS_OPTIONS: { val: Status; label: string }[] = [
-  { val: "new", label: "New" },
-  { val: "reviewing", label: "Reviewing" },
-  { val: "shortlisted", label: "Shortlisted" },
-  { val: "interview", label: "Interview" },
-  { val: "offered", label: "Offered" },
-  { val: "rejected", label: "Rejected" },
-];
-
-const STATUS_CLS: Record<Status, string> = {
-  new: "sNew",
-  reviewing: "sReviewing",
-  shortlisted: "sShortlisted",
-  interview: "sInterview",
-  offered: "sOffered",
-  rejected: "sRejected",
-};
+import { useApplicantProfile } from "../../../hooks/useApplicantProfile";
+import { AppStatus, STATUS_META } from "../../../types/applicants.types";
 
 export default function ApplicantProfilePage() {
-  const [status, setStatus] = useState<Status>(APPLICANT.status);
-  const [starred, setStarred] = useState(APPLICANT.starred);
-  const [notes, setNotes] = useState(APPLICANT.notes);
-  const [tab, setTab] = useState<"overview" | "resume" | "cover">("overview");
-  const [saved, setSaved] = useState(false);
+  const { id } = useParams<{ id: string }>();
+  const { profile, loading, error, changeStatus, toggleStar, saveNotes } =
+    useApplicantProfile(id);
+  console.log("Profile------->", profile);
 
-  const match = APPLICANT.match;
+  const [notes, setNotes] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [tab, setTab] = useState<"overview" | "resume" | "cover">("overview");
+
+  if (loading) {
+    return (
+      <div className={styles.page}>
+        <div
+          className={styles.skeleton}
+          style={{ height: 300, borderRadius: 12 }}
+        />
+      </div>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <div className={styles.page}>
+        <p style={{ color: "var(--status-error)" }}>
+          {error ?? "Applicant not found."}
+        </p>
+      </div>
+    );
+  }
+
+  const currentNotes = notes ?? profile.notes;
+  const match = profile.match;
   const matchColor =
     match >= 90
       ? "var(--status-success)"
@@ -140,81 +69,118 @@ export default function ApplicantProfilePage() {
         ? "var(--color-secondary)"
         : "#f59e0b";
 
-  const handleSaveNotes = () => {
+  const handleSaveNotes = async () => {
+    await saveNotes(currentNotes);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
   return (
     <div className={styles.page}>
-      <Link href="/employer/jobs/1/applicants" className={styles.back}>
+      <Link
+        href={
+          profile.jobId
+            ? `/employer/jobs/${profile.jobId}/applicants`
+            : "/employer/applicants"
+        }
+        className={styles.back}
+      >
         <ArrowLeft size={14} /> Back to applicants
       </Link>
 
       <div className={styles.layout}>
         {/* ── Main ── */}
         <div className={styles.main}>
-          {/* Profile header */}
           <div className={styles.profileCard}>
             <div className={styles.profileTop}>
-              <div className={styles.profileAvatar}>{APPLICANT.avatar}</div>
+              {/* Avatar */}
+              <div className={styles.profileAvatar}>
+                {profile.avatarUrl ? (
+                  <img
+                    src={profile.avatarUrl}
+                    alt={profile.name}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : (
+                  profile.avatar
+                )}
+              </div>
+
               <div className={styles.profileInfo}>
                 <div className={styles.profileName}>
-                  <h1>{APPLICANT.name}</h1>
+                  <h1>{profile.name}</h1>
                   <button
-                    className={`${styles.starBtn} ${starred ? styles.starActive : ""}`}
-                    onClick={() => setStarred((p) => !p)}
+                    className={`${styles.starBtn} ${profile.starred ? styles.starActive : ""}`}
+                    onClick={toggleStar}
                   >
                     <Star
                       size={16}
-                      style={{ fill: starred ? "#f59e0b" : "none" }}
+                      style={{ fill: profile.starred ? "#f59e0b" : "none" }}
                     />
                   </button>
                 </div>
-                <p className={styles.profileTitle}>{APPLICANT.title}</p>
+                <p className={styles.profileTitle}>{profile.title}</p>
                 <div className={styles.profileMeta}>
+                  {profile.location !== "—" && (
+                    <span>
+                      <MapPin size={11} /> {profile.location}
+                    </span>
+                  )}
+                  {profile.experienceYears !== undefined && (
+                    <span>
+                      <Briefcase size={11} /> {profile.experienceYears} yrs exp
+                    </span>
+                  )}
                   <span>
-                    <MapPin size={11} /> {APPLICANT.location}
-                  </span>
-                  <span>
-                    <Briefcase size={11} /> {APPLICANT.experience} experience
-                  </span>
-                  <span>
-                    <Clock size={11} /> Applied {APPLICANT.appliedAt}
+                    <Clock size={11} /> Applied{" "}
+                    {new Date(profile.appliedAt).toLocaleDateString()}
                   </span>
                 </div>
                 <div className={styles.profileLinks}>
-                  <a
-                    href={`mailto:${APPLICANT.email}`}
-                    className={styles.profileLink}
-                  >
-                    <Mail size={12} /> {APPLICANT.email}
-                  </a>
-                  <a
-                    href={`tel:${APPLICANT.phone}`}
-                    className={styles.profileLink}
-                  >
-                    <Phone size={12} /> {APPLICANT.phone}
-                  </a>
-                  <a
-                    href={`https://${APPLICANT.linkedin}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.profileLink}
-                  >
-                    <Linkedin size={12} /> LinkedIn
-                  </a>
-                  <a
-                    href={`https://${APPLICANT.github}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.profileLink}
-                  >
-                    <Github size={12} /> GitHub
-                  </a>
-                  {APPLICANT.portfolio && (
+                  {profile.showEmail && (
                     <a
-                      href={`https://${APPLICANT.portfolio}`}
+                      href={`mailto:${profile.email}`}
+                      className={styles.profileLink}
+                    >
+                      <Mail size={12} /> {profile.email}
+                    </a>
+                  )}
+                  {profile.showPhone && (
+                    <a
+                      href={`tel:${profile.phone}`}
+                      className={styles.profileLink}
+                    >
+                      <Phone size={12} /> {profile.phone}
+                    </a>
+                  )}
+                  {profile.linkedin && (
+                    <a
+                      href={`https://${profile.linkedin}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.profileLink}
+                    >
+                      <Linkedin size={12} /> LinkedIn
+                    </a>
+                  )}
+                  {profile.github && (
+                    <a
+                      href={`https://${profile.github}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.profileLink}
+                    >
+                      <Github size={12} /> GitHub
+                    </a>
+                  )}
+                  {profile.portfolio && (
+                    <a
+                      href={`https://${profile.portfolio}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className={styles.profileLink}
@@ -224,50 +190,53 @@ export default function ApplicantProfilePage() {
                   )}
                 </div>
               </div>
-              {/* Match score */}
-              <div className={styles.matchCard}>
-                <svg width="72" height="72" viewBox="0 0 72 72">
-                  <circle
-                    cx="36"
-                    cy="36"
-                    r="28"
-                    fill="none"
-                    stroke="var(--border)"
-                    strokeWidth="5"
-                  />
-                  <circle
-                    cx="36"
-                    cy="36"
-                    r="28"
-                    fill="none"
-                    stroke={matchColor}
-                    strokeWidth="5"
-                    strokeDasharray={`${match * 1.759} 175.9`}
-                    strokeLinecap="round"
-                    transform="rotate(-90 36 36)"
-                    style={{ transition: "stroke-dasharray .6s ease" }}
-                  />
-                </svg>
-                <div className={styles.matchInner}>
-                  <span
-                    className={styles.matchPct}
-                    style={{ color: matchColor }}
-                  >
-                    {match}%
-                  </span>
-                  <span className={styles.matchLabel}>match</span>
+
+              {match > 0 && (
+                <div className={styles.matchCard}>
+                  <svg width="72" height="72" viewBox="0 0 72 72">
+                    <circle
+                      cx="36"
+                      cy="36"
+                      r="28"
+                      fill="none"
+                      stroke="var(--border)"
+                      strokeWidth="5"
+                    />
+                    <circle
+                      cx="36"
+                      cy="36"
+                      r="28"
+                      fill="none"
+                      stroke={matchColor}
+                      strokeWidth="5"
+                      strokeDasharray={`${match * 1.759} 175.9`}
+                      strokeLinecap="round"
+                      transform="rotate(-90 36 36)"
+                      style={{ transition: "stroke-dasharray .6s ease" }}
+                    />
+                  </svg>
+                  <div className={styles.matchInner}>
+                    <span
+                      className={styles.matchPct}
+                      style={{ color: matchColor }}
+                    >
+                      {match}%
+                    </span>
+                    <span className={styles.matchLabel}>match</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
-            {/* Skills */}
-            <div className={styles.skillsRow}>
-              {APPLICANT.skills.map((s) => (
-                <span key={s} className={styles.skill}>
-                  {s}
-                </span>
-              ))}
-            </div>
+            {profile.skills.length > 0 && (
+              <div className={styles.skillsRow}>
+                {profile.skills.map((s) => (
+                  <span key={s} className={styles.skill}>
+                    {s}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Tabs */}
@@ -289,65 +258,62 @@ export default function ApplicantProfilePage() {
             ))}
           </div>
 
-          {/* Tab content */}
+          {/* Overview */}
           {tab === "overview" && (
             <div className={styles.tabContent}>
-              <div className={styles.section}>
-                <h2 className={styles.sectionTitle}>Summary</h2>
-                <p className={styles.prose}>{APPLICANT.summary}</p>
-              </div>
-              <div className={styles.section}>
-                <h2 className={styles.sectionTitle}>Work Experience</h2>
-                <div className={styles.expList}>
-                  {APPLICANT.experience_items.map((e, i) => (
-                    <div key={i} className={styles.expItem}>
-                      <div className={styles.expDot} />
-                      <div className={styles.expContent}>
-                        <div className={styles.expHeader}>
-                          <p className={styles.expRole}>{e.role}</p>
-                          <span className={styles.expDuration}>
-                            {e.duration}
-                          </span>
-                        </div>
-                        <p className={styles.expCompany}>
-                          <Building2 size={10} /> {e.company} · {e.period}
-                        </p>
-                        <p className={styles.expDesc}>{e.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className={styles.section}>
-                <h2 className={styles.sectionTitle}>Education</h2>
-                {APPLICANT.education.map((e, i) => (
-                  <div key={i} className={styles.eduItem}>
-                    <Award
-                      size={14}
-                      style={{ color: "var(--color-secondary)", flexShrink: 0 }}
-                    />
-                    <div>
-                      <p className={styles.eduDegree}>{e.degree}</p>
-                      <p className={styles.eduSchool}>
-                        {e.school} · {e.year} · GPA {e.gpa}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {APPLICANT.certifications.length > 0 && (
+              {profile.summary && (
                 <div className={styles.section}>
-                  <h2 className={styles.sectionTitle}>Certifications</h2>
-                  {APPLICANT.certifications.map((c) => (
-                    <div key={c} className={styles.certItem}>
-                      <CheckCircle2
-                        size={13}
+                  <h2 className={styles.sectionTitle}>Summary</h2>
+                  <p className={styles.prose}>{profile.summary}</p>
+                </div>
+              )}
+              {profile.experiences.length > 0 && (
+                <div className={styles.section}>
+                  <h2 className={styles.sectionTitle}>Work Experience</h2>
+                  <div className={styles.expList}>
+                    {profile.experiences.map((e, i) => (
+                      <div key={i} className={styles.expItem}>
+                        <div className={styles.expDot} />
+                        <div className={styles.expContent}>
+                          <div className={styles.expHeader}>
+                            <p className={styles.expRole}>{e.role}</p>
+                            {e.duration && (
+                              <span className={styles.expDuration}>
+                                {e.duration}
+                              </span>
+                            )}
+                          </div>
+                          <p className={styles.expCompany}>
+                            <Building2 size={10} /> {e.company}
+                            {e.period ? ` · ${e.period}` : ""}
+                          </p>
+                          {e.desc && <p className={styles.expDesc}>{e.desc}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {profile.educations.length > 0 && (
+                <div className={styles.section}>
+                  <h2 className={styles.sectionTitle}>Education</h2>
+                  {profile.educations.map((e, i) => (
+                    <div key={i} className={styles.eduItem}>
+                      <Award
+                        size={14}
                         style={{
-                          color: "var(--status-success)",
+                          color: "var(--color-secondary)",
                           flexShrink: 0,
                         }}
                       />
-                      <span>{c}</span>
+                      <div>
+                        <p className={styles.eduDegree}>{e.degree}</p>
+                        <p className={styles.eduSchool}>
+                          {e.school}
+                          {e.year ? ` · ${e.year}` : ""}
+                          {e.gpa ? ` · GPA ${e.gpa}` : ""}
+                        </p>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -355,49 +321,67 @@ export default function ApplicantProfilePage() {
             </div>
           )}
 
+          {/* Resume */}
           {tab === "resume" && (
             <div className={styles.tabContent}>
               <div className={styles.section}>
-                <div className={styles.resumeActions}>
-                  <div className={styles.resumeFile}>
-                    <FileText
-                      size={18}
-                      style={{ color: "var(--color-secondary)" }}
-                    />
-                    <span>Resume_{APPLICANT.name.replace(" ", "_")}.pdf</span>
-                  </div>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <a
-                      href={APPLICANT.resumeUrl}
-                      download
-                      className={`${styles.btn} ${styles.btnGhost}`}
-                    >
-                      <Download size={13} /> Download
-                    </a>
-                    <a
-                      href={APPLICANT.resumeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`${styles.btn} ${styles.btnGhost}`}
-                    >
-                      <ExternalLink size={13} /> Open
-                    </a>
-                  </div>
-                </div>
-                <div className={styles.resumePreview}>
+                {profile.resumeUrl ? (
+                  <>
+                    <div className={styles.resumeActions}>
+                      <div className={styles.resumeFile}>
+                        <FileText
+                          size={18}
+                          style={{ color: "var(--color-secondary)" }}
+                        />
+                        <span>Resume_{profile.name.replace(" ", "_")}.pdf</span>
+                      </div>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <a
+                          href={profile.resumeUrl}
+                          download
+                          className={`${styles.btn} ${styles.btnGhost}`}
+                        >
+                          <Download size={13} /> Download
+                        </a>
+                        <a
+                          href={profile.resumeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`${styles.btn} ${styles.btnGhost}`}
+                        >
+                          <ExternalLink size={13} /> Open
+                        </a>
+                      </div>
+                    </div>
+                    <div className={styles.resumePreview}>
+                      <iframe
+                        src={profile.resumeUrl}
+                        style={{ width: "100%", height: 600, border: "none" }}
+                        title="Resume preview"
+                      />
+                    </div>
+                  </>
+                ) : (
                   <p style={{ color: "var(--text-muted)", fontSize: 13 }}>
-                    Resume preview would render here via PDF viewer.
+                    No resume uploaded for this application.
                   </p>
-                </div>
+                )}
               </div>
             </div>
           )}
 
+          {/* Cover Letter */}
           {tab === "cover" && (
             <div className={styles.tabContent}>
               <div className={styles.section}>
                 <h2 className={styles.sectionTitle}>Cover Letter</h2>
-                <p className={styles.prose}>{APPLICANT.coverLetter}</p>
+                {profile.coverLetter ? (
+                  <p className={styles.prose}>{profile.coverLetter}</p>
+                ) : (
+                  <p style={{ color: "var(--text-muted)", fontSize: 13 }}>
+                    No cover letter submitted.
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -405,19 +389,27 @@ export default function ApplicantProfilePage() {
 
         {/* ── Sidebar ── */}
         <div className={styles.sidebar}>
-          {/* Status card */}
+          {/* Status */}
           <div className={styles.sideCard}>
             <h3 className={styles.sideTitle}>Application Status</h3>
             <div className={styles.statusOptions}>
-              {STATUS_OPTIONS.map((o) => (
-                <button
-                  key={o.val}
-                  className={`${styles.statusOption} ${status === o.val ? styles.statusActive : ""} ${styles[STATUS_CLS[o.val]]}`}
-                  onClick={() => setStatus(o.val)}
-                >
-                  {status === o.val && <CheckCircle2 size={12} />} {o.label}
-                </button>
-              ))}
+              {(
+                Object.entries(STATUS_META) as [
+                  AppStatus,
+                  { label: string; cls: string },
+                ][]
+              )
+                .filter(([val]) => val !== "withdrawn")
+                .map(([val, { label, cls }]) => (
+                  <button
+                    key={val}
+                    className={`${styles.statusOption} ${profile.status === val ? styles.statusActive : ""} ${styles[cls]}`}
+                    onClick={() => changeStatus(val)}
+                  >
+                    {profile.status === val && <CheckCircle2 size={12} />}{" "}
+                    {label}
+                  </button>
+                ))}
             </div>
           </div>
 
@@ -426,7 +418,7 @@ export default function ApplicantProfilePage() {
             <h3 className={styles.sideTitle}>Actions</h3>
             <div className={styles.actionList}>
               <Link
-                href={`/employer/messages?to=${APPLICANT.id}`}
+                href={`/employer/messages?to=${profile.userId ?? ""}`}
                 className={`${styles.btn} ${styles.btnPrimary} ${styles.btnFull}`}
               >
                 <MessageSquare size={14} /> Send message
@@ -436,15 +428,18 @@ export default function ApplicantProfilePage() {
               >
                 <Calendar size={14} /> Schedule interview
               </button>
-              <a
-                href={APPLICANT.resumeUrl}
-                download
-                className={`${styles.btn} ${styles.btnGhost} ${styles.btnFull}`}
-              >
-                <Download size={14} /> Download resume
-              </a>
+              {profile.resumeUrl && (
+                <a
+                  href={profile.resumeUrl}
+                  download
+                  className={`${styles.btn} ${styles.btnGhost} ${styles.btnFull}`}
+                >
+                  <Download size={14} /> Download resume
+                </a>
+              )}
               <button
                 className={`${styles.btn} ${styles.btnDangerGhost} ${styles.btnFull}`}
+                onClick={() => changeStatus("rejected")}
               >
                 <XCircle size={14} /> Reject applicant
               </button>
@@ -457,7 +452,7 @@ export default function ApplicantProfilePage() {
             <textarea
               className={styles.notesArea}
               placeholder="Add private notes about this candidate…"
-              value={notes}
+              value={currentNotes}
               onChange={(e) => setNotes(e.target.value)}
               rows={4}
             />
@@ -476,17 +471,22 @@ export default function ApplicantProfilePage() {
             </button>
           </div>
 
-          {/* Quick facts */}
+          {/* Quick info */}
           <div className={styles.sideCard}>
             <h3 className={styles.sideTitle}>Quick Info</h3>
             <div className={styles.quickFacts}>
               {[
-                { label: "Applied", val: APPLICANT.appliedAt },
-                { label: "Experience", val: APPLICANT.experience },
                 {
-                  label: "Previous apps",
-                  val: `${APPLICANT.previousApplications} at your company`,
+                  label: "Applied",
+                  val: new Date(profile.appliedAt).toLocaleDateString(),
                 },
+                {
+                  label: "Experience",
+                  val: profile.experienceYears
+                    ? `${profile.experienceYears} years`
+                    : "—",
+                },
+                { label: "Job", val: profile.jobTitle ?? "—" },
               ].map((f) => (
                 <div key={f.label} className={styles.factRow}>
                   <span className={styles.factLabel}>{f.label}</span>

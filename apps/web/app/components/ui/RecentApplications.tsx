@@ -3,13 +3,13 @@
 "use client";
 
 import Link from "next/link";
-import styles from "../styles/recent-applicantion.module.css";
+import styles from "../../applicant/styles/applicant.module.css";
 import { useSession } from "../../hooks/useSession";
 
 interface Application {
   title: string;
   company: string;
-  logo: string;
+  logoUrl: string;
   time: string;
   status: "applied" | "interview" | "rejected" | "offered";
 }
@@ -27,6 +27,7 @@ interface Props {
 
 export function RecentApplications({ applications }: Props) {
   const { user } = useSession();
+  console.log("Applications Recent------->", applications);
   return (
     <div>
       <div className={styles["section-header"]}>
@@ -58,7 +59,11 @@ export function RecentApplications({ applications }: Props) {
                 key={`${job.title}-${job.company}`}
                 className={styles["job-row"]}
               >
-                <div className={styles["job-logo"]}>{job.logo}</div>
+                <img
+                  src={`${job.logoUrl}`}
+                  alt="Logo"
+                  className={styles["job-logo"]}
+                />
                 <div className={styles["job-info"]}>
                   <p className={styles["job-title"]}>{job.title}</p>
                   <p className={styles["job-company"]}>{job.company}</p>

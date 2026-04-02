@@ -7,7 +7,7 @@ export class CreateApplicationDto {
 
   @IsOptional()
   @IsUUID()
-  resumeId?: string;
+  resumeId!: string;
 
   @IsOptional()
   @IsString()

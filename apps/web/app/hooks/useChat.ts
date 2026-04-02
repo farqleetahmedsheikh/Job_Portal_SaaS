@@ -23,15 +23,15 @@ export interface ChatMessage {
 
 export interface Conversation {
   id: string;
-  otherUserId: string;
-  otherUserName: string;
-  otherUserAvatar: string | null;
-  otherUserRole: string;
-  lastMessage: string | null;
-  lastMessageAt: string | null;
-  lastMessageSenderId: string | null;
-  unreadCount: number;
-  jobTitle: string | null;
+  other_user_id: string;
+  other_user_name: string;
+  other_user_avatar: string | null;
+  other_user_role: string;
+  last_message: string | null;
+  last_message_at: string | null;
+  last_message_sender_id: string | null;
+  unread_count: number;
+  job_title: string | null;
 }
 
 // ── Event names (must match backend WS_EVENTS) ────────────────────────────────
@@ -49,8 +49,7 @@ const EV = {
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:9000";
 
-// ── Typing debounce ───────────────────────────────────────────────────────────
-const TYPING_DEBOUNCE = 1500; // ms
+const TYPING_DEBOUNCE = 1500;
 
 export function useChat(currentUserId: string) {
   const socketRef = useRef<Socket | null>(null);
@@ -69,21 +68,18 @@ export function useChat(currentUserId: string) {
   // ── Connect socket ─────────────────────────────────────────────────────────
   useEffect(() => {
     const socket = io(`${SOCKET_URL}/chat`, {
-      withCredentials: true, // sends httpOnly cookie
+      withCredentials: true,
       transports: ["websocket"],
     });
 
     socket.on("connect", () => setConnected(true));
     socket.on("disconnect", () => setConnected(false));
 
-    // New message arrives
     socket.on(EV.NEW_MESSAGE, (msg: ChatMessage) => {
       setMessages((prev) => {
-        // Deduplicate — optimistic msg might already be in list
         if (prev.some((m) => m.id === msg.id)) return prev;
         return [...prev, msg];
       });
-      // Bump conversation's last message in inbox
       setConversations((prev) =>
         prev.map((c) =>
           c.id === msg.conversationId
@@ -92,18 +88,16 @@ export function useChat(currentUserId: string) {
                 lastMessage: msg.text,
                 lastMessageAt: msg.createdAt,
                 lastMessageSenderId: msg.senderId,
-                // Only increment unread if not the active conversation
                 unreadCount:
                   activeConvId === c.id
                     ? 0
-                    : c.unreadCount + (msg.senderId !== currentUserId ? 1 : 0),
+                    : c.unread_count + (msg.senderId !== currentUserId ? 1 : 0),
               }
             : c,
         ),
       );
     });
 
-    // Typing indicator
     socket.on(
       EV.TYPING_IND,
       ({ userId, isTyping }: { userId: string; isTyping: boolean }) => {
@@ -134,13 +128,12 @@ export function useChat(currentUserId: string) {
       .finally(() => setLoadingInbox(false));
   }, []);
 
-  // ── Open conversation ──────────────────────────────────────────────────────
+  // ── Open conversation by conversation ID ───────────────────────────────────
   const openConversation = useCallback(
     async (convId: string) => {
       const socket = socketRef.current;
       if (!socket) return;
 
-      // Leave previous room
       if (activeConvId && activeConvId !== convId) {
         socket.emit(EV.LEAVE, { conversationId: activeConvId });
       }
@@ -150,17 +143,12 @@ export function useChat(currentUserId: string) {
       setTypingUsers(new Set());
 
       try {
-        // Fetch history via REST (reliable, pageable later)
         const history = await api<ChatMessage[]>(
           `${API_BASE}/messaging/conversations/${convId}/messages`,
           "GET",
         );
         setMessages(history);
-
-        // Join socket room
         socket.emit(EV.JOIN, { conversationId: convId });
-
-        // Mark as read
         socket.emit(EV.MARK_READ, { conversationId: convId });
         setConversations((prev) =>
           prev.map((c) => (c.id === convId ? { ...c, unreadCount: 0 } : c)),
@@ -174,13 +162,39 @@ export function useChat(currentUserId: string) {
     [activeConvId],
   );
 
+  // ── Start conversation by user ID (find-or-create) ────────────────────────
+  const startConversation = useCallback(
+    async (otherUserId: string) => {
+      const existing = conversations.find((c) => c.other_user_id === otherUserId);
+      if (existing) {
+        openConversation(existing.id);
+        return;
+      }
+
+      try {
+        const conv = await api<Conversation>(
+          `${API_BASE}/messaging/conversations`,
+          "POST",
+          {
+            recipientId: otherUserId, // ← was otherUserId
+            firstMessage: " ", // ← required by backend, blank placeholder
+          },
+        );
+        setConversations((prev) => [conv, ...prev]);
+        openConversation(conv.id);
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    [conversations, openConversation],
+  );
+
   // ── Send message ───────────────────────────────────────────────────────────
   const sendMessage = useCallback(
     (text: string) => {
       const socket = socketRef.current;
       if (!socket || !activeConvId || !text.trim()) return;
 
-      // Optimistic message
       const optimistic: ChatMessage = {
         id: `opt-${Date.now()}`,
         conversationId: activeConvId,
@@ -192,7 +206,6 @@ export function useChat(currentUserId: string) {
       };
       setMessages((prev) => [...prev, optimistic]);
 
-      // Stop typing
       if (isTypingRef.current) {
         socket.emit(EV.STOP_TYPING, { conversationId: activeConvId });
         isTypingRef.current = false;
@@ -213,7 +226,6 @@ export function useChat(currentUserId: string) {
       socket.emit(EV.TYPING, { conversationId: activeConvId });
     }
 
-    // Reset debounce timer
     if (typingTimer.current) clearTimeout(typingTimer.current);
     typingTimer.current = setTimeout(() => {
       isTypingRef.current = false;
@@ -222,17 +234,15 @@ export function useChat(currentUserId: string) {
   }, [activeConvId]);
 
   return {
-    // data
     conversations,
     messages,
     activeConvId,
     typingUsers,
-    // state
     connected,
     loadingInbox,
     loadingMessages,
-    // actions
     openConversation,
+    startConversation, // ← new
     sendMessage,
     handleTyping,
   };

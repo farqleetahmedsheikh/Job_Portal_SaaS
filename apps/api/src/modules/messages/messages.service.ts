@@ -33,10 +33,10 @@ export class MessagingService {
   async findOrCreate(userId: string, dto: CreateConversationDto) {
     const existing = await this.ds.query(
       `SELECT c.id FROM conversations c
-       JOIN conversation_participants p1 ON p1.conversation_id = c.id AND p1.user_id = $1
-       JOIN conversation_participants p2 ON p2.conversation_id = c.id AND p2.user_id = $2
-       WHERE ($3::uuid IS NULL OR c.job_id = $3)
-       LIMIT 1`,
+     JOIN conversation_participants p1 ON p1.conversation_id = c.id AND p1.user_id = $1
+     JOIN conversation_participants p2 ON p2.conversation_id = c.id AND p2.user_id = $2
+     WHERE ($3::uuid IS NULL OR c.job_id = $3)
+     LIMIT 1`,
       [userId, dto.recipientId, dto.jobId ?? null],
     );
 
@@ -47,8 +47,8 @@ export class MessagingService {
       return this.findOne(existing[0].id, userId);
     }
 
-    return this.ds.transaction(async (m) => {
-      // ✅ m.create(EntityClass, data) — two args
+    // ── Create — return convId from transaction, call findOne AFTER it commits ──
+    const convId = await this.ds.transaction(async (m) => {
       const conv = m.create(Conversation, { jobId: dto.jobId ?? null });
       await m.save(Conversation, conv);
 
@@ -69,8 +69,10 @@ export class MessagingService {
         }),
       );
 
-      return this.findOne(conv.id, userId);
+      return conv.id; // ← just return the id, don't call findOne inside
     });
+
+    return this.findOne(convId, userId); // ← called AFTER transaction commits
   }
 
   // ── Inbox ───────────────────────────────────────────────────────────────────

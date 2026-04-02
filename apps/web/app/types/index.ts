@@ -50,7 +50,7 @@ export type AppStatus =
 export interface Job {
   id: string;
   title: string;
-  company: string;
+  companyName: string;
   logo: string;
   location: string;
   type: JobType;
@@ -68,7 +68,7 @@ export interface Job {
 
 export interface Application {
   id: string;
-  job: Pick<Job, "title" | "company" | "logo">;
+  job: Pick<Job, "title" | "companyName" | "logo">;
   status: AppStatus;
   appliedAt: string;
 }

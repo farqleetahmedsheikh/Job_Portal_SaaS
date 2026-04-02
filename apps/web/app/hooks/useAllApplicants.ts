@@ -15,19 +15,25 @@ import type {
 interface RawApplicant {
   id: string;
   status: ApplicantStatus;
-  starred: boolean;
+  isStarred: boolean; // ✗ starred
   matchScore?: number;
   createdAt: string;
-  resumeUrl?: string;
+  resume?: {
+    // ✗ resumeUrl (it's a nested object)
+    url?: string;
+  };
   applicant?: {
     id?: string;
     fullName?: string;
     email?: string;
     avatarUrl?: string;
-    title?: string;
-    location?: string;
-    experience?: string;
-    skills?: string[];
+    applicantProfile?: {
+      // title/location/skills/experience are nested here
+      jobTitle?: string;
+      location?: string;
+      experienceYears?: number;
+      skills?: string[];
+    };
   };
   job?: {
     id?: string;
@@ -82,6 +88,7 @@ export function useAllApplicants() {
       "GET",
     )
       .then((data) => {
+        console.log("Data ------->", data);
         if (cancelled) return;
         setApplicants(
           data.map(
@@ -91,17 +98,17 @@ export function useAllApplicants() {
               email: a.applicant?.email ?? "",
               avatar: toInitials(a.applicant?.fullName ?? "?"),
               avatarUrl: a.applicant?.avatarUrl,
-              title: a.applicant?.title ?? "—",
-              location: a.applicant?.location ?? "—",
-              match: a.matchScore ?? 0,
+              title: a.applicant?.applicantProfile?.jobTitle ?? "—", // ✗ a.applicant?.title
+              location: a.applicant?.applicantProfile?.location ?? "—", // ✗ a.applicant?.location
+              match: a.matchScore ?? 0, // field doesn't exist, stays 0
               status: a.status,
               appliedAt: a.createdAt,
-              starred: a.starred,
+              starred: a.isStarred, // ✗ a.starred
               jobId: a.job?.id ?? "",
               jobTitle: a.job?.title ?? "Unknown Job",
-              resumeUrl: a.resumeUrl,
-              skills: a.applicant?.skills ?? [],
-              experience: a.applicant?.experience,
+              resumeUrl: a.resume?.url ?? "", // ✗ a.resumeUrl (resume is an object)
+              skills: a.applicant?.applicantProfile?.skills ?? [], // ✗ a.applicant?.skills
+              experience: a.applicant?.applicantProfile?.experienceYears, // ✗ a.applicant?.experience
             }),
           ),
         );

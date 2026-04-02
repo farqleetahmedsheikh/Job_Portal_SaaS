@@ -213,7 +213,7 @@ function ApplicantCard({
             </a>
           )}
           <Link
-            href={`/employer/jobs/${applicant.jobId}/applicants/${applicant.id}`}
+            href={`/employer/applicants/${applicant.id}`}
             className={styles.viewBtn}
           >
             <Eye size={12} /> View
@@ -282,6 +282,7 @@ export default function AllApplicantsPage() {
     toggleStar,
     changeStatus,
   } = useAllApplicants();
+  console.log("Filter applicants-------->", filtered);
 
   if (loading) return <PageSkeleton />;
 

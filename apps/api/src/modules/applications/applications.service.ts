@@ -142,11 +142,46 @@ export class ApplicationsService {
       .createQueryBuilder('app')
       .leftJoinAndSelect('app.applicant', 'u')
       .leftJoinAndSelect('u.applicantProfile', 'p')
-      .where('app.job_id = :jobId', { jobId });
+      .leftJoinAndSelect('app.job', 'job') // ← missing
+      .leftJoinAndSelect('app.resume', 'resume') // ← missing
+      .where('app.jobId = :jobId', { jobId });
 
-    if (opts.sort === 'recent' || !opts.sort)
-      qb.orderBy('app.appliedAt', 'DESC');
+    if (opts.sort === 'match') {
+      qb.orderBy('app.matchScore', 'DESC');
+    } else {
+      qb.orderBy('app.appliedAt', 'DESC'); // ← was only on !opts.sort
+    }
+
     if (opts.limit) qb.take(opts.limit);
+
+    return qb.getMany().then((results) => {
+      console.log('findByJob raw count:', results.length);
+      console.log('findByJob first:', JSON.stringify(results[0], null, 2));
+      return results;
+    });
+  }
+
+  findAllByEmployer(
+    employerId: string,
+    opts: { limit?: number; sort?: 'recent' | 'match' } = {},
+  ) {
+    console.log('User Id---------->', employerId);
+    const qb = this.appRepo
+      .createQueryBuilder('app')
+      .leftJoinAndSelect('app.applicant', 'u')
+      .leftJoinAndSelect('u.applicantProfile', 'p')
+      .leftJoinAndSelect('app.job', 'job')
+      .leftJoinAndSelect('app.resume', 'resume')
+      .where('job.postedById = :employerId', { employerId });
+
+    if (opts.sort === 'match') {
+      qb.orderBy('app.matchScore', 'DESC');
+    } else {
+      qb.orderBy('app.appliedAt', 'DESC');
+    }
+
+    if (opts.limit) qb.take(opts.limit);
+    console.log('DB------------>', qb);
 
     return qb.getMany();
   }
@@ -208,7 +243,6 @@ export class ApplicationsService {
         'resume',
         'statusHistory',
         'statusHistory.changedBy',
-        'interviews',
       ],
     });
     if (!app) throw new NotFoundException('Application not found');

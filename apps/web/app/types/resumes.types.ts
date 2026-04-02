@@ -2,10 +2,10 @@
 
 export interface Resume {
   id: string;
-  filename: string;
+  name: string;
   originalName: string;
-  url: string;
-  sizeBytes: number;
+  fileUrl: string;
+  fileSize: number;
   isDefault: boolean;
   uploadedAt: string; // ISO
   usedIn?: number; // how many applications this resume was sent with

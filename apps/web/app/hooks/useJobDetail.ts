@@ -97,13 +97,14 @@ export function useJobDetail(id: string) {
 
   // ── Apply ──────────────────────────────────────────────────────────────────
   const handleApply = useCallback(
-    async (coverLetter?: string) => {
+    async (coverLetter?: string, resumeId?: string) => {
       setApplying(true);
       setApplyError(null);
       try {
         await api(`${API_BASE}/applications`, "POST", {
-          id,
+          jobId: id,
           coverLetter: coverLetter?.trim() || undefined,
+          resumeId,
         });
         setHasApplied(true);
         setShowModal(false);

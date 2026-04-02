@@ -21,6 +21,7 @@ export function useResumes() {
 
     api<Resume[]>(`${API_BASE}/resumes`, "GET")
       .then((data) => {
+        console.log("Resumes Data------->", data);
         if (!cancelled) {
           setResumes(data);
           setLoading(false);

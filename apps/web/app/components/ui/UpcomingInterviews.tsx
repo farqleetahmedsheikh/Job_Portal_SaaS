@@ -3,7 +3,7 @@
 "use client";
 
 import Link from "next/link";
-import styles from "../styles/upcoming-interview.module.css";
+import styles from "../../applicant/styles/applicant.module.css";
 
 interface Interview {
   title: string;

@@ -479,6 +479,13 @@
     filter: brightness(1.1);
 }
 
+.errorMsg {
+    color: var(--status-danger);
+    font-size: 14px;
+    text-align: center;
+    padding: 60px;
+}
+
 @media (max-width: 900px) {
     .tableHead {
         display: none;

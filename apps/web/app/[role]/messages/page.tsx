@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 /** @format */
 "use client";
 
@@ -6,11 +7,13 @@ import { MessageSquare, Search, Send } from "lucide-react";
 import { useUser } from "../../store/session.store";
 import { useChat } from "../../hooks/useChat";
 import { timeAgo } from "../../lib";
+import { useSearchParams } from "next/navigation";
 import type { Conversation, ChatMessage } from "../../hooks/useChat";
 import styles from "../../styles/messages.module.css";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function toInitials(name: string) {
+  if (!name) return "?";
   return name
     .split(" ")
     .slice(0, 2)
@@ -31,17 +34,18 @@ function ConversationItem({
   currentUserId: string;
   onClick: () => void;
 }) {
-  const isOwn = conv.lastMessageSenderId === currentUserId;
+  const isOwn = conv.last_message_sender_id === currentUserId;
+  console.log("Convo-------->", conv);
   return (
     <div
       className={`${styles.convItem} ${active ? styles.convItemActive : ""}`}
       onClick={onClick}
     >
       <div className={styles.convAvatar}>
-        {conv.otherUserAvatar ? (
+        {conv.other_user_avatar ? (
           <img
-            src={conv.otherUserAvatar}
-            alt={conv.otherUserName}
+            src={conv.other_user_avatar}
+            alt={conv.other_user_name}
             style={{
               width: "100%",
               height: "100%",
@@ -50,26 +54,26 @@ function ConversationItem({
             }}
           />
         ) : (
-          toInitials(conv.otherUserName)
+          toInitials(conv.other_user_name)
         )}
       </div>
       <div className={styles.convInfo}>
         <p className={styles.convName}>
-          <span>{conv.otherUserName}</span>
-          {conv.lastMessageAt && (
+          <span>{conv.other_user_name}</span>
+          {conv.last_message_at && (
             <span className={styles.convTime}>
-              {timeAgo(conv.lastMessageAt)}
+              {timeAgo(conv.last_message_at)}
             </span>
           )}
         </p>
         <p className={styles.convPreview}>
-          {conv.lastMessage
-            ? `${isOwn ? "You: " : ""}${conv.lastMessage}`
+          {conv.last_message
+            ? `${isOwn ? "You: " : ""}${conv.last_message}`
             : "No messages yet"}
         </p>
       </div>
-      {conv.unreadCount > 0 && (
-        <span className={styles.unreadBadge}>{conv.unreadCount}</span>
+      {conv.unread_count > 0 && (
+        <span className={styles.unreadBadge}>{conv.unread_count}</span>
       )}
     </div>
   );
@@ -138,13 +142,23 @@ export default function MessagesPage() {
     loadingInbox,
     loadingMessages,
     openConversation,
+    startConversation,
     sendMessage,
     handleTyping,
   } = useChat(currentUserId);
-
+  const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
   const [inputText, setInputText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const didAutoOpen = useRef(false);
+  useEffect(() => {
+    if (loadingInbox || didAutoOpen.current) return;
+    const to = searchParams.get("to");
+    if (to) {
+      didAutoOpen.current = true;
+      startConversation(to); // ← was openConversation(to)
+    }
+  }, [loadingInbox]); // ← wait for inbox before checking existing convs
 
   // Auto-scroll to bottom on new message
   useEffect(() => {
@@ -156,8 +170,8 @@ export default function MessagesPage() {
     const q = search.toLowerCase();
     return conversations.filter(
       (c) =>
-        c.otherUserName.toLowerCase().includes(q) ||
-        c.lastMessage?.toLowerCase().includes(q),
+        c.other_user_name.toLowerCase().includes(q) ||
+        c.last_message?.toLowerCase().includes(q),
     );
   }, [conversations, search]);
 
@@ -286,10 +300,10 @@ export default function MessagesPage() {
             {/* Header */}
             <div className={styles.chatHeader}>
               <div className={styles.chatHeaderAvatar}>
-                {activeConv.otherUserAvatar ? (
+                {activeConv.other_user_avatar ? (
                   <img
-                    src={activeConv.otherUserAvatar}
-                    alt={activeConv.otherUserName}
+                    src={activeConv.other_user_avatar}
+                    alt={activeConv.other_user_name}
                     style={{
                       width: "100%",
                       height: "100%",
@@ -298,12 +312,12 @@ export default function MessagesPage() {
                     }}
                   />
                 ) : (
-                  toInitials(activeConv.otherUserName)
+                  toInitials(activeConv.other_user_name)
                 )}
               </div>
               <div className={styles.chatHeaderInfo}>
                 <p className={styles.chatHeaderName}>
-                  {activeConv.otherUserName}
+                  {activeConv.other_user_name}
                 </p>
                 <p className={styles.chatHeaderSub}>
                   {isSomeoneTyping ? (
@@ -311,10 +325,10 @@ export default function MessagesPage() {
                       <span className={styles.onlineDot} />
                       typing...
                     </>
-                  ) : activeConv.jobTitle ? (
-                    `Re: ${activeConv.jobTitle}`
+                  ) : activeConv.job_title ? (
+                    `Re: ${activeConv.job_title}`
                   ) : (
-                    activeConv.otherUserRole
+                    activeConv.other_user_role
                   )}
                 </p>
               </div>

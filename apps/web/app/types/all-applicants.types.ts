@@ -27,7 +27,7 @@ export interface AllApplicant {
   jobTitle: string;
   resumeUrl?: string;
   skills: string[];
-  experience?: string; // e.g. "4 years"
+  experience?: number; // e.g. "4 years"
 }
 
 export interface JobOption {

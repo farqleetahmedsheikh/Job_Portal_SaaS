@@ -10,12 +10,20 @@ import { InputField } from "../../components/Auth/InputField";
 import { AuthForm } from "../../components/Auth/AuthForm";
 import { AuthLinks } from "../../components/Auth/AuthLinks";
 import { useSession } from "../../hooks/useSession";
-
+import { useUser } from "../../store/session.store";
+import { useRouter } from "next/navigation";
 type FormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const { login, isLoading } = useSession();
   const [serverError, setServerError] = useState<string | null>(null);
+  const user = useUser();
+  const router = useRouter();
+  
+  // If user exsist then push it to their dashboard
+  if (user) {
+    router.replace(`/${user.role}/dashboard`);
+  }
 
   const {
     register,

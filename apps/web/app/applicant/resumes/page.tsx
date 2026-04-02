@@ -63,7 +63,7 @@ function ResumeCard({
                 year: "numeric",
               })}
             </span>
-            <span>{(resume.sizeBytes / 1024).toFixed(0)} KB</span>
+            <span>{(resume.fileSize / 1024).toFixed(0)} KB</span>
             {(resume.usedIn ?? 0) > 0 && (
               <span className={styles.usedIn}>
                 <FileCheck size={10} /> {resume.usedIn} application
@@ -90,7 +90,7 @@ function ResumeCard({
           </button>
         )}
         <a
-          href={resume.url}
+          href={resume.fileUrl}
           target="_blank"
           rel="noopener noreferrer"
           className={styles.actionBtn}
@@ -99,7 +99,7 @@ function ResumeCard({
           <Eye size={14} />
         </a>
         <a
-          href={resume.url}
+          href={resume.fileUrl}
           download={resume.originalName}
           className={styles.actionBtn}
           title="Download"

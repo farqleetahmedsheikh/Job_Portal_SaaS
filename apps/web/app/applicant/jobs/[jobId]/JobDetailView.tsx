@@ -1,7 +1,7 @@
 /** @format */
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -21,11 +21,13 @@ import {
   X,
   Building2,
   Star,
+  FileText,
 } from "lucide-react";
 import { useJobDetail } from "../../../hooks/useJobDetail";
 import { useUser } from "../../../store/session.store";
-import { formatDate } from "../../../lib";
+import { api, formatDate } from "../../../lib";
 import styles from "../../styles/job-detail.module.css";
+import { API_BASE } from "../../../constants";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function toInitials(name: string) {
@@ -85,15 +87,28 @@ function ApplyModal({
   company: string;
   applying: boolean;
   applyError: string | null;
-  onApply: (coverLetter?: string) => void;
+  onApply: (coverLetter?: string, resumeId?: string) => void;
   onClose: () => void;
 }) {
   const [coverLetter, setCoverLetter] = useState("");
+  const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
+  const [resumes, setResumes] = useState<
+    { id: string; name: string; isDefault: boolean }[]
+  >([]);
+
+  useEffect(() => {
+    api<any[]>(`${API_BASE}/resumes`, "GET")
+      .then((data) => {
+        setResumes(data.filter((r) => r.status === "ready"));
+        const def = data.find((r) => r.isDefault && r.status === "ready");
+        if (def) setSelectedResumeId(def.id);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>Apply for this job</h2>
           <button className={styles.modalClose} onClick={onClose}>
@@ -102,7 +117,6 @@ function ApplyModal({
         </div>
 
         <div className={styles.modalBody}>
-          {/* Job preview */}
           <div className={styles.modalJobRow}>
             <Briefcase
               size={18}
@@ -114,7 +128,82 @@ function ApplyModal({
             </div>
           </div>
 
-          {/* Cover letter */}
+          {/* ── Resume picker ── */}
+          <label className={styles.formLabel}>Resume</label>
+          {resumes.length === 0 ? (
+            <p
+              style={{
+                fontSize: 13,
+                color: "var(--status-error)",
+                marginBottom: 12,
+              }}
+            >
+              No resumes uploaded.{" "}
+              <Link
+                href="/applicant/resumes"
+                style={{ color: "var(--color-secondary)" }}
+              >
+                Upload one first
+              </Link>
+            </p>
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                marginBottom: 16,
+              }}
+            >
+              {resumes.map((r) => (
+                <label
+                  key={r.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "10px 12px",
+                    borderRadius: 8,
+                    border: `1.5px solid ${selectedResumeId === r.id ? "var(--color-secondary)" : "var(--border)"}`,
+                    cursor: "pointer",
+                    background:
+                      selectedResumeId === r.id
+                        ? "rgba(var(--color-secondary-rgb), .06)"
+                        : "transparent",
+                    fontSize: 13,
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="resume"
+                    value={r.id}
+                    checked={selectedResumeId === r.id}
+                    onChange={() => setSelectedResumeId(r.id)}
+                    style={{ accentColor: "var(--color-secondary)" }}
+                  />
+                  <FileText
+                    size={14}
+                    style={{ color: "var(--color-secondary)", flexShrink: 0 }}
+                  />
+                  {r.name}
+                  {r.isDefault && (
+                    <span
+                      style={{
+                        marginLeft: "auto",
+                        fontSize: 11,
+                        color: "var(--text-muted)",
+                        fontWeight: 600,
+                      }}
+                    >
+                      DEFAULT
+                    </span>
+                  )}
+                </label>
+              ))}
+            </div>
+          )}
+
+          {/* ── Cover letter ── */}
           <label className={styles.formLabel}>
             Cover Letter{" "}
             <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>
@@ -122,13 +211,12 @@ function ApplyModal({
             </span>
           </label>
           <p className={styles.formHint}>
-            Tell the employer why you&apos;re a great fit. Keep it short and
-            specific.
+            Tell the employer why you're a great fit.
           </p>
           <textarea
             className={styles.textarea}
-            rows={6}
-            placeholder={`Hi, I'm interested in the ${jobTitle} position...\n\nI have experience with...\n\nI'd love to discuss how I can contribute to your team.`}
+            rows={5}
+            placeholder={`Hi, I'm interested in the ${jobTitle} position...`}
             value={coverLetter}
             onChange={(e) => setCoverLetter(e.target.value)}
           />
@@ -147,8 +235,10 @@ function ApplyModal({
           <button
             className={styles.btnPrimary}
             style={{ flex: 2 }}
-            onClick={() => onApply(coverLetter)}
-            disabled={applying}
+            onClick={() =>
+              onApply(coverLetter || undefined, selectedResumeId ?? undefined)
+            }
+            disabled={applying || resumes.length === 0}
             aria-busy={applying}
           >
             {applying ? (
@@ -244,7 +334,7 @@ function Skeleton() {
 }
 
 // ── Main View ─────────────────────────────────────────────────────────────────
-export function JobDetailView({ id }: { id: string }) {
+export function JobDetailView({ jobId }: { jobId: string }) {
   const user = useUser();
   const {
     job,
@@ -258,7 +348,7 @@ export function JobDetailView({ id }: { id: string }) {
     showModal,
     setShowModal,
     handleApply,
-  } = useJobDetail(id);
+  } = useJobDetail(jobId);
 
   if (loading) return <Skeleton />;
   if (error || !job)
@@ -282,7 +372,7 @@ export function JobDetailView({ id }: { id: string }) {
   const salary =
     job.salaryIsPublic && (job.salaryMin || job.salaryMax)
       ? job.salaryMin && job.salaryMax
-        ? `${job.salaryCurrency} ${(job.salaryMin)} – ${(job.salaryMax)}`
+        ? `${job.salaryCurrency} ${job.salaryMin} – ${job.salaryMax}`
         : job.salaryMin
           ? `From ${job.salaryCurrency} ${(job.salaryMin / 1000).toFixed(0)}k`
           : `Up to ${job.salaryCurrency} ${(job.salaryMax! / 1000).toFixed(0)}k`
@@ -750,7 +840,7 @@ export function JobDetailView({ id }: { id: string }) {
       {showModal && (
         <ApplyModal
           jobTitle={job.title}
-          company={job.company.companyName}
+          company={job.company.companyName} // ← remove resumeId prop
           applying={applying}
           applyError={applyError}
           onApply={handleApply}

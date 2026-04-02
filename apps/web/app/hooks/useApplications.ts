@@ -22,10 +22,11 @@ interface RawApplication {
   job?: {
     id?: string;
     title?: string;
-    salary?: string;
+    salaryMin?: string;
+    salaryMax: string;
     locationType?: string;
     location?: string;
-    company?: { name?: string; logoUrl?: string };
+    company?: { companyName?: string; logoUrl?: string };
   };
 }
 
@@ -87,17 +88,19 @@ export function useApplications() {
 
     api<RawApplication[]>(`${API_BASE}/applications/mine`, "GET")
       .then((data) => {
+        console.log("Data ------->", data);
         if (cancelled) return;
         setApplications(
           data.map(
             (a): Application => ({
               id: a.id,
               role: a.job?.title ?? "Unknown Role",
-              company: a.job?.company?.name ?? "Unknown Company",
-              logo: toInitials(a.job?.company?.name ?? "?"),
+              company: a.job?.company?.companyName ?? "Unknown Company",
+              logo: toInitials(a.job?.company?.companyName ?? "?"),
+              logoUrl: a.job?.company?.logoUrl,
               location: a.job?.location ?? "—",
               type: toJobType(a.job?.locationType),
-              salary: a.job?.salary ?? "—",
+              salary: `${a.job?.salaryMin} - ${a.job?.salaryMax}`,
               appliedDate: toDateLabel(a.createdAt),
               lastUpdate: toRelativeTime(a.updatedAt),
               status: a.status,

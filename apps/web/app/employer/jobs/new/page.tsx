@@ -1,6 +1,7 @@
 /** @format */
 "use client";
 
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -12,10 +13,14 @@ import {
   MapPin,
   DollarSign,
   Users,
+  Sparkles,
+  Square,
+  RefreshCw,
 } from "lucide-react";
 import { usePostJob } from "../../../hooks/usePostJob";
-import { FormField } from "../../../components/ui/FormField"; // shared
-import { SkillsInput } from "../../../components/ui/SkillsInput"; // shared
+import { useAIDescription, type Tone } from "../../../hooks/useAIDescription";
+import { FormField } from "../../../components/ui/FormField";
+import { SkillsInput } from "../../../components/ui/SkillsInput";
 import {
   JOB_TYPES,
   EXPERIENCE_LEVELS,
@@ -26,7 +31,7 @@ import {
 } from "../../../types/post-job.types";
 import styles from "../../styles/post-job.module.css";
 
-// ── Local-only helper — too small to be its own file ────────────────────────
+// ── Section wrapper ──────────────────────────────────────────────────────────
 function Section({
   id,
   active,
@@ -56,7 +61,100 @@ const NAV_ICONS: Record<SectionId, React.ReactNode> = {
   description: <Users size={15} />,
 };
 
-// ── Page ────────────────────────────────────────────────────────────────────
+const TONES: { value: Tone; label: string }[] = [
+  { value: "professional", label: "Professional" },
+  { value: "friendly", label: "Friendly" },
+  { value: "energetic", label: "Energetic" },
+  { value: "technical", label: "Technical" },
+  { value: "concise", label: "Concise" },
+];
+
+// ── AI toolbar ───────────────────────────────────────────────────────────────
+function AIToolbar({
+  streaming,
+  tone,
+  hasContent,
+  onTone,
+  onGenerate,
+  onImprove,
+  onStop,
+  error,
+}: {
+  streaming: boolean;
+  tone: Tone;
+  hasContent: boolean;
+  onTone: (t: Tone) => void;
+  onGenerate: () => void;
+  onImprove: () => void;
+  onStop: () => void;
+  error: string | null;
+}) {
+  return (
+    <div className={styles.aiToolbar}>
+      {/* Tone pills */}
+      <div className={styles.aiToneRow}>
+        <span className={styles.aiToneLabel}>Tone</span>
+        {TONES.map((t) => (
+          <button
+            key={t.value}
+            type="button"
+            className={`${styles.tonePill} ${tone === t.value ? styles.tonePillActive : ""}`}
+            onClick={() => onTone(t.value)}
+            disabled={streaming}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Action buttons */}
+      <div className={styles.aiActions}>
+        {streaming ? (
+          <button type="button" className={styles.aiStopBtn} onClick={onStop}>
+            <Square size={12} style={{ fill: "currentColor" }} />
+            Stop
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              className={styles.aiGenerateBtn}
+              onClick={onGenerate}
+            >
+              <Sparkles size={13} />
+              {hasContent ? "Regenerate" : "Write with AI"}
+            </button>
+            {hasContent && (
+              <button
+                type="button"
+                className={styles.aiImproveBtn}
+                onClick={onImprove}
+              >
+                <RefreshCw size={13} />
+                Improve
+              </button>
+            )}
+          </>
+        )}
+
+        {streaming && (
+          <span className={styles.aiStreamingBadge}>
+            <span className={styles.aiDot} />
+            Writing…
+          </span>
+        )}
+      </div>
+
+      {error && (
+        <p className={styles.aiError}>
+          <AlertCircle size={12} /> {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ── Page ─────────────────────────────────────────────────────────────────────
 export default function PostJobPage() {
   const {
     form,
@@ -73,7 +171,40 @@ export default function PostJobPage() {
     submitting,
     progress,
     handleSubmit,
+    // needs a direct setter for description — add this to usePostJob if not present
+    setDescription,
   } = usePostJob();
+
+  const [tone, setTone] = useState<Tone>("professional");
+
+  // Stream directly into the description field
+  const handleChunk = useCallback(
+    (text: string) => setDescription(text),
+    [setDescription],
+  );
+  const handleDone = useCallback(
+    (text: string) => setDescription(text),
+    [setDescription],
+  );
+
+  const {
+    streaming,
+    error: aiError,
+    generate,
+    stop,
+  } = useAIDescription(handleChunk, handleDone);
+
+  const buildContext = () => ({
+    title: form.title,
+    department: form.department,
+    type: form.type,
+    experienceLevel: form.experienceLevel,
+    locationType: form.locationType,
+    skills: form.skills,
+  });
+
+  const handleGenerate = () => generate(buildContext(), tone);
+  const handleImprove = () => generate(buildContext(), tone, form.description);
 
   return (
     <div className={styles.page}>
@@ -115,7 +246,6 @@ export default function PostJobPage() {
         </div>
       </div>
 
-      {/* Server error */}
       {serverError && (
         <div className={styles["error-banner"]} role="alert">
           <AlertCircle size={14} /> {serverError}
@@ -164,9 +294,8 @@ export default function PostJobPage() {
           ))}
         </nav>
 
-        {/* Sections */}
         <div className={styles.form}>
-          {/* ── Job Basics ─────────────────────────────────────────────────── */}
+          {/* ── Basics ── */}
           <Section id="basic" active={activeSection} title="Job Basics">
             <div className={styles.fieldRow}>
               <FormField label="Job Title" required error={errors.title}>
@@ -240,7 +369,7 @@ export default function PostJobPage() {
             </div>
           </Section>
 
-          {/* ── Location & Type ────────────────────────────────────────────── */}
+          {/* ── Location ── */}
           <Section id="location" active={activeSection} title="Location & Type">
             <FormField label="Work Location" required error={errors.location}>
               <input
@@ -274,7 +403,7 @@ export default function PostJobPage() {
             </div>
           </Section>
 
-          {/* ── Compensation ───────────────────────────────────────────────── */}
+          {/* ── Compensation ── */}
           <Section
             id="compensation"
             active={activeSection}
@@ -328,26 +457,42 @@ export default function PostJobPage() {
             </FormField>
           </Section>
 
-          {/* ── Job Description ────────────────────────────────────────────── */}
+          {/* ── Description ── */}
           <Section
             id="description"
             active={activeSection}
             title="Job Description"
           >
+            {/* AI toolbar — sits above the description textarea */}
             <FormField
               label="Job Description"
               required
               error={errors.description}
               hint="Describe the role, team, and what success looks like"
             >
+              <AIToolbar
+                streaming={streaming}
+                tone={tone}
+                hasContent={!!form.description?.trim()}
+                onTone={setTone}
+                onGenerate={handleGenerate}
+                onImprove={handleImprove}
+                onStop={stop}
+                error={aiError}
+              />
               <textarea
-                className={`${styles.textarea} ${errors.description ? styles.inputError : ""}`}
-                rows={6}
-                placeholder="We're looking for a passionate engineer to join our team..."
+                className={`${styles.textarea} ${errors.description ? styles.inputError : ""} ${streaming ? styles.textareaStreaming : ""}`}
+                rows={8}
+                placeholder={
+                  streaming
+                    ? ""
+                    : "Write a description or click 'Write with AI' to generate one from your job details above…"
+                }
                 value={form.description}
                 onChange={setField("description")}
               />
             </FormField>
+
             <FormField
               label="Responsibilities"
               hint="Key day-to-day tasks (one per line)"

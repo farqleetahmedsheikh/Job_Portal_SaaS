@@ -17,7 +17,7 @@ interface RawApplication {
   createdAt: string;
   job?: {
     title?: string;
-    company?: { name?: string; logoUrl?: string };
+    company?: { companyName?: string; logoUrl?: string };
   };
 }
 
@@ -27,12 +27,12 @@ interface RawInterview {
   format?: string;
   durationMinutes?: number;
   scheduledAt: string;
-  job?: { company?: { name?: string } };
+  job?: { company?: { companyName?: string } };
 }
 
 interface RawStats {
-  total: number;
-  active: number;
+  totalApplications: number;
+  activeApplications: number;
   responseRate: number;
   responseRateDelta: number;
   weeklyCount: number;
@@ -121,10 +121,11 @@ export function useApplicantDashboard() {
     ])
       .then(([rawStats, rawApps, rawIvs]) => {
         if (cancelled) return;
+        console.log("RawStats------->", rawStats);
 
         setStats({
-          totalApplications: rawStats.total,
-          activeApplications: rawStats.active,
+          totalApplications: rawStats.totalApplications,
+          activeApplications: rawStats.activeApplications,
           responseRate: rawStats.responseRate,
           responseRateDelta: rawStats.responseRateDelta,
           weeklyApplications: rawStats.weeklyCount,
@@ -135,8 +136,8 @@ export function useApplicantDashboard() {
           (rawApps ?? []).map((app) => ({
             id: app.id,
             title: app.job?.title ?? "Unknown Role",
-            company: app.job?.company?.name ?? "Unknown Company",
-            logo: toInitials(app.job?.company?.name ?? "?"),
+            company: app.job?.company?.companyName ?? "Unknown Company",
+            logo: toInitials(app.job?.company?.companyName ?? "?"),
             logoUrl: app.job?.company?.logoUrl,
             time: toRelativeTime(app.createdAt),
             status: app.status,
@@ -146,7 +147,7 @@ export function useApplicantDashboard() {
         setInterviews(
           (rawIvs ?? []).map((iv) => ({
             id: iv.id,
-            title: `${iv.type ? iv.type.charAt(0).toUpperCase() + iv.type.slice(1) + " Round" : "Interview"} — ${iv.job?.company?.name ?? ""}`,
+            title: `${iv.type ? iv.type.charAt(0).toUpperCase() + iv.type.slice(1) + " Round" : "Interview"} — ${iv.job?.company?.companyName ?? ""}`,
             sub: `${iv.format ?? "Video call"} · ${iv.durationMinutes ?? 45} min`,
             time: toInterviewLabel(iv.scheduledAt),
             color: interviewDotColor(iv.type),

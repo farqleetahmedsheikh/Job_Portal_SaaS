@@ -15,6 +15,7 @@ import {
   MapPin,
   DollarSign,
   Users,
+  Clock,
 } from "lucide-react";
 import { useEditJob } from "../../../../hooks/useEditJob";
 import { FormField } from "../../../../components/ui/FormField";
@@ -65,7 +66,7 @@ function EditSkeleton() {
     <div className={styles.page}>
       <div className={styles.header}>
         <div
-          className={`${styles.skeleton}`}
+          className={styles.skeleton}
           style={{ width: 160, height: 14, borderRadius: 6 }}
         />
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -120,6 +121,8 @@ export function EditJobView({ id }: { id: string }) {
     progress,
     handleSave,
     handleStatusChange,
+    isExpired, // ← from hook return, not a named import
+    tomorrowString, // ← from hook return, not a named import
   } = useEditJob(id);
 
   if (loading) return <EditSkeleton />;
@@ -155,7 +158,6 @@ export function EditJobView({ id }: { id: string }) {
           </p>
         </div>
         <div className={styles.headerActions}>
-          {/* Status actions */}
           {job?.status === "active" && (
             <button
               className={`${styles.btn} ${styles.btnGhost}`}
@@ -188,8 +190,6 @@ export function EditJobView({ id }: { id: string }) {
               <XCircle size={14} /> Close
             </button>
           )}
-
-          {/* Save actions */}
           <button
             className={`${styles.btn} ${styles.btnGhost}`}
             onClick={() => handleSave("draft")}
@@ -200,7 +200,7 @@ export function EditJobView({ id }: { id: string }) {
           <button
             className={`${styles.btn} ${styles.btnPrimary}`}
             onClick={() => handleSave("active")}
-            disabled={submitting}
+            disabled={submitting || isExpired}
             aria-busy={submitting}
           >
             {submitting ? (
@@ -220,14 +220,31 @@ export function EditJobView({ id }: { id: string }) {
         </div>
       </div>
 
-      {/* Error banner */}
+      {/* ── Expired banner ──────────────────────────────────────────────────── */}
+      {isExpired && (
+        <div
+          className={styles["save-banner"]}
+          style={{
+            background: "rgba(244,63,94,.08)",
+            borderColor: "rgba(244,63,94,.25)",
+            color: "var(--status-danger)",
+          }}
+          role="alert"
+        >
+          <Clock size={14} />
+          This job has expired. Update the deadline to a future date before
+          republishing.
+        </div>
+      )}
+
+      {/* ── Error banner ────────────────────────────────────────────────────── */}
       {serverError && (
-        <div className={styles["error-banner"]} role="alert">
+        <div className={styles["errorMsg"]} role="alert">
           <AlertCircle size={14} /> {serverError}
         </div>
       )}
 
-      {/* Closed / paused notice */}
+      {/* ── Paused / closed notice ───────────────────────────────────────────── */}
       {(isPaused || isClosed) && (
         <div
           className={styles["save-banner"]}
@@ -247,7 +264,7 @@ export function EditJobView({ id }: { id: string }) {
         </div>
       )}
 
-      {/* Progress */}
+      {/* ── Progress ────────────────────────────────────────────────────────── */}
       <div className={styles.progressCard}>
         <div className={styles.progressInfo}>
           <span className={styles.progressLabel}>Completion</span>
@@ -350,10 +367,20 @@ export function EditJobView({ id }: { id: string }) {
                   onChange={setField("openings")}
                 />
               </FormField>
-              <FormField label="Application Deadline" error={errors.deadline}>
+              {/* Deadline — min set to tomorrow, error shown if past */}
+              <FormField
+                label="Application Deadline"
+                error={errors.deadline}
+                hint={
+                  isExpired
+                    ? "Set a future date to republish this job"
+                    : undefined
+                }
+              >
                 <input
                   className={`${styles.input} ${errors.deadline ? styles.inputError : ""}`}
                   type="date"
+                  min={tomorrowString()} // ← from hook, prevents past date selection
                   value={form.deadline}
                   onChange={setField("deadline")}
                 />
@@ -536,7 +563,7 @@ export function EditJobView({ id }: { id: string }) {
             <button
               className={`${styles.btn} ${styles.btnPrimary}`}
               onClick={() => handleSave("active")}
-              disabled={submitting}
+              disabled={submitting || isExpired}
               aria-busy={submitting}
             >
               {submitting ? (

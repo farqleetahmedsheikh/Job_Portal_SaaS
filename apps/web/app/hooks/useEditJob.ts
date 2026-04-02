@@ -12,7 +12,6 @@ import {
   type SectionId,
 } from "../types/post-job.types";
 
-// Shape returned by GET /jobs/:id
 interface JobDetail {
   id: string;
   title: string;
@@ -25,6 +24,7 @@ interface JobDetail {
   salaryCurrency: string;
   experienceLevel: string;
   expiresAt: string | null;
+  deadline: string | null;
   openings: number;
   description: string;
   responsibilities: string | null;
@@ -32,7 +32,7 @@ interface JobDetail {
   niceToHave: string | null;
   benefits: string | null;
   skills: string[];
-  status: "active" | "paused" | "draft" | "closed";
+  status: "active" | "paused" | "draft" | "closed" | "expired";
 }
 
 function jobToForm(j: JobDetail): JobForm {
@@ -46,8 +46,8 @@ function jobToForm(j: JobDetail): JobForm {
     salaryMax: j.salaryMax != null ? String(j.salaryMax) : "",
     salaryCurrency: j.salaryCurrency,
     experienceLevel: j.experienceLevel,
-    // expiresAt ISO → date input needs YYYY-MM-DD
-    deadline: j.expiresAt ? j.expiresAt.slice(0, 10) : "",
+    // prefer deadline column, fall back to expiresAt
+    deadline: (j.deadline ?? j.expiresAt ?? "").slice(0, 10),
     openings: String(j.openings),
     description: j.description,
     responsibilities: j.responsibilities ?? "",
@@ -55,21 +55,59 @@ function jobToForm(j: JobDetail): JobForm {
     niceToHave: j.niceToHave ?? "",
     benefits: j.benefits ?? "",
     skills: j.skills ?? [],
-    status:
-      j.status === "paused" || j.status === "closed"
-        ? "active" // editing a paused/closed job — let user decide new status
-        : j.status,
+    // expired / paused / closed → let user decide new status
+    status: j.status === "active" || j.status === "draft" ? j.status : "draft",
   };
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Today as YYYY-MM-DD in local time */
+function todayString(): string {
+  const d = new Date();
+  return [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, "0"),
+    String(d.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+/** Tomorrow as YYYY-MM-DD in local time */
+function tomorrowString(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, "0"),
+    String(d.getDate()).padStart(2, "0"),
+  ].join("-");
 }
 
 function validate(form: JobForm): JobFormErrors {
   const e: JobFormErrors = {};
+
   if (!form.title.trim()) e.title = "Job title is required";
   if (!form.location.trim()) e.location = "Location is required";
   if (!form.description.trim()) e.description = "Job description is required";
   if (!form.requirements.trim()) e.requirements = "Requirements are required";
+
   if (form.salaryMin && form.salaryMax && +form.salaryMin > +form.salaryMax)
     e.salaryMax = "Max salary must be greater than min";
+
+  // ── Deadline checks ───────────────────────────────────────────────────────
+  if (form.deadline) {
+    const today = todayString();
+    // const tomorrow = tomorrowString();
+
+    if (form.deadline <= today) {
+      // deadline is today or already in the past
+      e.deadline =
+        form.deadline < today
+          ? "Deadline has already passed — please set a future date"
+          : "Deadline cannot be today — applicants need at least one day to apply";
+    }
+  }
+
   return e;
 }
 
@@ -148,17 +186,36 @@ export function useEditJob(jobId: string) {
       if (!form) return;
       setServerError(null);
 
+      // Always validate deadline regardless of draft/active
+      const deadlineErrors: JobFormErrors = {};
+      if (form.deadline) {
+        const today = todayString();
+        if (form.deadline < today) {
+          deadlineErrors.deadline =
+            "Deadline has already passed — please set a future date";
+        } else if (form.deadline === today) {
+          deadlineErrors.deadline =
+            "Deadline cannot be today — applicants need at least one day to apply";
+        }
+      }
+
       if (status === "active") {
-        const errs = validate(form);
+        const errs = { ...validate(form), ...deadlineErrors };
         if (Object.keys(errs).length > 0) {
           setErrors(errs);
+          // scroll to the offending section
           if (errs.title) setActiveSection("basic");
           else if (errs.location) setActiveSection("location");
           else if (errs.salaryMax) setActiveSection("compensation");
+          else if (errs.deadline) setActiveSection("compensation");
           else if (errs.description || errs.requirements)
             setActiveSection("description");
           return;
         }
+      } else if (Object.keys(deadlineErrors).length > 0) {
+        // Even draft saves must not have a past/today deadline
+        setErrors(deadlineErrors);
+        return;
       }
 
       setSubmitting(true);
@@ -174,6 +231,7 @@ export function useEditJob(jobId: string) {
           salaryCurrency: form.salaryCurrency,
           experienceLevel: form.experienceLevel,
           expiresAt: form.deadline || undefined,
+          deadline: form.deadline || undefined,
           openings: Number(form.openings) || 1,
           description: form.description.trim(),
           responsibilities: form.responsibilities.trim() || undefined,
@@ -202,8 +260,23 @@ export function useEditJob(jobId: string) {
   // ── Status-only actions (pause / close / reopen) ───────────────────────────
   const handleStatusChange = useCallback(
     async (status: "active" | "paused" | "closed") => {
-      setSubmitting(true);
+      if (!form) return;
       setServerError(null);
+
+      // Block re-activating if deadline is in the past or today
+      if (status === "active" && form.deadline) {
+        const today = todayString();
+        if (form.deadline <= today) {
+          setServerError(
+            form.deadline < today
+              ? "Cannot reactivate: the deadline has already passed. Edit the deadline first."
+              : "Cannot reactivate: deadline is today. Set a future deadline first.",
+          );
+          return;
+        }
+      }
+
+      setSubmitting(true);
       try {
         await api(`${API_BASE}/jobs/${jobId}/status`, "PATCH", { status });
         router.push("/employer/jobs");
@@ -214,7 +287,7 @@ export function useEditJob(jobId: string) {
         setSubmitting(false);
       }
     },
-    [jobId, router],
+    [jobId, form, router],
   );
 
   // ── Progress ───────────────────────────────────────────────────────────────
@@ -231,6 +304,12 @@ export function useEditJob(jobId: string) {
       pct: Math.round((withSkills / total) * 100),
     };
   }, [form]);
+
+  // ── Derived — is the loaded job expired ───────────────────────────────────
+  const isExpired =
+    job?.status === "expired" ||
+    (!!job?.deadline && job.deadline.slice(0, 10) < todayString()) ||
+    (!!job?.expiresAt && new Date(job.expiresAt) < new Date());
 
   return {
     job,
@@ -251,5 +330,8 @@ export function useEditJob(jobId: string) {
     progress,
     handleSave,
     handleStatusChange,
+    isExpired, // UI can show a warning banner when true
+    todayString, // pass to <input type="date" min={tomorrowString()}> in the form
+    tomorrowString,
   };
 }

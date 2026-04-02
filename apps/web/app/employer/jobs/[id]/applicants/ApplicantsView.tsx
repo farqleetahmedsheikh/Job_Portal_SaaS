@@ -54,6 +54,8 @@ export function ApplicantsView({ id }: Props) {
     toggleStar,
     changeStatus,
   } = useApplicants({ id });
+  console.log("Job------->", job);
+  console.log("Applicants-------->", applicants);
 
   // ── Loading ───────────────────────────────────────────────────────────────
   if (loading)
@@ -327,7 +329,7 @@ export function ApplicantsView({ id }: Props) {
                       <Eye size={14} />
                     </Link>
                     <Link
-                      href={`/employer/messages?to=${app.id}`}
+                      href={`/employer/messages?to=${(app as any).userId ?? ""}`}
                       className={styles.actionBtn}
                       title="Message"
                     >

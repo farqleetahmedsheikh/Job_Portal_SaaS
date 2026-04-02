@@ -473,6 +473,150 @@
     color: var(--text-primary);
 }
 
+.errorMsg {
+    color: var(--status-danger);
+    font-size: 14px;
+    text-align: center;
+    padding: 60px;
+}
+
+/* AI Module  */
+
+.aiToolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.aiToneRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.aiToneLabel {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.tonePill {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.tonePill:disabled {
+    opacity: .5;
+}
+
+.tonePillActive {
+    border-color: #7F77DD;
+    color: #534AB7;
+    background: #EEEDFE;
+    font-weight: 500;
+}
+
+.aiActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.aiGenerateBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    padding: 6px 14px;
+    border-radius: var(--border-radius);
+    border: 1px solid #7F77DD;
+    color: #534AB7;
+    background: #EEEDFE;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.aiGenerateBtn:hover {
+    background: #CECBF6;
+}
+
+.aiImproveBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    background: transparent;
+    cursor: pointer;
+}
+
+.aiImproveBtn:hover {
+    background: var(--bg-secondary);
+}
+
+.aiStopBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-danger);
+    color: var(--status-error);
+    background: transparent;
+    cursor: pointer;
+}
+
+.aiStreamingBadge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: #534AB7;
+}
+
+.aiDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #534AB7;
+    animation: pulse .8s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: .3;
+    }
+}
+
+.aiError {
+    font-size: 12px;
+    color: var(--status-error);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.textareaStreaming {
+    border-color: #7F77DD !important;
+}
+
 @media (max-width: 640px) {
     .layout {
         grid-template-columns: 1fr;

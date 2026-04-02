@@ -35,6 +35,11 @@ export function usePostJob() {
   const [activeSection, setActiveSection] = useState<SectionId>("basic");
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  
+  const setDescription = useCallback(
+    (val: string) => setForm((prev) => ({ ...prev, description: val })),
+    [],
+  );
 
   const setField = useCallback(
     (key: keyof JobForm) =>
@@ -91,7 +96,7 @@ export function usePostJob() {
       }
       setSubmitting(true);
       try {
-        console.log("Job Data--------> ", form)
+        console.log("Job Data--------> ", form);
         const job = await api<{ id: string }>(`${API_BASE}/jobs`, "POST", {
           ...form,
           salaryMin: form.salaryMin ? Number(form.salaryMin) : undefined,
@@ -126,6 +131,7 @@ export function usePostJob() {
   return {
     form,
     setField,
+    setDescription,
     skillInput,
     setSkillInput,
     addSkill,

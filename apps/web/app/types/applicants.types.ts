@@ -6,13 +6,15 @@ export type AppStatus =
   | "shortlisted"
   | "interview"
   | "offered"
-  | "rejected";
+  | "rejected"
+  | "withdrawn"; // ← add
 
 export type SortKey = "match" | "date" | "name";
 
 export interface Applicant {
   id: string;
   name: string;
+  avatar: string | undefined;
   avatarUrl: string | null;
   title: string;
   location: string;
@@ -32,6 +34,7 @@ export const STATUS_META: Record<AppStatus, { label: string; cls: string }> = {
   interview: { label: "Interview", cls: "sInterview" },
   offered: { label: "Offered", cls: "sOffered" },
   rejected: { label: "Rejected", cls: "sRejected" },
+  withdrawn: { label: "Withdrawn", cls: "sRejected" },
 };
 
 export const PIPELINE: AppStatus[] = [

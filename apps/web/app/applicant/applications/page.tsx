@@ -107,7 +107,7 @@ function ApplicationRow({
         tabIndex={0}
         onKeyDown={(e) => e.key === "Enter" && setExpanded((p) => !p)}
       >
-        <div className={styles["row-logo"]}>{app.logo}</div>
+        <img src={app.logoUrl} className={styles["row-logo"]} />
 
         <div className={styles["row-info"]}>
           <div className={styles["row-role"]}>{app.role}</div>
@@ -323,7 +323,7 @@ export default function ApplicationsPage() {
     withdrawApplication,
     removeApplication,
   } = useApplications();
-
+  console.log("Applications------>", filtered);
   const [showSort, setShowSort] = useState(false);
 
   if (loading) return <PageSkeleton />;
