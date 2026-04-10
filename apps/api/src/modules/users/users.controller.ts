@@ -72,6 +72,8 @@ export class UsersController {
         githubUrl: dto.githubUrl,
         summary: dto.summary,
         isOpenToWork: dto.isOpenToWork,
+        educations: dto.educations, // ← new
+        experiences: dto.experiences, // ← new
       });
     }
 

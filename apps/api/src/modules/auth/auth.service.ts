@@ -19,7 +19,7 @@ import { Response } from 'express';
 import { UsersService } from '../users/users.service';
 import { ApplicantsService } from '../applicants/applicant.service';
 import { CompaniesService } from '../companies/companies.service';
-import { MailService } from '../mail/mail.service';
+// import { MailService } from '../mail/mail.service';
 import { CacheService } from '../cache/cache.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -29,7 +29,6 @@ import {
 } from './dto/complete-profile.dto';
 import { UserRole } from '../../common/enums/user-role.enum';
 import type { User } from '../users/entities/user.entity';
-import { throwError } from 'rxjs';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface JwtPayload {
@@ -94,7 +93,7 @@ export class AuthService {
     private readonly companies: CompaniesService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
-    private readonly mail: MailService,
+    // private readonly mail: MailService,
     private readonly cache: CacheService,
   ) {}
 
@@ -164,7 +163,7 @@ export class AuthService {
     await this.cache.set(`${OTP_CACHE_PREFIX}${email}`, otp, OTP_TTL_SECONDS);
 
     try {
-      await this.mail.sendOtp(email, otp);
+      // await this.mail.sendOtp(email, otp);
     } catch (err) {
       await this.cache.del(`${OTP_CACHE_PREFIX}${email}`);
       this.logger.error(

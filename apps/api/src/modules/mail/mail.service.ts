@@ -1,92 +1,292 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Injectable,
   Logger,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
-import type Mail from 'nodemailer/lib/mailer';
+import { Resend } from 'resend';
 
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
-  private readonly transporter: Mail;
+  private readonly resend: Resend;
   private readonly fromAddress: string;
 
   constructor(private readonly config: ConfigService) {
     this.fromAddress =
-      this.config.get<string>('mail.from') ?? 'noreply@HiringFly.com';
-
-    this.transporter = nodemailer.createTransport({
-      host: this.config.get<string>('mail.host'),
-      port: this.config.get<number>('mail.port') ?? 587,
-      secure: (this.config.get<number>('mail.port') ?? 587) === 465,
-      auth: {
-        user: this.config.get<string>('mail.user'),
-        pass: this.config.get<string>('mail.password'),
-      },
-    });
+      this.config.get<string>('mail.from') ??
+      'HiringFly <noreply@hiringfly.com>';
+    this.resend = new Resend(this.config.get<string>('ApiKey'));
   }
 
-  // ── Send OTP ───────────────────────────────────────────
+  // ── Auth ───────────────────────────────────────────────────────────────────
+
   async sendOtp(to: string, otp: string): Promise<void> {
     await this.send({
       to,
       subject: 'Your HiringFly verification code',
-      html: `
-        <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
-          <h2>Your verification code</h2>
-          <p>Use the code below to reset your password.
-             It expires in <strong>5 minutes</strong>.</p>
-          <div style="font-size:36px;font-weight:bold;
-                      letter-spacing:8px;padding:16px 0;color:#4f46e5">
-            ${otp}
-          </div>
-          <p style="color:#888;font-size:13px">
-            If you didn't request this, you can safely ignore this email.
-          </p>
+      html: this.base(`
+        <h2>Your verification code</h2>
+        <p>Use the code below to reset your password.
+           It expires in <strong>5 minutes</strong>.</p>
+        <div style="font-size:36px;font-weight:bold;
+                    letter-spacing:8px;padding:16px 0;color:#4f46e5">
+          ${otp}
         </div>
-      `,
+        <p style="color:#888;font-size:13px">
+          If you didn't request this, you can safely ignore this email.
+        </p>
+      `),
     });
   }
 
-  // ── Send welcome email ─────────────────────────────────
   async sendWelcome(to: string, fullName: string): Promise<void> {
     await this.send({
       to,
       subject: 'Welcome to HiringFly!',
-      html: `
-        <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
-          <h2>Welcome, ${fullName}!</h2>
-          <p>Your account has been created successfully.
-             Start exploring jobs and building your profile.</p>
-        </div>
-      `,
+      html: this.base(`
+        <h2>Welcome, ${fullName}!</h2>
+        <p>Your account has been created successfully.
+           Start exploring jobs and building your profile.</p>
+      `),
     });
   }
 
-  // ── Private send ──────────────────────────────────────
+  // ── Interviews ─────────────────────────────────────────────────────────────
+
+  async sendInterviewScheduled(opts: {
+    to: string;
+    candidateName: string;
+    jobTitle: string;
+    company: string;
+    scheduledAt: Date;
+    durationMins: number;
+    format: string;
+    meetLink?: string;
+    notes?: string;
+  }): Promise<void> {
+    const { date, time } = this.formatDateTime(opts.scheduledAt);
+    await this.send({
+      to: opts.to,
+      subject: `Interview scheduled — ${opts.jobTitle} at ${opts.company}`,
+      html: this.base(`
+        <h2>Interview scheduled 🎉</h2>
+        <p>Hi ${opts.candidateName}, your interview has been confirmed.</p>
+        ${this.metaCard([
+          ['Role', `${opts.jobTitle} at ${opts.company}`],
+          ['Date', date],
+          ['Time', time],
+          ['Duration', `${opts.durationMins} minutes`],
+          ['Format', opts.format],
+          ...(opts.meetLink
+            ? [
+                ['Link', `<a href="${opts.meetLink}">${opts.meetLink}</a>`] as [
+                  string,
+                  string,
+                ],
+              ]
+            : []),
+        ])}
+        ${opts.notes ? `<p><strong>Notes from interviewer:</strong> ${opts.notes}</p>` : ''}
+        ${opts.meetLink ? this.btn('Join Meeting', opts.meetLink) : ''}
+      `),
+    });
+  }
+
+  async sendInterviewRescheduled(opts: {
+    to: string;
+    candidateName: string;
+    jobTitle: string;
+    company: string;
+    scheduledAt: Date;
+    meetLink?: string;
+  }): Promise<void> {
+    const { date, time } = this.formatDateTime(opts.scheduledAt);
+    await this.send({
+      to: opts.to,
+      subject: `Interview rescheduled — ${opts.jobTitle} at ${opts.company}`,
+      html: this.base(`
+        <h2>Interview rescheduled</h2>
+        <p>Hi ${opts.candidateName}, your interview has been moved to a new time.</p>
+        ${this.metaCard([
+          ['Role', `${opts.jobTitle} at ${opts.company}`],
+          ['New date', date],
+          ['New time', time],
+          ...(opts.meetLink
+            ? [
+                ['Link', `<a href="${opts.meetLink}">${opts.meetLink}</a>`] as [
+                  string,
+                  string,
+                ],
+              ]
+            : []),
+        ])}
+        ${opts.meetLink ? this.btn('Join Meeting', opts.meetLink) : ''}
+      `),
+    });
+  }
+
+  async sendInterviewCancelled(opts: {
+    to: string;
+    candidateName: string;
+    jobTitle: string;
+    company: string;
+    reason?: string;
+  }): Promise<void> {
+    await this.send({
+      to: opts.to,
+      subject: `Interview cancelled — ${opts.jobTitle} at ${opts.company}`,
+      html: this.base(`
+        <h2>Interview cancelled</h2>
+        <p>Hi ${opts.candidateName}, your interview for
+           <strong>${opts.jobTitle}</strong> at
+           <strong>${opts.company}</strong> has been cancelled.</p>
+        ${opts.reason ? this.metaCard([['Reason', opts.reason]]) : ''}
+        <p>Log in to HiringFly to check your application status.</p>
+      `),
+    });
+  }
+
+  // ── Applications ───────────────────────────────────────────────────────────
+
+  async sendApplicationReceived(opts: {
+    to: string;
+    employerName: string;
+    jobTitle: string;
+    candidateName: string;
+  }): Promise<void> {
+    await this.send({
+      to: opts.to,
+      subject: `New application — ${opts.jobTitle}`,
+      html: this.base(`
+        <h2>New application received</h2>
+        <p>Hi ${opts.employerName}, a new application has been submitted.</p>
+        ${this.metaCard([
+          ['Role', opts.jobTitle],
+          ['Applicant', opts.candidateName],
+        ])}
+        ${this.btn('View Application', 'https://hiringfly.com/employer/applications')}
+      `),
+    });
+  }
+
+  async sendApplicationStatus(opts: {
+    to: string;
+    candidateName: string;
+    jobTitle: string;
+    company: string;
+    status: string;
+  }): Promise<void> {
+    await this.send({
+      to: opts.to,
+      subject: `Application update — ${opts.jobTitle} at ${opts.company}`,
+      html: this.base(`
+        <h2>Application status updated</h2>
+        <p>Hi ${opts.candidateName}, your application status has changed.</p>
+        ${this.metaCard([
+          ['Role', `${opts.jobTitle} at ${opts.company}`],
+          ['Status', opts.status],
+        ])}
+        ${this.btn('View Application', 'https://hiringfly.com/applicant/applications')}
+      `),
+    });
+  }
+
+  // ── Offer ──────────────────────────────────────────────────────────────────
+
+  async sendOffer(opts: {
+    to: string;
+    candidateName: string;
+    jobTitle: string;
+    company: string;
+  }): Promise<void> {
+    await this.send({
+      to: opts.to,
+      subject: `You have an offer — ${opts.jobTitle} at ${opts.company}`,
+      html: this.base(`
+        <h2>Congratulations, ${opts.candidateName}! 🎉</h2>
+        <p>You have received a job offer from <strong>${opts.company}</strong>
+           for the role of <strong>${opts.jobTitle}</strong>.</p>
+        ${this.btn('View Offer', 'https://hiringfly.com/applicant/applications')}
+      `),
+    });
+  }
+
+  // ── Core send ──────────────────────────────────────────────────────────────
+
   private async send(options: {
     to: string;
     subject: string;
     html: string;
   }): Promise<void> {
-    try {
-      await this.transporter.sendMail({
-        from: this.fromAddress,
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-      });
-    } catch (err) {
+    const { error } = await this.resend.emails.send({
+      from: this.fromAddress,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+    });
+
+    if (error) {
       this.logger.error(
         `Failed to send email to ${options.to}: ${options.subject}`,
-        err instanceof Error ? err.stack : err,
+        error.message,
       );
       throw new InternalServerErrorException('Failed to send email');
     }
+  }
+
+  // ── Template helpers ───────────────────────────────────────────────────────
+
+  private base(content: string): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="utf-8"/></head>
+      <body style="font-family:-apple-system,sans-serif;background:#f5f5f5;margin:0;padding:32px 16px">
+        <div style="background:#fff;border-radius:12px;padding:32px;max-width:520px;margin:0 auto">
+          <div style="font-size:20px;font-weight:600;color:#111;margin-bottom:24px">HiringFly</div>
+          ${content}
+          <div style="text-align:center;font-size:12px;color:#aaa;margin-top:24px">
+            HiringFly · You're receiving this because you have an active account.
+          </div>
+        </div>
+      </body>
+      </html>`;
+  }
+
+  private metaCard(rows: [string, string][]): string {
+    const inner = rows
+      .map(
+        ([label, value]) => `
+          <div style="display:flex;gap:8px;font-size:13px;color:#444;margin-bottom:6px">
+            <span style="font-weight:500;min-width:90px;color:#111">${label}</span>
+            <span>${value}</span>
+          </div>`,
+      )
+      .join('');
+    return `<div style="background:#f9f9f9;border-radius:8px;padding:16px;margin:20px 0">${inner}</div>`;
+  }
+
+  private btn(label: string, href: string): string {
+    return `<a href="${href}"
+               style="display:inline-block;background:#111;color:#fff;text-decoration:none;
+                      padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;margin-top:8px">
+              ${label}
+            </a>`;
+  }
+
+  private formatDateTime(date: Date): { date: string; time: string } {
+    return {
+      date: date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+      time: date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    };
   }
 }

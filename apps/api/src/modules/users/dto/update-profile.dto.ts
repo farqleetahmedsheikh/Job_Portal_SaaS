@@ -9,8 +9,11 @@ import {
   IsArray,
   IsUrl,
   IsBoolean,
+  ValidateNested,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+import { EducationDto } from 'src/modules/applicants/dto/education.dto';
+import { ExperienceDto } from 'src/modules/applicants/dto/experience.dto';
 
 export class UpdateUserProfileDto {
   // ── User table fields ──────────────────────────────────
@@ -72,4 +75,16 @@ export class UpdateUserProfileDto {
   @IsBoolean()
   @IsOptional()
   isOpenToWork?: any;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => EducationDto)
+  educations?: EducationDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ExperienceDto)
+  experiences?: ExperienceDto[];
 }

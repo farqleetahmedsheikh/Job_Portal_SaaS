@@ -1,5 +1,5 @@
 import { IsString, IsOptional, IsBoolean, IsArray } from 'class-validator';
-export class ExperienceEntryDto {
+export class ExperienceDto {
   @IsString() company!: string;
   @IsString() title!: string;
   @IsString() startDate!: string; // "2022-03"

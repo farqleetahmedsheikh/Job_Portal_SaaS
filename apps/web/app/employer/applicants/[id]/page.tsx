@@ -28,16 +28,23 @@ import {
 import styles from "../../styles/applicant-profile.module.css";
 import { useApplicantProfile } from "../../../hooks/useApplicantProfile";
 import { AppStatus, STATUS_META } from "../../../types/applicants.types";
+import { ScheduleInterviewModal } from "../../../components/ui/ScheduleInterviewModal";
+import { useUser } from "../../../store/session.store";
+import { useCompany } from "../../../hooks/useCompany";
 
 export default function ApplicantProfilePage() {
   const { id } = useParams<{ id: string }>();
   const { profile, loading, error, changeStatus, toggleStar, saveNotes } =
     useApplicantProfile(id);
-  console.log("Profile------->", profile);
 
   const [notes, setNotes] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [tab, setTab] = useState<"overview" | "resume" | "cover">("overview");
+  const [scheduling, setScheduling] = useState(false);
+  const [scheduledSuccess, setScheduledSuccess] = useState(false);
+  const user = useUser();
+  const { company } = useCompany();
+  console.log("User---->", user);
 
   if (loading) {
     return (
@@ -344,7 +351,10 @@ export default function ApplicantProfilePage() {
                           <Download size={13} /> Download
                         </a>
                         <a
-                          href={profile.resumeUrl}
+                          href={profile.resumeUrl.replace(
+                            "/upload/",
+                            "/upload/fl_attachment/",
+                          )}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`${styles.btn} ${styles.btnGhost}`}
@@ -353,17 +363,11 @@ export default function ApplicantProfilePage() {
                         </a>
                       </div>
                     </div>
-                    <div className={styles.resumePreview}>
-                      <iframe
-                        src={profile.resumeUrl}
-                        style={{ width: "100%", height: 600, border: "none" }}
-                        title="Resume preview"
-                      />
-                    </div>
+                    <div className={styles.resumePreview} />
                   </>
                 ) : (
                   <p style={{ color: "var(--text-muted)", fontSize: 13 }}>
-                    No resume uploaded for this application.
+                    No resume uploaded.
                   </p>
                 )}
               </div>
@@ -423,11 +427,27 @@ export default function ApplicantProfilePage() {
               >
                 <MessageSquare size={14} /> Send message
               </Link>
-              <button
-                className={`${styles.btn} ${styles.btnGhost} ${styles.btnFull}`}
-              >
-                <Calendar size={14} /> Schedule interview
-              </button>
+
+              {scheduledSuccess ? (
+                <div
+                  className={`${styles.btn} ${styles.btnGhost} ${styles.btnFull}`}
+                  style={{
+                    color: "var(--status-success)",
+                    borderColor: "var(--status-success)",
+                    pointerEvents: "none",
+                  }}
+                >
+                  <CheckCircle2 size={14} /> Interview scheduled!
+                </div>
+              ) : (
+                <button
+                  className={`${styles.btn} ${styles.btnGhost} ${styles.btnFull}`}
+                  onClick={() => setScheduling(true)}
+                >
+                  <Calendar size={14} /> Schedule interview
+                </button>
+              )}
+
               {profile.resumeUrl && (
                 <a
                   href={profile.resumeUrl}
@@ -497,6 +517,24 @@ export default function ApplicantProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* ── Schedule interview modal ── */}
+      {scheduling && (
+        <ScheduleInterviewModal
+          prefillApplicationId={profile.id}
+          prefillApplicantName={profile.name}
+          prefillCandidateId={profile.userId}
+          prefillCompanyId={company?.id}
+          prefillScheduledById={user?.id}
+          prefillJobTitle={profile.jobTitle}
+          onClose={() => setScheduling(false)}
+          onScheduled={() => {
+            setScheduling(false);
+            setScheduledSuccess(true);
+            changeStatus("interview");
+          }}
+        />
+      )}
     </div>
   );
 }

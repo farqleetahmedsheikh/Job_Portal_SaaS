@@ -1,301 +1,219 @@
-/**
- * eslint-disable no-useless-catch
- *
- * @format
- */
-
 /** @format */
+"use client";
+
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { api } from "../lib";
 import { API_BASE } from "../constants";
 import type {
   Interview,
   InterviewStatus,
-  InterviewType,
   InterviewFormat,
-  FilterTab,
+  InterviewType,
   ScheduleForm,
 } from "../types/interviews.types";
 
-// ─── Raw API shape ────────────────────────────────────────────────────────────
-
-interface RawInterview {
-  id: string;
-  type?: string;
-  format?: string;
-  status: string;
-  scheduledAt: string;
-  durationMinutes?: number;
-  duration?: number;
-  location?: string;
-  meetLink?: string;
-  notes?: string | null;
-  interviewers?: string[];
-  panelists?: { name?: string; role?: string; avatarUrl?: string }[];
-  candidate?: { fullName?: string; avatarUrl?: string };
-  application?: { role?: string };
-  job?: {
-    id?: string;
-    title?: string;
-    company?: { name?: string; logoUrl?: string };
-  };
+interface Options {
+  mode: "employer" | "applicant";
 }
 
-// ─── Normalisation helpers ────────────────────────────────────────────────────
+// ── Value guards ──────────────────────────────────────────────────────────────
+const VALID_STATUSES: InterviewStatus[] = [
+  "upcoming",
+  "completed",
+  "cancelled",
+];
+const VALID_FORMATS: InterviewFormat[] = ["video", "phone", "onsite", "async"];
+const VALID_TYPES: InterviewType[] = [
+  "technical",
+  "hr",
+  "panel",
+  "cultural",
+  "final",
+];
 
-function toInitials(name: string): string {
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("");
-}
-
-function toType(raw?: string): InterviewType {
-  const allowed: InterviewType[] = [
-    "technical",
-    "hr",
-    "panel",
-    "cultural",
-    "final",
-  ];
-  return allowed.includes(raw as InterviewType)
-    ? (raw as InterviewType)
-    : "technical";
-}
-
-function toFormat(raw?: string): InterviewFormat {
-  const allowed: InterviewFormat[] = ["video", "phone", "onsite", "async"];
-  return allowed.includes(raw as InterviewFormat)
-    ? (raw as InterviewFormat)
-    : "video";
-}
-
-function toStatus(raw: string): InterviewStatus {
-  const allowed: InterviewStatus[] = ["upcoming", "completed", "cancelled"];
-  return allowed.includes(raw as InterviewStatus)
-    ? (raw as InterviewStatus)
+const toStatus = (v: string): InterviewStatus =>
+  VALID_STATUSES.includes(v?.toLowerCase() as InterviewStatus)
+    ? (v.toLowerCase() as InterviewStatus)
     : "upcoming";
-}
 
-function normalize(iv: RawInterview): Interview {
+const toFormat = (v: string): InterviewFormat =>
+  VALID_FORMATS.includes(v?.toLowerCase() as InterviewFormat)
+    ? (v.toLowerCase() as InterviewFormat)
+    : "video";
+
+const toType = (v: string): InterviewType =>
+  VALID_TYPES.includes(v?.toLowerCase() as InterviewType)
+    ? (v.toLowerCase() as InterviewType)
+    : "technical";
+
+// ── Normalise raw API → Interview ─────────────────────────────────────────────
+function normalise(raw: any): Interview {
+  const candidate = raw.candidate ?? raw.applicant ?? {};
+  const job = raw.job ?? {};
+  const company = job?.company ?? {};
+
   return {
-    id: iv.id,
-    jobId: iv.job?.id ?? "",
-    jobTitle: iv.job?.title ?? "Unknown Role",
-    company: iv.job?.company?.name ?? "Unknown Company",
-    companyLogo: toInitials(iv.job?.company?.name ?? "?"),
-    companyLogoUrl: iv.job?.company?.logoUrl,
-    candidate: iv.candidate?.fullName ?? "—",
-    avatarUrl: iv.candidate?.avatarUrl ?? null,
-    role: iv.application?.role ?? iv.job?.title ?? "—",
-    scheduledAt: iv.scheduledAt,
-    duration: iv.duration ?? iv.durationMinutes ?? 45, // accept either field
-    format: toFormat(iv.format),
-    type: toType(iv.type),
-    location: iv.location,
-    meetLink: iv.meetLink ?? null,
-    interviewers: iv.interviewers ?? [],
-    panelists: (iv.panelists ?? []).map((p) => ({
-      name: p.name ?? "Interviewer",
-      role: p.role ?? "—",
-      avatarUrl: p.avatarUrl,
+    id: raw.id,
+    // job
+    jobId: job?.id ?? "",
+    jobTitle: job?.title ?? "—",
+    company: company?.companyName ?? "—",
+    companyLogoUrl: company?.logoUrl ?? undefined,
+    // candidate
+    candidate: candidate?.fullName ?? "Unknown",
+    applicationId: raw.applicationId ?? "",
+    avatarUrl: candidate?.avatarUrl ?? null,
+    role: job?.title ?? "—",
+    // schedule — backend may send format in "type" column (legacy)
+    scheduledAt: raw.scheduledAt,
+    duration: raw.durationMins ?? 45,
+    format: toFormat(raw.format ?? raw.type),
+    type: toType(raw.interviewType ?? raw.roundType ?? "technical"),
+    location: raw.location ?? undefined,
+    meetLink: raw.meetLink ?? null,
+    // people
+    interviewers: (raw.panelists ?? []).map(
+      (p: any) => p.name ?? p.user?.fullName ?? "",
+    ),
+    panelists: (raw.panelists ?? []).map((p: any) => ({
+      name: p.name ?? p.user?.fullName ?? "",
+      role: p.role ?? "",
+      avatarUrl: p.user?.avatarUrl ?? undefined,
     })),
-    status: toStatus(iv.status),
-    notes: iv.notes ?? null,
+    // meta
+    status: toStatus(raw.status),
+    notes: raw.notes ?? null,
   };
 }
 
-function isToday(iso: string): boolean {
-  const d = new Date(iso);
-  const t = new Date();
-  return (
-    d.getFullYear() === t.getFullYear() &&
-    d.getMonth() === t.getMonth() &&
-    d.getDate() === t.getDate()
-  );
-}
-
-// ─── Options ──────────────────────────────────────────────────────────────────
-
-interface UseInterviewsOptions {
-  /**
-   * "applicant" → GET /interviews/mine  (read-only)
-   * "employer"  → GET /interviews       (+ schedule / cancel)
-   */
-  mode: "applicant" | "employer";
-}
-
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-
-export function useInterviews({ mode }: UseInterviewsOptions) {
+export function useInterviews({ mode }: Options) {
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [filter, setFilter] = useState<FilterTab>("all");
+  const [filter, setFilter] = useState<"all" | InterviewStatus>("all");
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const endpoint =
-    mode === "applicant"
-      ? `${API_BASE}/interviews/mine`
-      : `${API_BASE}/interviews`;
-
-  // ── Fetch ─────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    let cancelled = false;
+  // ── Fetch ──────────────────────────────────────────────────────────────────
+  const fetchInterviews = useCallback(() => {
     setLoading(true);
+    const url =
+      mode === "employer"
+        ? `${API_BASE}/interviews`
+        : `${API_BASE}/interviews/mine`;
 
-    api<RawInterview[]>(endpoint, "GET")
-      .then((data) => {
-        if (!cancelled) {
-          setInterviews(data.map(normalize));
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err.message);
-          setLoading(false);
-        }
-      });
+    api<any[]>(url, "GET")
+      .then((data) => setInterviews(data.map(normalise)))
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [mode]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [endpoint]);
+  useEffect(() => {
+    fetchInterviews();
+  }, [fetchInterviews]);
 
-  // ── Derived — counts ──────────────────────────────────────────────────────
-  const counts = useMemo(
-    () => ({
-      all: interviews.length,
-      upcoming: interviews.filter((iv) => iv.status === "upcoming").length,
-      completed: interviews.filter((iv) => iv.status === "completed").length,
-      cancelled: interviews.filter((iv) => iv.status === "cancelled").length,
-      today: interviews.filter(
-        (iv) => iv.status === "upcoming" && isToday(iv.scheduledAt),
-      ).length,
-    }),
-    [interviews],
+  // ── Cancel (optimistic) ────────────────────────────────────────────────────
+  const handleCancel = useCallback(
+    async (id: string, reason?: string) => {
+      setInterviews((prev) =>
+        prev.map((iv) =>
+          iv.id === id ? { ...iv, status: "cancelled" as InterviewStatus } : iv,
+        ),
+      );
+      try {
+        await api(`${API_BASE}/interviews/${id}`, "DELETE", { reason });
+      } catch {
+        fetchInterviews(); // rollback
+      }
+    },
+    [fetchInterviews],
   );
 
-  // ── Derived — filtered + sorted ───────────────────────────────────────────
-  const filtered = useMemo(() => {
-    const list =
-      filter === "all"
-        ? interviews
-        : interviews.filter((iv) => iv.status === filter);
-    return [...list].sort(
-      (a, b) =>
-        new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime(),
-    );
-  }, [interviews, filter]);
+  // ── handleSchedule — EmployerInterviewsPage compat ─────────────────────────
+  const handleSchedule = useCallback(
+    async (_form: ScheduleForm) => {
+      setSubmitting(false);
+      setShowModal(false);
+      fetchInterviews();
+    },
+    [fetchInterviews],
+  );
 
-  // ── Derived — grouped lists (employer page) ───────────────────────────────
+  const onScheduled = useCallback(() => {
+    setShowModal(false);
+    fetchInterviews();
+  }, [fetchInterviews]);
+
+  // ── Derived ────────────────────────────────────────────────────────────────
+  const now = new Date();
+
   const todayList = useMemo(
     () =>
-      filtered.filter(
-        (iv) => iv.status === "upcoming" && isToday(iv.scheduledAt),
+      interviews.filter(
+        (iv) =>
+          iv.status === "upcoming" &&
+          new Date(iv.scheduledAt).toDateString() === now.toDateString(),
       ),
-    [filtered],
+    [interviews],
   );
 
   const upcomingList = useMemo(
     () =>
-      filtered.filter(
-        (iv) => iv.status === "upcoming" && !isToday(iv.scheduledAt),
-      ),
-    [filtered],
-  );
-
-  const pastList = useMemo(
-    () => filtered.filter((iv) => iv.status !== "upcoming"),
-    [filtered],
-  );
-
-  // ── Derived — next upcoming (applicant hero banner) ───────────────────────
-  const nextInterview = useMemo(
-    () =>
-      interviews
-        .filter((iv) => iv.status === "upcoming")
-        .sort(
-          (a, b) =>
-            new Date(a.scheduledAt).getTime() -
-            new Date(b.scheduledAt).getTime(),
-        )[0] ?? null,
+      interviews.filter((iv) => {
+        if (iv.status !== "upcoming") return false;
+        const d = new Date(iv.scheduledAt);
+        return d.toDateString() !== now.toDateString() && d > now;
+      }),
     [interviews],
   );
 
-  // ── Mutation — cancel (optimistic + rollback) ─────────────────────────────
-  const handleCancel = useCallback((id: string) => {
-    setInterviews((prev) =>
-      prev.map((iv) =>
-        iv.id === id ? { ...iv, status: "cancelled" as const } : iv,
+  const pastList = useMemo(
+    () =>
+      interviews.filter(
+        (iv) =>
+          iv.status === "completed" ||
+          iv.status === "cancelled" ||
+          (iv.status === "upcoming" && new Date(iv.scheduledAt) < now),
       ),
-    );
-    api(`${API_BASE}/interviews/${id}/cancel`, "PATCH").catch(() => {
-      setInterviews((prev) =>
-        prev.map((iv) =>
-          iv.id === id ? { ...iv, status: "upcoming" as const } : iv,
-        ),
-      );
-    });
-  }, []);
+    [interviews],
+  );
 
-  // ── Mutation — schedule ───────────────────────────────────────────────────
-  const handleSchedule = useCallback(async (form: ScheduleForm) => {
-    setSubmitting(true);
-    try {
-      const created = await api<RawInterview>(
-        `${API_BASE}/interviews`,
-        "POST",
-        {
-          candidateId: form.candidateId || undefined,
-          candidate: form.candidate,
-          role: form.role || undefined,
-          scheduledAt: `${form.date}T${form.time}:00`,
-          duration: Number(form.duration),
-          type: form.type,
-          interviewers: form.interviewers
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean),
-          notes: form.notes || undefined,
-        },
-      );
-      setInterviews((prev) => [normalize(created), ...prev]);
-      setShowModal(false);
-    } catch (err) {
-      throw err;
-    } finally {
-      setSubmitting(false);
-    }
-  }, []);
+  const filtered = useMemo(
+    () =>
+      filter === "all"
+        ? interviews
+        : interviews.filter((iv) => iv.status === filter),
+    [interviews, filter],
+  );
+
+  const counts = useMemo(
+    () => ({
+      all: interviews.length,
+      upcoming: interviews.filter((iv) => iv.status === "upcoming").length,
+      today: todayList.length,
+      completed: interviews.filter((iv) => iv.status === "completed").length,
+      cancelled: interviews.filter((iv) => iv.status === "cancelled").length,
+    }),
+    [interviews, todayList],
+  );
 
   return {
-    // data
+    loading,
+    error,
     interviews,
     filtered,
-    counts,
-    // grouped — employer page
     todayList,
     upcomingList,
     pastList,
-    // next upcoming — applicant hero
-    nextInterview,
-    // state
-    loading,
-    error,
-    // filter
+    counts,
     filter,
     setFilter,
-    // employer modal
     showModal,
     setShowModal,
     submitting,
-    // mutations
     handleCancel,
     handleSchedule,
+    onScheduled,
+    refetch: fetchInterviews,
   };
 }

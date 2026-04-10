@@ -2,6 +2,25 @@
 // app/applicant/profile/profile.types.ts
 
 // ── Text / number fields (rendered via FIELDS config) ─────────────────────────
+export interface Education {
+  school:       string;
+  degree:       string;
+  field:        string;
+  startYear:    string;
+  endYear?:     string;
+  grade?:       string;
+  description?: string;
+}
+
+export interface Experience {
+  company:      string;
+  title:        string;
+  startDate:    string;
+  endDate?:     string;
+  isCurrent?:   boolean;
+  description?: string;
+  skills?:      string[];
+}
 export interface ProfileForm {
   // User table
   fullName: string;
@@ -17,6 +36,8 @@ export interface ProfileForm {
   linkedinUrl: string;
   githubUrl: string;
   portfolioUrl: string;
+  educations: Education[]; // handled separately in UI
+  experiences: Experience[]; // handled separately in UI
 }
 
 // ── Boolean fields (rendered via toggle sections) ─────────────────────────────

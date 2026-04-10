@@ -21,14 +21,13 @@ import { formatDateTime } from "../../lib";
 import {
   TYPE_META,
   STATUS_META,
-  SCHEDULE_INIT,
   type Interview,
-  type InterviewFormat, // ← was InterviewType — TYPE_ICON keys are formats
-  type ScheduleForm,
+  type InterviewFormat,
 } from "../../types/interviews.types";
+import { ScheduleInterviewModal } from "../../components/ui/ScheduleInterviewModal";
+import { RescheduleModal } from "../../components/ui/RescheduleModal";
 import styles from "../styles/emp-interviews.module.css";
 
-// format → icon (video/phone/onsite/async — InterviewFormat, not InterviewType)
 const TYPE_ICON: Record<InterviewFormat, React.ReactNode> = {
   video: <Video size={13} />,
   phone: <Phone size={13} />,
@@ -39,285 +38,195 @@ const TYPE_ICON: Record<InterviewFormat, React.ReactNode> = {
 function isToday(iso: string) {
   const d = new Date(iso),
     t = new Date();
-  return (
-    d.getFullYear() === t.getFullYear() &&
-    d.getMonth() === t.getMonth() &&
-    d.getDate() === t.getDate()
-  );
+  return d.toDateString() === t.toDateString();
 }
 
 // ── InterviewCard ─────────────────────────────────────────────────────────────
 function InterviewCard({
   iv,
   onCancel,
+  onRescheduleSuccess,
 }: {
   iv: Interview;
   onCancel: (id: string) => void;
+  onRescheduleSuccess: () => void;
 }) {
   const [showMenu, setShowMenu] = useState(false);
-  const typeMeta = TYPE_META[iv.format]; // ← iv.format (video/phone/…), not iv.type
+  const [showReschedule, setShowReschedule] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const typeMeta = TYPE_META[iv.format];
   const statusMeta = STATUS_META[iv.status];
   const today = isToday(iv.scheduledAt);
 
-  return (
-    <div
-      className={`${styles.card} ${today ? styles.cardToday : ""} ${iv.status === "cancelled" ? styles.cardCancelled : ""}`}
-    >
-      {today && iv.status === "upcoming" && (
-        <div className={styles.todayBanner}>
-          <span className={styles.pulse} /> Today
-        </div>
-      )}
-      <div className={styles.cardMain}>
-        <div className={styles.candidate}>
-          <CandidateAvatar name={iv.candidate} avatarUrl={iv.avatarUrl} />
-          <div className={styles.candidateInfo}>
-            <p className={styles.candidateName}>{iv.candidate}</p>
-            <p className={styles.candidateRole}>{iv.role}</p>
-          </div>
-        </div>
-        <div className={styles.timeBlock}>
-          <div className={styles.timeMain}>
-            <Calendar size={13} /> {formatDateTime(iv.scheduledAt)}
-          </div>
-          <div className={styles.timeSub}>
-            <Clock size={11} /> {iv.duration} min
-          </div>
-        </div>
-        <span className={`${styles.typeChip} ${styles[typeMeta.cls]}`}>
-          {TYPE_ICON[iv.format]} {typeMeta.label}
-        </span>
-        <div className={styles.interviewers}>
-          {iv.interviewers.map((name) => (
-            <span key={name} className={styles.interviewer}>
-              {name
-                .split(" ")
-                .map((n) => n[0])
-                .join("")}
-            </span>
-          ))}
-          <span className={styles.interviewerNames}>
-            {iv.interviewers.join(", ")}
-          </span>
-        </div>
-        <span className={`${styles.statusChip} ${styles[statusMeta.cls]}`}>
-          {statusMeta.label}
-        </span>
-        <div className={styles.cardActions}>
-          {iv.meetLink && iv.status === "upcoming" && (
-            <a
-              href={iv.meetLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`}
-            >
-              <Video size={12} /> Join
-            </a>
-          )}
-          <button
-            className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`}
-          >
-            <MessageSquare size={12} /> Message
-          </button>
-          <div className={styles.moreWrap}>
-            <button
-              className={styles.moreBtn}
-              onClick={() => setShowMenu((p) => !p)}
-            >
-              <MoreVertical size={15} />
-            </button>
-            {showMenu && (
-              <div className={styles.moreMenu}>
-                <button className={styles.moreItem}>
-                  <Edit2 size={12} /> Reschedule
-                </button>
-                {iv.meetLink && (
-                  <button
-                    className={styles.moreItem}
-                    onClick={() => {
-                      navigator.clipboard.writeText(iv.meetLink!);
-                      setShowMenu(false);
-                    }}
-                  >
-                    <Copy size={12} /> Copy link
-                  </button>
-                )}
-                {iv.status === "upcoming" && (
-                  <button
-                    className={`${styles.moreItem} ${styles.moreItemDanger}`}
-                    onClick={() => {
-                      onCancel(iv.id);
-                      setShowMenu(false);
-                    }}
-                  >
-                    <XCircle size={12} /> Cancel
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      {iv.notes && iv.status !== "cancelled" && (
-        <div className={styles.cardNote}>{iv.notes}</div>
-      )}
-    </div>
-  );
-}
-
-// ── ScheduleModal ─────────────────────────────────────────────────────────────
-function ScheduleModal({
-  onClose,
-  onSubmit,
-  submitting,
-}: {
-  onClose: () => void;
-  onSubmit: (f: ScheduleForm) => Promise<void>;
-  submitting: boolean;
-}) {
-  const [form, setForm] = useState<ScheduleForm>(SCHEDULE_INIT);
-  const [error, setError] = useState<string | null>(null);
-
-  const set =
-    (k: keyof ScheduleForm) =>
-    (
-      e: React.ChangeEvent<
-        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-      >,
-    ) =>
-      setForm((p) => ({ ...p, [k]: e.target.value }));
-
-  const handleSubmit = async () => {
-    if (!form.candidate || !form.date || !form.time) {
-      setError("Candidate, date and time are required.");
-      return;
+  const handleCopy = () => {
+    if (iv.meetLink) {
+      navigator.clipboard.writeText(iv.meetLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
-    setError(null);
-    try {
-      await onSubmit(form);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to schedule");
-    }
+    setShowMenu(false);
   };
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Schedule Interview</h2>
-          <button className={styles.modalClose} onClick={onClose}>
-            <XCircle size={18} />
-          </button>
-        </div>
-        <div className={styles.modalBody}>
-          {error && <p className={styles.modalError}>{error}</p>}
-          <div className={styles.formGrid}>
-            <div className={styles.formField}>
-              <label className={styles.formLabel}>Candidate *</label>
-              <input
-                className={styles.formInput}
-                placeholder="Name"
-                value={form.candidate}
-                onChange={set("candidate")}
-              />
+    <>
+      <div
+        className={`${styles.card} ${today ? styles.cardToday : ""} ${iv.status === "cancelled" ? styles.cardCancelled : ""}`}
+      >
+        {today && iv.status === "upcoming" && (
+          <div className={styles.todayBanner}>
+            <span className={styles.pulse} /> Today
+          </div>
+        )}
+        <div className={styles.cardMain}>
+          {/* Candidate */}
+          <div className={styles.candidate}>
+            <CandidateAvatar name={iv.candidate} avatarUrl={iv.avatarUrl} />
+            <div className={styles.candidateInfo}>
+              <p className={styles.candidateName}>{iv.candidate}</p>
+              <p className={styles.candidateRole}>{iv.role}</p>
             </div>
-            <div className={styles.formField}>
-              <label className={styles.formLabel}>Role</label>
-              <input
-                className={styles.formInput}
-                placeholder="e.g. Senior Frontend Engineer"
-                value={form.role}
-                onChange={set("role")}
-              />
+          </div>
+
+          {/* Time */}
+          <div className={styles.timeBlock}>
+            <div className={styles.timeMain}>
+              <Calendar size={12} /> {formatDateTime(iv.scheduledAt)}
             </div>
-            <div className={styles.formField}>
-              <label className={styles.formLabel}>Date *</label>
-              <input
-                className={styles.formInput}
-                type="date"
-                value={form.date}
-                onChange={set("date")}
-              />
+            <div className={styles.timeSub}>
+              <Clock size={11} /> {iv.duration} min
             </div>
-            <div className={styles.formField}>
-              <label className={styles.formLabel}>Time *</label>
-              <input
-                className={styles.formInput}
-                type="time"
-                value={form.time}
-                onChange={set("time")}
-              />
+          </div>
+
+          {/* Type */}
+          <span className={`${styles.typeChip} ${styles[typeMeta.cls]}`}>
+            {TYPE_ICON[iv.format]} {typeMeta.label}
+          </span>
+
+          {/* Panelists */}
+          {iv.interviewers.length > 0 && (
+            <div className={styles.interviewers}>
+              {iv.interviewers.slice(0, 3).map((name) => (
+                <span key={name} className={styles.interviewer}>
+                  {name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")}
+                </span>
+              ))}
+              <span className={styles.interviewerNames}>
+                {iv.interviewers.join(", ")}
+              </span>
             </div>
-            <div className={styles.formField}>
-              <label className={styles.formLabel}>Duration</label>
-              <select
-                className={styles.formSelect}
-                value={form.duration}
-                onChange={set("duration")}
+          )}
+
+          {/* Status */}
+          <span className={`${styles.statusChip} ${styles[statusMeta.cls]}`}>
+            {statusMeta.label}
+          </span>
+
+          {/* Actions */}
+          <div className={styles.cardActions}>
+            {iv.meetLink && iv.status === "upcoming" && (
+              <a
+                href={iv.meetLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`}
               >
-                <option value="30">30 minutes</option>
-                <option value="45">45 minutes</option>
-                <option value="60">60 minutes</option>
-                <option value="90">90 minutes</option>
-              </select>
-            </div>
-            <div className={styles.formField}>
-              <label className={styles.formLabel}>Interview Type</label>
-              <select
-                className={styles.formSelect}
-                value={form.type}
-                onChange={set("type")}
+                <Video size={12} /> Join
+              </a>
+            )}
+            {!iv.meetLink && iv.status === "upcoming" && (
+              <a
+                href={`/employer/interviews/${iv.id}/room`}
+                className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`}
               >
-                <option value="video">Video call</option>
-                <option value="phone">Phone call</option>
-                <option value="onsite">On-site</option>
-              </select>
-            </div>
-            <div className={`${styles.formField} ${styles.formFieldFull}`}>
-              <label className={styles.formLabel}>Interviewers</label>
-              <input
-                className={styles.formInput}
-                placeholder="Names separated by comma"
-                value={form.interviewers}
-                onChange={set("interviewers")}
-              />
-            </div>
-            <div className={`${styles.formField} ${styles.formFieldFull}`}>
-              <label className={styles.formLabel}>Notes</label>
-              <textarea
-                className={styles.formTextarea}
-                rows={3}
-                placeholder="Topics to cover, special instructions…"
-                value={form.notes}
-                onChange={set("notes")}
-              />
+                <Video size={12} /> Join room
+              </a>
+            )}
+            <button
+              className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`}
+            >
+              <MessageSquare size={12} /> Message
+            </button>
+            <div className={styles.moreWrap}>
+              <button
+                className={styles.moreBtn}
+                onClick={() => setShowMenu((p) => !p)}
+              >
+                <MoreVertical size={15} />
+              </button>
+              {showMenu && (
+                <div className={styles.moreMenu}>
+                  {iv.status === "upcoming" && (
+                    <button
+                      className={styles.moreItem}
+                      onClick={() => {
+                        setShowReschedule(true);
+                        setShowMenu(false);
+                      }}
+                    >
+                      <Edit2 size={12} /> Reschedule
+                    </button>
+                  )}
+                  {iv.meetLink && (
+                    <button className={styles.moreItem} onClick={handleCopy}>
+                      <Copy size={12} /> {copied ? "Copied!" : "Copy link"}
+                    </button>
+                  )}
+                  {iv.status === "upcoming" && (
+                    <button
+                      className={`${styles.moreItem} ${styles.moreItemDanger}`}
+                      onClick={() => {
+                        onCancel(iv.id);
+                        setShowMenu(false);
+                      }}
+                    >
+                      <XCircle size={12} /> Cancel interview
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
-        <div className={styles.modalFooter}>
-          <button
-            className={`${styles.btn} ${styles.btnGhost}`}
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-          <button
-            className={`${styles.btn} ${styles.btnPrimary}`}
-            onClick={handleSubmit}
-            disabled={submitting}
-            aria-busy={submitting}
-          >
-            {submitting ? (
-              <>
-                <span className={styles.spinner} /> Scheduling...
-              </>
-            ) : (
-              <>
-                <Calendar size={14} /> Schedule &amp; Send invite
-              </>
-            )}
-          </button>
+
+        {iv.notes && iv.status !== "cancelled" && (
+          <div className={styles.cardNote}>{iv.notes}</div>
+        )}
+      </div>
+
+      {showReschedule && (
+        <RescheduleModal
+          interviewId={iv.id}
+          candidateName={iv.candidate}
+          currentScheduledAt={iv.scheduledAt}
+          currentDuration={iv.duration}
+          onClose={() => setShowReschedule(false)}
+          onRescheduled={() => {
+            setShowReschedule(false);
+            onRescheduleSuccess();
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+// ── Skeleton row ──────────────────────────────────────────────────────────────
+function SkeletonCard() {
+  return (
+    <div className={styles.card} style={{ padding: 20 }}>
+      <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+        <div className={styles.skeletonCircle} />
+        <div
+          style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}
+        >
+          <div className={styles.skeletonLine} style={{ width: "40%" }} />
+          <div className={styles.skeletonLine} style={{ width: "25%" }} />
         </div>
+        <div className={styles.skeletonLine} style={{ width: 100 }} />
+        <div className={styles.skeletonLine} style={{ width: 70 }} />
       </div>
     </div>
   );
@@ -332,28 +241,15 @@ export default function EmployerInterviewsPage() {
     setFilter,
     showModal,
     setShowModal,
-    submitting,
     todayList,
     upcomingList,
     pastList,
     filtered,
     counts,
     handleCancel,
-    handleSchedule,
-  } = useInterviews({ mode: "employer" }); // ← was missing
-
-  if (loading)
-    return (
-      <div className={styles.page}>
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div
-            key={i}
-            className={styles.skeleton}
-            style={{ height: 110, marginBottom: 12 }}
-          />
-        ))}
-      </div>
-    );
+    onScheduled,
+    refetch,
+  } = useInterviews({ mode: "employer" });
 
   if (error)
     return (
@@ -364,6 +260,7 @@ export default function EmployerInterviewsPage() {
 
   return (
     <div className={styles.page}>
+      {/* Header */}
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Interviews</h1>
@@ -379,6 +276,7 @@ export default function EmployerInterviewsPage() {
         </button>
       </div>
 
+      {/* Stats */}
       <div className={styles.statRow}>
         {[
           { label: "Total", val: counts.all, color: "var(--text-primary)" },
@@ -403,6 +301,7 @@ export default function EmployerInterviewsPage() {
         ))}
       </div>
 
+      {/* Tabs */}
       <div className={styles.tabs}>
         {(["all", "upcoming", "completed", "cancelled"] as const).map((f) => (
           <button
@@ -416,50 +315,89 @@ export default function EmployerInterviewsPage() {
         ))}
       </div>
 
-      {todayList.length > 0 && (
-        <div className={styles.group}>
-          <h2 className={styles.groupTitle}>
-            <span className={styles.groupPulse} />
-            Today · {todayList.length} interview
-            {todayList.length > 1 ? "s" : ""}
-          </h2>
-          {todayList.map((iv) => (
-            <InterviewCard key={iv.id} iv={iv} onCancel={handleCancel} />
+      {/* Loading skeletons */}
+      {loading && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCard key={i} />
           ))}
-        </div>
-      )}
-      {upcomingList.length > 0 && (
-        <div className={styles.group}>
-          <h2 className={styles.groupTitle}>Upcoming</h2>
-          {upcomingList.map((iv) => (
-            <InterviewCard key={iv.id} iv={iv} onCancel={handleCancel} />
-          ))}
-        </div>
-      )}
-      {pastList.length > 0 && (
-        <div className={styles.group}>
-          <h2 className={styles.groupTitle}>Past</h2>
-          {pastList.map((iv) => (
-            <InterviewCard key={iv.id} iv={iv} onCancel={handleCancel} />
-          ))}
-        </div>
-      )}
-      {filtered.length === 0 && (
-        <div className={styles.empty}>
-          <Calendar
-            size={32}
-            style={{ color: "var(--text-muted)", marginBottom: 12 }}
-          />
-          <p>No interviews found</p>
-          <span>Schedule an interview to get started</span>
         </div>
       )}
 
+      {!loading && (
+        <>
+          {todayList.length > 0 && (
+            <div className={styles.group}>
+              <h2 className={styles.groupTitle}>
+                <span className={styles.groupPulse} />
+                Today · {todayList.length} interview
+                {todayList.length > 1 ? "s" : ""}
+              </h2>
+              {todayList.map((iv) => (
+                <InterviewCard
+                  key={iv.id}
+                  iv={iv}
+                  onCancel={handleCancel}
+                  onRescheduleSuccess={refetch}
+                />
+              ))}
+            </div>
+          )}
+
+          {upcomingList.length > 0 &&
+            (filter === "all" || filter === "upcoming") && (
+              <div className={styles.group}>
+                <h2 className={styles.groupTitle}>Upcoming</h2>
+                {upcomingList.map((iv) => (
+                  <InterviewCard
+                    key={iv.id}
+                    iv={iv}
+                    onCancel={handleCancel}
+                    onRescheduleSuccess={refetch}
+                  />
+                ))}
+              </div>
+            )}
+
+          {pastList.length > 0 &&
+            (filter === "all" ||
+              filter === "completed" ||
+              filter === "cancelled") && (
+              <div className={styles.group}>
+                <h2 className={styles.groupTitle}>Past</h2>
+                {pastList.map((iv) => (
+                  <InterviewCard
+                    key={iv.id}
+                    iv={iv}
+                    onCancel={handleCancel}
+                    onRescheduleSuccess={refetch}
+                  />
+                ))}
+              </div>
+            )}
+
+          {filtered.length === 0 && (
+            <div className={styles.empty}>
+              <Calendar
+                size={32}
+                style={{ color: "var(--text-muted)", marginBottom: 12 }}
+              />
+              <p>No interviews found</p>
+              <span>
+                {filter === "all"
+                  ? "Click 'Schedule interview' to get started"
+                  : `No ${filter} interviews`}
+              </span>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Schedule modal */}
       {showModal && (
-        <ScheduleModal
+        <ScheduleInterviewModal
           onClose={() => setShowModal(false)}
-          onSubmit={handleSchedule}
-          submitting={submitting}
+          onScheduled={onScheduled}
         />
       )}
     </div>

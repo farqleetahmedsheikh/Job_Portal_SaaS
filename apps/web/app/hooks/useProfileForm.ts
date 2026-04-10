@@ -9,6 +9,8 @@ import type {
   ProfileForm,
   PrivacyForm,
   NotificationsForm,
+  Education,
+  Experience,
 } from "../types/profile.types";
 
 // ── Builders ──────────────────────────────────────────────────────────────────
@@ -27,6 +29,9 @@ function buildProfileForm(user: SessionUser): ProfileForm {
     linkedinUrl: ap?.linkedinUrl ?? "",
     githubUrl: ap?.githubUrl ?? "",
     portfolioUrl: ap?.portfolioUrl ?? "",
+    // ── Arrays ──────────────────────────────────────────────────────────────
+    educations: (ap?.educations as Education[]) ?? [],
+    experiences: (ap?.experiences as Experience[]) ?? [],
   };
 }
 
@@ -75,40 +80,48 @@ export function useProfileForm({ user, setUser }: Options) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-
-  // Avatar-specific state
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
 
-  // ── Text field changes ─────────────────────────────────────────────────────
+  // ── Field changes — accepts both native events AND direct (name, value) calls
+  // EducationField / ExperienceField call: handleChange("educations", [...])
+  // Regular inputs call:                  handleChange(event)
   const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-      setDraft((prev) => ({ ...prev, [e.target.name]: e.target.value })),
+    (
+      nameOrEvent:
+        | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+        | string,
+      value?: unknown,
+    ) => {
+      if (typeof nameOrEvent === "string") {
+        // Direct call from array components: handleChange("educations", [...])
+        setDraft((prev) => ({ ...prev, [nameOrEvent]: value }));
+      } else {
+        // Native event from text inputs
+        const { name, value: val } = nameOrEvent.target;
+        setDraft((prev) => ({ ...prev, [name]: val }));
+      }
+    },
     [],
   );
 
-  // ── Avatar upload — multipart, not JSON ───────────────────────────────────
+  // ── Avatar upload ─────────────────────────────────────────────────────────
   const handleAvatarUpload = useCallback(
     async (file: File) => {
       setAvatarUploading(true);
       setAvatarError(null);
-
       const formData = new FormData();
       formData.append("file", file);
-
       try {
-        // Must use raw fetch — api() sends JSON which breaks multipart
         const res = await fetch(`${API_BASE}/users/me/avatar`, {
           method: "PATCH",
-          credentials: "include", // sends httpOnly JWT cookie
-          body: formData, // browser sets Content-Type + boundary automatically
+          credentials: "include",
+          body: formData,
         });
-
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
           throw new Error(err?.message ?? "Avatar upload failed");
         }
-
         const updated: SessionUser = await res.json();
         setUser(updated);
       } catch (err) {
@@ -120,7 +133,7 @@ export function useProfileForm({ user, setUser }: Options) {
     [setUser],
   );
 
-  // ── Toggle changes — optimistic, saves immediately ─────────────────────────
+  // ── Toggle changes — optimistic, saves immediately ────────────────────────
   const handlePrivacyToggle = useCallback(
     async (name: keyof PrivacyForm) => {
       const next = !privacy[name];
@@ -157,7 +170,7 @@ export function useProfileForm({ user, setUser }: Options) {
     [notifications, setUser],
   );
 
-  // ── Edit / cancel / save ───────────────────────────────────────────────────
+  // ── Edit / cancel / save ──────────────────────────────────────────────────
   const handleEdit = useCallback(() => {
     setDraft(form);
     setServerError(null);
@@ -195,6 +208,9 @@ export function useProfileForm({ user, setUser }: Options) {
               .map((s) => s.trim())
               .filter(Boolean)
           : undefined,
+        // ── Arrays — send as-is, already structured ────────────────────────
+        educations: draft.educations?.length ? draft.educations : undefined,
+        experiences: draft.experiences?.length ? draft.experiences : undefined,
       });
 
       setUser(updated);
@@ -212,23 +228,19 @@ export function useProfileForm({ user, setUser }: Options) {
   }, [draft, setUser]);
 
   return {
-    // Text form
     form,
     draft,
     handleChange,
     handleEdit,
     handleCancel,
     handleSave,
-    // Avatar
     avatarUploading,
     avatarError,
     handleAvatarUpload,
-    // Booleans
     privacy,
     handlePrivacyToggle,
     notifications,
     handleNotifToggle,
-    // UI state
     editing,
     saving,
     saved,

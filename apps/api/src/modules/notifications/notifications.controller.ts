@@ -1,3 +1,4 @@
+// notifications.controller.ts
 import {
   Controller,
   Delete,
@@ -10,9 +11,8 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import * as authService from '../auth/auth.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import * as currentUserDecorator from '../../common/decorators/current-user.decorator';
 import { NotificationsService } from './notifications.service';
 
 @Controller('notifications')
@@ -23,7 +23,7 @@ export class NotificationsController {
   // GET /api/notifications?unread=true
   @Get()
   findAll(
-    @CurrentUser() user: authService.JwtPayload,
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
     @Query('unread') unread?: string,
   ) {
     return this.svc.findAll(user.sub, unread === 'true');
@@ -31,8 +31,19 @@ export class NotificationsController {
 
   // GET /api/notifications/unread-count
   @Get('unread-count')
-  unreadCount(@CurrentUser() user: authService.JwtPayload) {
+  unreadCount(
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+  ) {
     return this.svc.getUnreadCount(user.sub);
+  }
+
+  // PATCH /api/notifications/read-all
+  @Patch('read-all')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  markAllRead(
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+  ) {
+    return this.svc.markAllRead(user.sub);
   }
 
   // PATCH /api/notifications/:id/read
@@ -40,16 +51,9 @@ export class NotificationsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   markRead(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: authService.JwtPayload,
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
   ) {
     return this.svc.markRead(id, user.sub);
-  }
-
-  // PATCH /api/notifications/read-all
-  @Patch('read-all')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  markAllRead(@CurrentUser() user: authService.JwtPayload) {
-    return this.svc.markAllRead(user.sub);
   }
 
   // DELETE /api/notifications/:id
@@ -57,7 +61,7 @@ export class NotificationsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: authService.JwtPayload,
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
   ) {
     return this.svc.remove(id, user.sub);
   }

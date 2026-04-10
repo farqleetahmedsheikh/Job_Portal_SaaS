@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   IsString,
   IsEnum,
@@ -12,12 +11,21 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { InterviewType } from '../../../common/enums/enums';
+import { InterviewRoundType, InterviewType } from '../../../common/enums/enums';
 import { PanelistDto } from './panel-list.dto';
 
 export class ScheduleInterviewDto {
   @IsUUID()
   applicationId?: string;
+
+  @IsUUID()
+  candidateId?: string;
+
+  @IsUUID()
+  companyId?: string;
+
+  @IsUUID()
+  scheduledById?: string;
 
   @IsDateString()
   scheduledAt!: string;
@@ -37,6 +45,9 @@ export class ScheduleInterviewDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsEnum(InterviewRoundType)
+  roundType!: InterviewRoundType;
 
   @IsOptional()
   @IsArray()

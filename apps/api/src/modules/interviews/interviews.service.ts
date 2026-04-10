@@ -42,7 +42,6 @@ export class InterviewsService {
       throw new ForbiddenException('Access denied');
 
     return this.ds.transaction(async (m) => {
-      // ✅ m.create(EntityClass, data) — two args
       const iv = m.create(Interview, {
         applicationId: dto.applicationId,
         scheduledById: userId,
@@ -52,6 +51,7 @@ export class InterviewsService {
         scheduledAt: new Date(dto.scheduledAt),
         durationMins: dto.durationMins,
         type: dto.type,
+        roundType: dto.roundType, // ← was missing from original
         meetLink: dto.meetLink,
         notes: dto.notes,
         status: InterviewStatus.UPCOMING,
@@ -59,7 +59,7 @@ export class InterviewsService {
       await m.save(Interview, iv);
 
       if (dto.panelists?.length) {
-        const panelists: InterviewPanelist[] = dto.panelists.map((p) =>
+        const panelists = dto.panelists.map((p) =>
           m.create(InterviewPanelist, {
             interviewId: iv.id,
             userId: p.userId ?? '',
@@ -69,7 +69,18 @@ export class InterviewsService {
         await m.save(InterviewPanelist, panelists);
       }
 
-      return this.findOne(iv.id);
+      // ← use the transaction manager, not the outer ivRepo
+      return m.findOne(Interview, {
+        where: { id: iv.id },
+        relations: [
+          'job',
+          'job.company',
+          'candidate',
+          'candidate.applicantProfile',
+          'panelists',
+          'panelists.user',
+        ],
+      });
     });
   }
 
@@ -154,6 +165,8 @@ export class InterviewsService {
         'panelists.user',
       ],
     });
+    console.log('Finding interview with ID:', ivId); // Debug log to verify incoming ID
+    console.log('Found interview:', iv); // Debug log to verify found interview
     if (!iv) throw new NotFoundException('Interview not found');
     return iv;
   }

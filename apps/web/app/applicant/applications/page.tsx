@@ -134,8 +134,8 @@ function ApplicationRow({
         </div>
 
         <div className={styles["row-status"]}>
-          <span className={`${styles["status-chip"]} ${styles[cfg.cls]}`}>
-            {cfg.icon} {cfg.label}
+          <span className={`${styles["status-chip"]} ${styles["cfg-cls"]}`}>
+            {cfg?.icon || ""} {cfg?.label || ""}
           </span>
         </div>
 
@@ -151,8 +151,8 @@ function ApplicationRow({
             <div className={styles.pipeline}>
               {PIPELINE_STEPS.map((step, i) => {
                 const stepNum = i + 1;
-                const isDone = stepNum < cfg.step;
-                const isActive = stepNum === cfg.step;
+                const isDone = stepNum < cfg?.step;
+                const isActive = stepNum === cfg?.step;
                 return (
                   <div key={step} className={styles["pipeline-step"]}>
                     <div

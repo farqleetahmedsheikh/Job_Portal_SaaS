@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 /** @format */
 "use client";
 
@@ -12,6 +13,8 @@ import { SkillsField } from "../../components/ui/SkillsField";
 import { DangerZone } from "../../components/ui/DangerZone";
 import { StatusBanners } from "../../components/ui/StatusBanners";
 import styles from "../styles/profile.module.css";
+import { EducationField } from "../../components/ui/EducationField";
+import { ExperienceField } from "../../components/ui/ExperienceField";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -71,16 +74,18 @@ export default function ProfilePage() {
 
         <div className={styles["card-body"]}>
           <div className={styles["form-grid"]}>
-            {visibleFields.map((field) => (
-              <ProfileField
-                key={field.name}
-                config={field}
-                value={form[field.name]}
-                draftValue={draft[field.name]}
-                editing={editing}
-                onChange={handleChange}
-              />
-            ))}
+            {visibleFields
+              .filter((field) => typeof form[field.name] === "string")
+              .map((field) => (
+                <ProfileField
+                  key={field.name}
+                  config={field}
+                  value={form[field.name] as string}
+                  draftValue={draft[field.name] as string}
+                  editing={editing}
+                  onChange={handleChange}
+                />
+              ))}
           </div>
         </div>
       </div>
@@ -101,6 +106,50 @@ export default function ProfilePage() {
               editing={editing}
               draftValue={draft.skills}
               skills={user.applicantProfile?.skills}
+              onChange={handleChange}
+            />
+          </div>
+        </div>
+      )}
+
+      {isApplicant && (
+        <div className={styles.card}>
+          <div className={styles["card-header"]}>
+            <h2 className={styles["card-title"]}>Experience</h2>
+            {!editing && (
+              <span className={styles["card-count"]}>
+                {user.applicantProfile?.experiences?.length ?? 0} added
+              </span>
+            )}
+          </div>
+          <div className={styles["card-body"]}>
+            <ExperienceField
+              editing={editing}
+              value={
+                draft.experiences ?? user.applicantProfile?.experiences ?? []
+              }
+              onChange={handleChange}
+            />
+          </div>
+        </div>
+      )}
+
+      {isApplicant && (
+        <div className={styles.card}>
+          <div className={styles["card-header"]}>
+            <h2 className={styles["card-title"]}>Education</h2>
+            {!editing && (
+              <span className={styles["card-count"]}>
+                {user.applicantProfile?.educations?.length ?? 0} added
+              </span>
+            )}
+          </div>
+          <div className={styles["card-body"]}>
+            <EducationField
+              editing={editing}
+              value={
+                draft.educations ?? user.applicantProfile?.educations ?? []
+              }
               onChange={handleChange}
             />
           </div>

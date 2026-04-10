@@ -20,7 +20,7 @@ interface RawApplicant {
   createdAt: string;
   resume?: {
     // ✗ resumeUrl (it's a nested object)
-    url?: string;
+    fileUrl?: string;
   };
   applicant?: {
     id?: string;
@@ -106,7 +106,7 @@ export function useAllApplicants() {
               starred: a.isStarred, // ✗ a.starred
               jobId: a.job?.id ?? "",
               jobTitle: a.job?.title ?? "Unknown Job",
-              resumeUrl: a.resume?.url ?? "", // ✗ a.resumeUrl (resume is an object)
+              resumeUrl: a.resume?.fileUrl ?? "", // ✗ a.resumeUrl (resume is an object)
               skills: a.applicant?.applicantProfile?.skills ?? [], // ✗ a.applicant?.skills
               experience: a.applicant?.applicantProfile?.experienceYears, // ✗ a.applicant?.experience
             }),

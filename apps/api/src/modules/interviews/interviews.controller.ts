@@ -27,7 +27,7 @@ export class InterviewsController {
 
   // ── Employer ────────────────────────────────────────────────────────────────
 
-  // GET /api/interviews?status=upcoming
+  // GET /api/interviews
   @Get()
   @Roles(UserRole.EMPLOYER)
   @UseGuards(RolesGuard)
@@ -46,8 +46,32 @@ export class InterviewsController {
     @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
     @Body() dto: ScheduleInterviewDto,
   ) {
+    console.log('Scheduling interview with data:', dto); // Debug log to verify incoming data
     return this.svc.schedule(user.sub, dto);
   }
+
+  // ── Applicant ───────────────────────────────────────────────────────────────
+
+  // GET /api/interviews/mine
+  @Get('mine')
+  @Roles(UserRole.APPLICANT)
+  @UseGuards(RolesGuard)
+  findMine(
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+    @Query('status') status?: InterviewStatus,
+  ) {
+    return this.svc.findForApplicant(user.sub, status);
+  }
+
+  // ── Shared ──────────────────────────────────────────────────────────────────
+
+  // GET /api/interviews/:id
+  @Get(':id')
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.svc.findOne(id);
+  }
+
+  // ── Dynamic — Employer only ─────────────────────────────────────────────────
 
   // PATCH /api/interviews/:id/reschedule
   @Patch(':id/reschedule')
@@ -83,26 +107,5 @@ export class InterviewsController {
     @Body() dto: CancelInterviewDto,
   ) {
     return this.svc.cancel(id, user.sub, dto);
-  }
-
-  // ── Applicant ───────────────────────────────────────────────────────────────
-
-  // GET /api/interviews/mine
-  @Get('mine')
-  @Roles(UserRole.APPLICANT)
-  @UseGuards(RolesGuard)
-  findMine(
-    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
-    @Query('status') status?: InterviewStatus,
-  ) {
-    return this.svc.findForApplicant(user.sub, status);
-  }
-
-  // ── Shared ──────────────────────────────────────────────────────────────────
-
-  // GET /api/interviews/:id
-  @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.svc.findOne(id);
   }
 }

@@ -13,7 +13,7 @@ interface RawProfile {
   createdAt: string;
   coverLetter?: string;
   employerNotes?: string;
-  resume?: { url?: string; filename?: string };
+  resume?: { fileUrl?: string; filename?: string };
   applicant: {
     id: string;
     fullName?: string;
@@ -157,7 +157,7 @@ function normalise(raw: RawProfile): ApplicantProfile {
       year: e.year ?? "",
       gpa: e.gpa,
     })),
-    resumeUrl: raw.resume?.url,
+    resumeUrl: raw.resume?.fileUrl,
     coverLetter: raw.coverLetter,
     notes: raw.employerNotes ?? "",
     jobId: raw.job?.id,

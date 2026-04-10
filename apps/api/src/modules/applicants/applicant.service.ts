@@ -14,6 +14,8 @@ import { UpdateApplicantProfileDto } from './dto/update-profile.dto';
 import { SearchApplicantsDto } from './dto/search-applicant.dto';
 import { UpdateEducationsDto } from './dto/update-education.dto';
 import { UpdateExperiencesDto } from './dto/update-experience.dto';
+import { EducationDto } from './dto/education.dto';
+import { ExperienceDto } from './dto/experience.dto';
 
 // ✅ Uses exact entity property names — jobTitle not title
 type UpsertApplicantData = Partial<{
@@ -27,6 +29,8 @@ type UpsertApplicantData = Partial<{
   portfolioUrl: string | null;
   isOpenToWork: boolean;
   openToWork: boolean;
+  educations: EducationDto[]; // ← new
+  experiences: ExperienceDto[]; // ← new
 }>;
 
 @Injectable()

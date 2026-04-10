@@ -4,11 +4,12 @@ import { NotificationsService } from './notifications.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CompanyPerk } from '../companies/entities/company-perk.entity';
 import { Notification } from './entities/notification.entity';
+import { MailService } from '../mail/mail.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Notification, CompanyPerk])],
   controllers: [NotificationsController],
-  providers: [NotificationsService],
+  providers: [NotificationsService, MailService],
   exports: [NotificationsService], // exported so other services can fire notifications
 })
 export class NotificationsModule {}

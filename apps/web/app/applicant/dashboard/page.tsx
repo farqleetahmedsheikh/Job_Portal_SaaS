@@ -148,7 +148,24 @@ export default function ApplicantDashboard() {
         {/* Left: Applications + Interviews */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           {applications.length > 0 ? (
-            <RecentApplications applications={applications} />
+            <RecentApplications
+              applications={applications
+                .filter((app) => app.status !== "withdrawn")
+                .map((app) => ({
+                  ...app,
+                  logoUrl: app.logoUrl ?? "",
+                  status:
+                    app.status === "reviewing"
+                      ? "applied"
+                      : app.status === "shortlisted"
+                        ? "interview"
+                        : (app.status as
+                            | "applied"
+                            | "interview"
+                            | "offered"
+                            | "rejected"),
+                }))}
+            />
           ) : (
             <div className={styles.emptyState}>
               <p>No applications yet.</p>

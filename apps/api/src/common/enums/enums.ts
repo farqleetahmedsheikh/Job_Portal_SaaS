@@ -68,10 +68,21 @@ export enum AppSource {
   OTHER = 'other',
 }
 
+// Delivery format — how the interview is conducted
 export enum InterviewType {
   VIDEO = 'video',
   PHONE = 'phone',
   ONSITE = 'onsite',
+  ASYNC = 'async', // ← add async
+}
+
+// Round type — what kind of interview it is
+export enum InterviewRoundType {
+  TECHNICAL = 'technical',
+  HR = 'hr',
+  PANEL = 'panel',
+  CULTURAL = 'cultural',
+  FINAL = 'final',
 }
 
 export enum InterviewStatus {
@@ -99,6 +110,8 @@ export enum NotifType {
   APP_RECEIVED = 'application_received',
   APP_STATUS = 'application_status_changed',
   IV_SCHEDULED = 'interview_scheduled',
+  IV_RESCHEDULED = 'interview_rescheduled', // ← add
+  IV_CANCELLED = 'interview_cancelled', // ← add
   IV_REMINDER = 'interview_reminder',
   OFFER = 'offer_received',
   MESSAGE = 'message_received',

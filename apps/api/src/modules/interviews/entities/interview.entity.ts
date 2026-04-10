@@ -11,7 +11,11 @@ import {
   JoinColumn,
   Check,
 } from 'typeorm';
-import { InterviewType, InterviewStatus } from '../../../common/enums/enums';
+import {
+  InterviewType,
+  InterviewStatus,
+  InterviewRoundType,
+} from '../../../common/enums/enums';
 import { Application } from '../../applications/entities/application.entity';
 import { Job } from '../../jobs/entities/job.entity';
 import { User } from '../../users/entities/user.entity';
@@ -59,6 +63,15 @@ export class Interview {
     default: InterviewStatus.UPCOMING,
   })
   status?: InterviewStatus;
+
+  @Column({
+    type: 'enum',
+    enum: InterviewRoundType,
+    default: InterviewRoundType.TECHNICAL,
+    nullable: true,
+    name: 'round_type',
+  })
+  roundType?: InterviewRoundType;
 
   // Video link shown as "Join" button on interviews page
   @Column({ name: 'meet_link', type: 'text', nullable: true })

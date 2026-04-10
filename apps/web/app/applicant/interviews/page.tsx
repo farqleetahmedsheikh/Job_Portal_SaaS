@@ -1,8 +1,4 @@
-/**
- * eslint-disable @typescript-eslint/no-explicit-any
- *
- * @format
- */
+/** @format */
 
 "use client";
 
@@ -25,6 +21,7 @@ import { useInterviews } from "../../hooks/useInterviews";
 import type { Interview, FilterTab } from "../../types/interviews.types";
 import { TYPE_META, STATUS_META } from "../../types/interviews.types";
 import styles from "../styles/interview.module.css";
+import Image from "next/image";
 
 // ─── Date / time helpers ──────────────────────────────────────────────────────
 
@@ -87,16 +84,18 @@ function InterviewCard({ interview }: { interview: Interview }) {
   const statusMeta = STATUS_META[interview.status];
   const isUpcoming = interview.status === "upcoming";
 
-  // Primary interviewer — prefer interviewers[] then panelists[]
-  const primaryInterviewer =
-    interview.interviewers[0] ?? interview.panelists[0]?.name ?? "—";
+  // All panelists come from panelists[] — no separate interviewers[]
+  const primaryInterviewer = interview.id;
+  const extraInterviewers = interview.panelists.slice(1).map((p) => p.name);
 
-  const extraInterviewers = [
-    ...interview.interviewers.slice(1),
-    ...interview.panelists
-      .slice(interview.interviewers.length > 0 ? 0 : 1)
-      .map((p: { name: any }) => p.name),
-  ];
+  // Fallback initials when no logo URL
+  const logoFallback =
+    interview.company
+      ?.split(" ")
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase() || "?";
 
   return (
     <div
@@ -112,9 +111,11 @@ function InterviewCard({ interview }: { interview: Interview }) {
         <div className={styles["card-top"]}>
           <div className={styles["card-logo"]}>
             {interview.companyLogoUrl ? (
-              <img
+              <Image
                 src={interview.companyLogoUrl}
                 alt={interview.company}
+                width={40}
+                height={40}
                 style={{
                   width: "100%",
                   height: "100%",
@@ -123,7 +124,7 @@ function InterviewCard({ interview }: { interview: Interview }) {
                 }}
               />
             ) : (
-              interview.companyLogo
+              logoFallback // ← was interview.companyLogo (doesn't exist)
             )}
           </div>
 

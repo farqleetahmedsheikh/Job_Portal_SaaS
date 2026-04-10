@@ -12,7 +12,6 @@ import {
   Linkedin,
   Twitter,
   Instagram,
-  Edit2,
   Check,
   X,
   Camera,
@@ -25,6 +24,7 @@ import { StatusBanners } from "../../components/ui/StatusBanners";
 import { ProfileHeader } from "../../components/ui/ProfileHeader";
 import { COMPANY_SIZES, INDUSTRIES } from "../../types/company.types";
 import styles from "../styles/company.module.css";
+import Image from "next/image";
 
 // ── Inline field — company page uses company.module.css, not profile ──────────
 function Field({
@@ -128,6 +128,7 @@ export default function CompanyPage() {
     savePerks,
   } = useCompany();
   console.log("PERKS---------->", perks);
+  console.log("COMPANY---------->", company);
   // ── Loading / error / empty states ───────────────────────────────────────
   if (loading)
     return (
@@ -209,7 +210,7 @@ export default function CompanyPage() {
       <div className={styles.card}>
         <div className={styles.coverWrap}>
           {company.coverUrl ? (
-            <img
+            <Image
               src={company.coverUrl}
               alt="Cover"
               className={`${styles.cover} ${coverUploading ? styles["uploading"] : ""}`}
@@ -240,10 +241,12 @@ export default function CompanyPage() {
         <div className={styles.logoRow}>
           <div className={styles.logoWrap}>
             {company.logoUrl ? (
-              <img
+              <Image
                 src={company.logoUrl}
                 alt={form.companyName}
                 className={`${styles.logo} ${logoUploading ? styles["uploading"] : ""}`}
+                width={100}
+                height={100}
               />
             ) : (
               <div className={styles.logoFallback}>

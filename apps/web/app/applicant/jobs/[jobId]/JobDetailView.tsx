@@ -2,16 +2,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowLeft,
   MapPin,
   Briefcase,
   Clock,
-  DollarSign,
   Users,
-  Calendar,
-  Eye,
   Bookmark,
   BookmarkCheck,
   CheckCircle2,
@@ -19,7 +17,6 @@ import {
   ShieldCheck,
   Sparkles,
   X,
-  Building2,
   Star,
   FileText,
 } from "lucide-react";
@@ -97,7 +94,9 @@ function ApplyModal({
   >([]);
 
   useEffect(() => {
-    api<any[]>(`${API_BASE}/resumes`, "GET")
+    api<
+      Array<{ id: string; name: string; isDefault: boolean; status: string }>
+    >(`${API_BASE}/resumes`, "GET")
       .then((data) => {
         setResumes(data.filter((r) => r.status === "ready"));
         const def = data.find((r) => r.isDefault && r.status === "ready");
@@ -211,7 +210,7 @@ function ApplyModal({
             </span>
           </label>
           <p className={styles.formHint}>
-            Tell the employer why you're a great fit.
+            Tell the employer why you&apos;re a great fit.
           </p>
           <textarea
             className={styles.textarea}
@@ -400,9 +399,11 @@ export function JobDetailView({ jobId }: { jobId: string }) {
               <div className={styles.companyRow}>
                 <div className={styles.companyLogo}>
                   {job.company.logoUrl ? (
-                    <img
+                    <Image
                       src={job.company.logoUrl}
                       alt={job.company.companyName}
+                      width={56}
+                      height={56}
                     />
                   ) : (
                     toInitials(job.company.companyName)
@@ -759,9 +760,11 @@ export function JobDetailView({ jobId }: { jobId: string }) {
             <div className={styles.companyCard}>
               <div className={styles.companyCardLogo}>
                 {job.company.logoUrl ? (
-                  <img
+                  <Image
                     src={job.company.logoUrl}
                     alt={job.company.companyName}
+                    width={56}
+                    height={56}
                   />
                 ) : (
                   toInitials(job.company.companyName)

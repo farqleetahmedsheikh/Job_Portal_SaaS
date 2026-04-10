@@ -6,6 +6,7 @@ import { Interview } from './entities/interview.entity';
 import { Company } from '../companies/entities/company.entity';
 import { Application } from '../applications/entities/application.entity';
 import { InterviewsController } from './interviews.controller';
+import { InterviewGateway } from './interview.gateway';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { InterviewsController } from './interviews.controller';
     ]),
   ],
   controllers: [InterviewsController],
-  providers: [InterviewsService],
+  providers: [InterviewsService, InterviewGateway],
   exports: [InterviewsService],
 })
 export class InterviewsModule {}
