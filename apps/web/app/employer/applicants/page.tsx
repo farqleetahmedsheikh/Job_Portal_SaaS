@@ -1,4 +1,5 @@
 /** @format */
+
 "use client";
 
 import Link from "next/link";
@@ -15,7 +16,6 @@ import {
   UserCheck,
   Calendar,
   Award,
-  Filter,
   ArrowUpDown,
 } from "lucide-react";
 import { useAllApplicants } from "../../hooks/useAllApplicants";
@@ -24,6 +24,8 @@ import type {
   ApplicantStatus,
 } from "../../types/all-applicants.types";
 import styles from "../styles/all-applicants.module.css";
+import Image from "next/image";
+import { ApplicantGate } from "../../components/ui/ApplicantGate";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -109,7 +111,12 @@ function ApplicantCard({
       <div className={styles.cardTop}>
         <div className={styles.avatar}>
           {applicant.avatarUrl ? (
-            <img src={applicant.avatarUrl} alt={applicant.name} />
+            <Image
+              src={applicant.avatarUrl}
+              alt={applicant.name}
+              width={40}
+              height={40}
+            />
           ) : (
             applicant.avatar
           )}
@@ -201,7 +208,7 @@ function ApplicantCard({
 
         <div className={styles.footerActions}>
           {applicant.resumeUrl && (
-            <a
+            <Link
               href={applicant.resumeUrl}
               target="_blank"
               rel="noopener noreferrer"
@@ -210,7 +217,7 @@ function ApplicantCard({
               download
             >
               <Download size={13} />
-            </a>
+            </Link>
           )}
           <Link
             href={`/employer/applicants/${applicant.id}`}
@@ -421,14 +428,16 @@ export default function AllApplicantsPage() {
             </span>
           </div>
         ) : (
-          filtered.map((a) => (
-            <ApplicantCard
-              key={a.id}
-              applicant={a}
-              onStar={toggleStar}
-              onStatus={changeStatus}
-            />
-          ))
+          <ApplicantGate totalCount={filtered.length}>
+            {filtered.map((a) => (
+              <ApplicantCard
+                key={a.id}
+                applicant={a}
+                onStar={toggleStar}
+                onStatus={changeStatus}
+              />
+            ))}
+          </ApplicantGate>
         )}
       </div>
 

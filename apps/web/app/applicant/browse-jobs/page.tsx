@@ -10,6 +10,7 @@ import { useBrowseJobs }  from "../../hooks/useBrowseJobs";
 import { formatDate }     from "../../lib";
 import type { BrowseJob } from "../../hooks/useBrowseJobs";
 import styles from "../styles/browse-jobs.module.css";
+import Image from "next/image";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const JOB_TYPES  = ["Full-time", "Part-time", "Contract", "Internship"];
@@ -70,7 +71,7 @@ function JobCard({
       <div className={styles["job-card-top"]}>
         <div className={styles["company-logo"]}>
           {job.company.logoUrl
-            ? <img src={job.company.logoUrl} alt={job.company.companyName} />
+            ? <Image src={job.company.logoUrl} alt={job.company.companyName} width={40} height={40} />
             : job.company.companyName[0]}
         </div>
         <div className={styles["job-card-badges"]}>

@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 /** @format */
 "use client";
 
@@ -10,6 +9,7 @@ import { timeAgo } from "../../lib";
 import { useSearchParams } from "next/navigation";
 import type { Conversation, ChatMessage } from "../../hooks/useChat";
 import styles from "../../styles/messages.module.css";
+import Image from "next/image";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function toInitials(name: string) {
@@ -43,7 +43,9 @@ function ConversationItem({
     >
       <div className={styles.convAvatar}>
         {conv.other_user_avatar ? (
-          <img
+          <Image
+            width={40}
+            height={40}
             src={conv.other_user_avatar}
             alt={conv.other_user_name}
             style={{
@@ -86,7 +88,9 @@ function MessageBubble({ msg, isOwn }: { msg: ChatMessage; isOwn: boolean }) {
       {!isOwn && (
         <div className={styles.msgAvatar}>
           {msg.sender.avatar ? (
-            <img
+            <Image
+              width={40}
+              height={40}
               src={msg.sender.avatar}
               alt={msg.sender.fullName}
               style={{
@@ -158,7 +162,7 @@ export default function MessagesPage() {
       didAutoOpen.current = true;
       startConversation(to); // ← was openConversation(to)
     }
-  }, [loadingInbox]); // ← wait for inbox before checking existing convs
+  }, [loadingInbox, searchParams, startConversation]); // ← wait for inbox before checking existing convs
 
   // Auto-scroll to bottom on new message
   useEffect(() => {
@@ -301,9 +305,11 @@ export default function MessagesPage() {
             <div className={styles.chatHeader}>
               <div className={styles.chatHeaderAvatar}>
                 {activeConv.other_user_avatar ? (
-                  <img
+                  <Image
                     src={activeConv.other_user_avatar}
                     alt={activeConv.other_user_name}
+                    width={40}
+                    height={40}
                     style={{
                       width: "100%",
                       height: "100%",

@@ -17,7 +17,7 @@ export interface Application {
   role: string;
   company: string;
   logo: string
-  logoUrl: string | undefined; // initials fallback
+  logoUrl: string; // initials fallback
   location: string;
   type: JobType;
   salary: string;

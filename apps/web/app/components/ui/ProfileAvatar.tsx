@@ -6,6 +6,7 @@ import { Camera, AlertTriangle, Loader } from "lucide-react";
 import { initials } from "../../lib";
 import type { SessionUser } from "../../store/session.store";
 import styles from "../../applicant/styles/profile.module.css";
+import Image from "next/image";
 
 interface Props {
   user: SessionUser;

@@ -792,14 +792,14 @@ export function JobDetailView({ jobId }: { jobId: string }) {
                 <p className={styles.companyDesc}>{job.company.description}</p>
               )}
               {job.company.website && (
-                <a
+                <Link
                   href={job.company.website}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={styles.companyLink}
                 >
                   <Globe size={13} /> Visit website
-                </a>
+                </Link>
               )}
 
               {/* Perks */}

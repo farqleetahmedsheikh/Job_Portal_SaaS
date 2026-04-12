@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Controller,
   Get,
@@ -87,7 +86,7 @@ export class ApplicationsController {
       sort: sort as 'recent' | 'match' | undefined,
     };
     return jobId
-      ? this.svc.findByJob(jobId, opts)
+      ? this.svc.findByJob(jobId, user.sub, opts)
       : this.svc.findAllByEmployer(user.sub, opts); // ← was missing
   }
 

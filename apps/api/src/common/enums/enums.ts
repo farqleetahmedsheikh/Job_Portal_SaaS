@@ -119,3 +119,57 @@ export enum NotifType {
   PROFILE_VIEWED = 'profile_viewed',
   SYSTEM = 'system',
 }
+
+export enum SubscriptionPlan {
+  FREE = 'free',
+  STARTER = 'starter',
+  GROWTH = 'growth',
+  SCALE = 'scale',
+}
+
+export enum SubscriptionStatus {
+  ACTIVE = 'active',
+  CANCELLED = 'cancelled',
+  PAST_DUE = 'past_due',
+  TRIALING = 'trialing',
+}
+
+export enum VerificationStatus {
+  UNVERIFIED = 'unverified',
+  PENDING = 'pending',
+  VERIFIED = 'verified',
+  REJECTED = 'rejected',
+  LAPSED = 'lapsed',
+}
+
+export enum AddonType {
+  EXTRA_POST = 'extra_post',
+  BOOST_CAP = 'boost_cap',
+  FEATURE_JOB = 'feature_job',
+}
+
+export enum BillingEventType {
+  SUBSCRIPTION_CHARGE = 'subscription_charge',
+  ADDON_CHARGE = 'addon_charge',
+  REFUND = 'refund',
+  DISPUTE = 'dispute',
+}
+
+export enum AiMatcherTier {
+  NONE = 'none',
+  BASIC = 'basic',
+  ADVANCED = 'advanced',
+}
+
+export enum AnalyticsTier {
+  NONE = 'none',
+  BASIC = 'basic',
+  ADVANCED = 'advanced',
+  ENTERPRISE = 'enterprise',
+}
+
+export enum SupportTier {
+  EMAIL = 'email',
+  PRIORITY = 'priority',
+  DEDICATED = 'dedicated',
+}

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /** @format */
 import { useState, useCallback, useRef } from "react";
 
@@ -103,7 +105,7 @@ Keep it ${tone} and specific to the role. Plain text only.`;
                 full += text;
                 onChunk(full);
               }
-            } catch (_) {}
+            } catch (_) { /* empty */ }
           }
         }
 

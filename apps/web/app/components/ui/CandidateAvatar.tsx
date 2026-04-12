@@ -1,6 +1,7 @@
 /** @format */
 "use client";
 
+import Image from "next/image";
 import styles from "../../employer/styles/emp-dashboard.module.css";
 
 interface Props {
@@ -21,7 +22,9 @@ function toInitials(name: string) {
 export function CandidateAvatar({ name, avatarUrl, size = 36 }: Props) {
   if (avatarUrl) {
     return (
-      <img
+      <Image
+      width={40}
+      height={40}
         src={avatarUrl}
         alt={name}
         className={styles.appAvatar}

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /** @format */
 
 "use client";
@@ -23,6 +24,7 @@ import { api } from "../../lib";
 import { API_BASE } from "../../constants";
 import styles from "../styles/schedule-modal.module.css";
 import { INTERVIEW_TYPE_META } from "../../types/interviews.types";
+import Image from "next/image";
 
 type InterviewType = "video" | "phone" | "onsite";
 interface Job {
@@ -331,9 +333,11 @@ export function ScheduleInterviewModal({
                       >
                         <div className={styles.appAvatar}>
                           {a.avatarUrl ? (
-                            <img
+                            <Image
                               src={a.avatarUrl}
                               alt={a.name}
+                              width={40}
+                              height={40}
                               style={{
                                 width: "100%",
                                 height: "100%",
@@ -476,7 +480,7 @@ export function ScheduleInterviewModal({
                   onChange={(e) => setMeetLink(e.target.value)}
                 />
                 <p className={styles.hint}>
-                  Leave blank to use HiringFly's built-in video room
+                  Leave blank to use HiringFly&apos;s built-in video room
                 </p>
               </div>
             )}

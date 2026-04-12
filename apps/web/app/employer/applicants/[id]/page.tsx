@@ -31,6 +31,7 @@ import { AppStatus, STATUS_META } from "../../../types/applicants.types";
 import { ScheduleInterviewModal } from "../../../components/ui/ScheduleInterviewModal";
 import { useUser } from "../../../store/session.store";
 import { useCompany } from "../../../hooks/useCompany";
+import Image from "next/image";
 
 export default function ApplicantProfilePage() {
   const { id } = useParams<{ id: string }>();
@@ -103,9 +104,11 @@ export default function ApplicantProfilePage() {
               {/* Avatar */}
               <div className={styles.profileAvatar}>
                 {profile.avatarUrl ? (
-                  <img
+                  <Image
                     src={profile.avatarUrl}
                     alt={profile.name}
+                    width={80}
+                    height={80}
                     style={{
                       width: "100%",
                       height: "100%",
@@ -150,50 +153,50 @@ export default function ApplicantProfilePage() {
                 </div>
                 <div className={styles.profileLinks}>
                   {profile.showEmail && (
-                    <a
+                    <Link
                       href={`mailto:${profile.email}`}
                       className={styles.profileLink}
                     >
                       <Mail size={12} /> {profile.email}
-                    </a>
+                    </Link>
                   )}
                   {profile.showPhone && (
-                    <a
+                    <Link
                       href={`tel:${profile.phone}`}
                       className={styles.profileLink}
                     >
                       <Phone size={12} /> {profile.phone}
-                    </a>
+                    </Link>
                   )}
                   {profile.linkedin && (
-                    <a
+                    <Link
                       href={`https://${profile.linkedin}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className={styles.profileLink}
                     >
                       <Linkedin size={12} /> LinkedIn
-                    </a>
+                    </Link>
                   )}
                   {profile.github && (
-                    <a
+                    <Link
                       href={`https://${profile.github}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className={styles.profileLink}
                     >
                       <Github size={12} /> GitHub
-                    </a>
+                    </Link>
                   )}
                   {profile.portfolio && (
-                    <a
+                    <Link
                       href={`https://${profile.portfolio}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className={styles.profileLink}
                     >
                       <Globe size={12} /> Portfolio
-                    </a>
+                    </Link>
                   )}
                 </div>
               </div>
@@ -343,14 +346,14 @@ export default function ApplicantProfilePage() {
                         <span>Resume_{profile.name.replace(" ", "_")}.pdf</span>
                       </div>
                       <div style={{ display: "flex", gap: 8 }}>
-                        <a
+                        <Link
                           href={profile.resumeUrl}
                           download
                           className={`${styles.btn} ${styles.btnGhost}`}
                         >
                           <Download size={13} /> Download
-                        </a>
-                        <a
+                        </Link>
+                        <Link
                           href={profile.resumeUrl.replace(
                             "/upload/",
                             "/upload/fl_attachment/",
@@ -360,7 +363,7 @@ export default function ApplicantProfilePage() {
                           className={`${styles.btn} ${styles.btnGhost}`}
                         >
                           <ExternalLink size={13} /> Open
-                        </a>
+                        </Link>
                       </div>
                     </div>
                     <div className={styles.resumePreview} />
@@ -449,13 +452,13 @@ export default function ApplicantProfilePage() {
               )}
 
               {profile.resumeUrl && (
-                <a
+                <Link
                   href={profile.resumeUrl}
                   download
                   className={`${styles.btn} ${styles.btnGhost} ${styles.btnFull}`}
                 >
                   <Download size={14} /> Download resume
-                </a>
+                </Link>
               )}
               <button
                 className={`${styles.btn} ${styles.btnDangerGhost} ${styles.btnFull}`}

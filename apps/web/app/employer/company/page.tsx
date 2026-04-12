@@ -210,7 +210,7 @@ export default function CompanyPage() {
       <div className={styles.card}>
         <div className={styles.coverWrap}>
           {company.coverUrl ? (
-            <Image
+            <img
               src={company.coverUrl}
               alt="Cover"
               className={`${styles.cover} ${coverUploading ? styles["uploading"] : ""}`}

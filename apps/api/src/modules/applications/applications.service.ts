@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Injectable,
   NotFoundException,
@@ -16,6 +17,7 @@ import { AppStatus, JobStatus } from 'src/common/enums/enums';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { BulkStatusUpdateDto } from './dto/bulk-status-update.dto';
 import { UpdateEmployerNotesDto } from './dto/update-employer-notes.dto';
+import { LimitsService } from '../billing/limits.service'; // ← new
 
 @Injectable()
 export class ApplicationsService {
@@ -27,6 +29,7 @@ export class ApplicationsService {
     @InjectRepository(Job)
     private readonly jobRepo: Repository<Job>,
     private readonly ds: DataSource,
+    private readonly limitsService: LimitsService, // ← new
   ) {}
 
   // ── Applicant: Apply ────────────────────────────────────────────────────────
@@ -34,7 +37,7 @@ export class ApplicationsService {
     const job = await this.jobRepo.findOneBy({ id: dto.jobId });
     if (!job) throw new NotFoundException('Job not found');
 
-    // ── Expiry / status guards ──────────────────────────────────────────────
+    // ── Status / expiry guards ─────────────────────────────────────────────
     if (job.status !== JobStatus.ACTIVE) {
       throw new BadRequestException(
         `This job is no longer accepting applications (status: ${job.status})`,
@@ -42,11 +45,11 @@ export class ApplicationsService {
     }
 
     const now = new Date();
-    const today = new Date(now.toISOString().split('T')[0]); // midnight UTC
+    const today = new Date(now.toISOString().split('T')[0]);
 
     if (job.deadline) {
       const deadline = new Date(job.deadline);
-      deadline.setHours(23, 59, 59, 999); // end of deadline day
+      deadline.setHours(23, 59, 59, 999);
       if (now > deadline) {
         throw new BadRequestException(
           'The application deadline for this job has passed',
@@ -57,7 +60,11 @@ export class ApplicationsService {
     if (job.expiresAt && now > new Date(job.expiresAt)) {
       throw new BadRequestException('This job listing has expired');
     }
-    // ────────────────────────────────────────────────────────────────────────
+
+    // ── Billing / rate-limit guards ────────────────────────────────────────
+    await this.limitsService.checkAndIncrementApplyLimit(applicantId); // ← new: 20/day cap
+    await this.limitsService.checkJobAcceptsApplications(dto.jobId); // ← new: applicant cap
+    // ──────────────────────────────────────────────────────────────────────
 
     const existing = await this.appRepo.findOneBy({
       jobId: dto.jobId,
@@ -82,6 +89,9 @@ export class ApplicationsService {
           toStatus: AppStatus.NEW,
         }),
       );
+
+      // ← new: increment job counter — auto-closes job if cap hit
+      await this.limitsService.incrementApplicantCount(dto.jobId);
 
       return app;
     });
@@ -134,38 +144,40 @@ export class ApplicationsService {
     });
   }
 
-  findByJob(
+  // ── Employer: Applications for one job ─────────────────────────────────────
+  async findByJob(
     jobId: string,
-    opts: { limit?: number; sort?: 'recent' | 'match' } = {},
+    employerId: string, // ← new param
+    opts: { sort?: 'recent' | 'match' } = {},
   ) {
+    // Enforce viewable limit for this employer's plan
+    const viewLimit =
+      await this.limitsService.getViewableApplicantLimit(employerId); // ← new
+
     const qb = this.appRepo
       .createQueryBuilder('app')
       .leftJoinAndSelect('app.applicant', 'u')
       .leftJoinAndSelect('u.applicantProfile', 'p')
-      .leftJoinAndSelect('app.job', 'job') // ← missing
-      .leftJoinAndSelect('app.resume', 'resume') // ← missing
+      .leftJoinAndSelect('app.job', 'job')
+      .leftJoinAndSelect('app.resume', 'resume')
       .where('app.jobId = :jobId', { jobId });
 
-    if (opts.sort === 'match') {
-      qb.orderBy('app.matchScore', 'DESC');
-    } else {
-      qb.orderBy('app.appliedAt', 'DESC'); // ← was only on !opts.sort
-    }
+    if (opts.sort === 'match') qb.orderBy('app.matchScore', 'DESC');
+    else qb.orderBy('app.appliedAt', 'DESC');
 
-    if (opts.limit) qb.take(opts.limit);
+    qb.take(viewLimit); // ← new
 
-    return qb.getMany().then((results) => {
-      console.log('findByJob raw count:', results.length);
-      console.log('findByJob first:', JSON.stringify(results[0], null, 2));
-      return results;
-    });
+    return qb.getMany();
   }
 
-  findAllByEmployer(
+  // ── Employer: All applications across all jobs ──────────────────────────────
+  async findAllByEmployer(
     employerId: string,
-    opts: { limit?: number; sort?: 'recent' | 'match' } = {},
+    opts: { sort?: 'recent' | 'match' } = {},
   ) {
-    console.log('User Id---------->', employerId);
+    const viewLimit =
+      await this.limitsService.getViewableApplicantLimit(employerId); // ← new
+
     const qb = this.appRepo
       .createQueryBuilder('app')
       .leftJoinAndSelect('app.applicant', 'u')
@@ -174,14 +186,10 @@ export class ApplicationsService {
       .leftJoinAndSelect('app.resume', 'resume')
       .where('job.postedById = :employerId', { employerId });
 
-    if (opts.sort === 'match') {
-      qb.orderBy('app.matchScore', 'DESC');
-    } else {
-      qb.orderBy('app.appliedAt', 'DESC');
-    }
+    if (opts.sort === 'match') qb.orderBy('app.matchScore', 'DESC');
+    else qb.orderBy('app.appliedAt', 'DESC');
 
-    if (opts.limit) qb.take(opts.limit);
-    console.log('DB------------>', qb);
+    qb.take(viewLimit); // ← new
 
     return qb.getMany();
   }

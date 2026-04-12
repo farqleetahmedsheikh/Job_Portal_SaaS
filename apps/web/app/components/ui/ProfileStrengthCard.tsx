@@ -7,6 +7,7 @@ import { useUser } from "../../store/session.store";
 import { useProfileStrength } from "../../hooks/useProfileStrength";
 import { initials } from "../../lib";
 import styles from "../../applicant/styles/applicant.module.css";
+import Image from "next/image";
 
 const CIRCUMFERENCE = 2 * Math.PI * 36; // r=36 matches SVG
 
@@ -46,9 +47,11 @@ export function ProfileStrengthCard() {
         <div className={styles["profile-top"]}>
           <div className={styles["profile-avatar"]}>
             {user?.avatar ? ( // was: user.avatar (wrong field name)
-              <img
+              <Image
                 src={user.avatar}
                 alt={user.fullName}
+                width={40}
+                height={40}
                 style={{
                   width: "100%",
                   height: "100%",

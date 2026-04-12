@@ -26,6 +26,7 @@ import {
 import { useApplications } from "../../hooks/useApplications";
 import type { Application, AppStatus } from "../../types/applications.types";
 import styles from "../styles/applications.module.css";
+import Image from "next/image";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -107,7 +108,13 @@ function ApplicationRow({
         tabIndex={0}
         onKeyDown={(e) => e.key === "Enter" && setExpanded((p) => !p)}
       >
-        <img src={app.logoUrl} className={styles["row-logo"]} />
+        <Image
+          src={app.logoUrl}
+          alt={`${app.company} logo`}
+          className={styles["row-logo"]}
+          width={40}
+          height={40}
+        />
 
         <div className={styles["row-info"]}>
           <div className={styles["row-role"]}>{app.role}</div>

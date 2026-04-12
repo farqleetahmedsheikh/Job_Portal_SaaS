@@ -35,7 +35,7 @@ export function usePostJob() {
   const [activeSection, setActiveSection] = useState<SectionId>("basic");
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  
+
   const setDescription = useCallback(
     (val: string) => setForm((prev) => ({ ...prev, description: val })),
     [],
@@ -97,14 +97,18 @@ export function usePostJob() {
       setSubmitting(true);
       try {
         console.log("Job Data--------> ", form);
-        const job = await api<{ id: string }>(`${API_BASE}/jobs`, "POST", {
+        const job = await api<{ id: string; title: string }>(`${API_BASE}/jobs`, "POST", {
           ...form,
           salaryMin: form.salaryMin ? Number(form.salaryMin) : undefined,
           salaryMax: form.salaryMax ? Number(form.salaryMax) : undefined,
           openings: Number(form.openings) || 1,
           status,
+          isFeatured: false,
         });
-        router.push(`/employer/jobs/${job.id}`);
+        router.push(
+          `/employer/jobs?featured=${job.id}&title=${encodeURIComponent(job.title)}`,
+        );
+
       } catch (err) {
         setServerError(
           err instanceof Error ? err.message : "Failed to post job",

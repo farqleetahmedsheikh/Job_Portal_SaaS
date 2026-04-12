@@ -136,6 +136,23 @@ export class Job {
   @Column({ name: 'applicants_count', type: 'int', default: 0 })
   applicantsCount?: number;
 
+  // ── Applicant cap ──────────────────────────────────────
+  @Column({ name: 'applicant_cap', default: 25 })
+  applicantCap!: number;
+
+  @Column({ name: 'applicant_count', default: 0 })
+  applicantCount!: number;
+
+  @Column({ name: 'cap_reached_at', type: 'timestamptz', nullable: true })
+  capReachedAt?: Date;
+
+  // ── Featured ───────────────────────────────────────────
+  @Column({ name: 'is_featured', default: false })
+  isFeatured!: boolean;
+
+  @Column({ name: 'featured_until', type: 'timestamptz', nullable: true })
+  featuredUntil?: Date;
+
   @Column({
     name: 'published_at',
     type: 'timestamptz',

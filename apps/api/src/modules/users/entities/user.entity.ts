@@ -17,7 +17,7 @@ import { Exclude } from 'class-transformer';
 import { UserRole } from '../../../common/enums/enums';
 import { ApplicantProfile } from 'src/modules/applicants/entities/applicant-profile.entity';
 import { Company } from 'src/modules/companies/entities/company.entity';
-
+import { Subscription } from 'src/modules/billing/entities/subscription.entity';
 
 @Entity('users')
 @Index(['email'], { unique: true, where: 'deleted_at IS NULL' })
@@ -80,6 +80,9 @@ export class User {
 
   @OneToOne(() => Company, (c) => c.owner, { cascade: true })
   companies?: Company;
+
+  @OneToOne(() => Subscription, (s) => s.user, { nullable: true })
+  subscription?: Subscription;
 
   // Import Company lazily to avoid circular deps
   // @OneToMany(() => Company, (c) => c.owner)

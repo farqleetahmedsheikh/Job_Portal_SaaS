@@ -1,9 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/** @format */
-// src/modules/jobs/jobs.service.ts
-
 import {
   Injectable,
   NotFoundException,
@@ -23,6 +20,7 @@ import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
 import { QueryJobsDto } from './dto/query-job.dto';
 import { ChangeJobStatusDto } from './dto/change-job-status.dto';
+import { LimitsService } from '../billing/limits.service'; // ← new
 
 @Injectable()
 export class JobsService {
@@ -35,6 +33,7 @@ export class JobsService {
     @InjectRepository(Company)
     private readonly companyRepo: Repository<Company>,
     private readonly dataSource: DataSource,
+    private readonly limitsService: LimitsService, // ← new
   ) {}
 
   // ── Employer: Create ────────────────────────────────────────────────────────
@@ -45,12 +44,19 @@ export class JobsService {
     if (!company)
       throw new ForbiddenException('No company profile found for this account');
 
+    // ── Billing checks ────────────────────────────────────────────────────────
+    await this.limitsService.consumeJobPostSlot(userId);
+    const applicantCap = await this.limitsService.getApplicantCap(userId);
+    // ─────────────────────────────────────────────────────────────────────────
+
     return this.dataSource.transaction(async (manager) => {
       const job = manager.create(Job, {
         ...dto,
         companyId: company.id,
         postedById: userId,
         publishedAt: dto.status === JobStatus.ACTIVE ? new Date() : null,
+        applicantCap, // ← new
+        applicantCount: 0, // ← new
       });
       await manager.save(Job, job);
 
@@ -109,6 +115,10 @@ export class JobsService {
   async duplicate(jobId: string, userId: string): Promise<Job> {
     const job = await this.findOwnedOrFail(jobId, userId);
 
+    // Duplicating counts as a new post — check slot availability
+    await this.limitsService.consumeJobPostSlot(userId); // ← new
+    const applicantCap = await this.limitsService.getApplicantCap(userId); // ← new
+
     const {
       id: _id,
       createdAt: _ca,
@@ -127,8 +137,13 @@ export class JobsService {
       title: `${job.title} (copy)`,
       status: JobStatus.DRAFT,
       publishedAt: null,
-      deadline: null, // clear deadline on duplicate — employer sets a new one
+      deadline: null,
       expiresAt: null,
+      applicantCap, // ← new: fresh cap from current plan
+      applicantCount: 0, // ← new: reset counter
+      capReachedAt: null, // ← new
+      isFeatured: false, // ← new: don't copy featured status
+      featuredUntil: null, // ← new
     } as Job);
 
     return this.jobRepo.save(copy);
@@ -157,14 +172,13 @@ export class JobsService {
     } = query;
 
     const now = new Date();
-    const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const today = now.toISOString().split('T')[0];
 
     const qb = this.jobRepo
       .createQueryBuilder('j')
       .innerJoinAndSelect('j.company', 'c')
       .where('j.status = :status', { status: JobStatus.ACTIVE })
       .andWhere('j.deleted_at IS NULL')
-      // ── Exclude past-deadline jobs even if status hasn't been updated yet ──
       .andWhere('(j.deadline IS NULL OR j.deadline >= :today)', { today })
       .andWhere('(j.expires_at IS NULL OR j.expires_at > :now)', { now });
 
@@ -183,9 +197,12 @@ export class JobsService {
     if (companyId) qb.andWhere('j.company_id = :companyId', { companyId });
     if (skills?.length) qb.andWhere('j.skills @> :skills', { skills });
 
-    if (sort === 'salary') qb.orderBy('j.salaryMax', 'DESC', 'NULLS LAST');
-    else if (sort === 'relevance') qb.orderBy('j.applicantsCount', 'ASC');
-    else qb.orderBy('j.publishedAt', 'DESC');
+    // ── Featured jobs always float to top ────────────────────────────────────
+    qb.addOrderBy('j.isFeatured', 'DESC'); // ← new
+
+    if (sort === 'salary') qb.addOrderBy('j.salaryMax', 'DESC', 'NULLS LAST');
+    else if (sort === 'relevance') qb.addOrderBy('j.applicantsCount', 'ASC');
+    else qb.addOrderBy('j.publishedAt', 'DESC');
 
     const [items, total] = await qb
       .skip((page - 1) * limit)
@@ -202,15 +219,17 @@ export class JobsService {
       relations: ['company', 'company.perks'],
     });
     if (!job) throw new NotFoundException('Job not found');
-
     await this.jobRepo.increment({ id: jobId }, 'viewsCount', 1);
-
     return job;
   }
 
   // ── Employer: Applicant pipeline for one job ────────────────────────────────
   async getApplicants(jobId: string, userId: string) {
     await this.findOwnedOrFail(jobId, userId);
+
+    // ── Enforce viewable limit based on employer's plan ───────────────────────
+    const viewLimit =
+      await this.limitsService.getViewableApplicantLimit(userId); // ← new
 
     return this.dataSource
       .getRepository(Application)
@@ -221,6 +240,7 @@ export class JobsService {
       .leftJoinAndSelect('a.statusHistory', 'sh')
       .where('a.job_id = :jobId', { jobId })
       .orderBy('a.applied_at', 'DESC')
+      .take(viewLimit) // ← new
       .getMany();
   }
 
@@ -237,7 +257,7 @@ export class JobsService {
     return this.jobRepo.find({ where, order: { createdAt: 'DESC' } });
   }
 
-  // ── Applicant: Save a job ────────────────────────────────────────────────────
+  // ── Applicant: Save a job ───────────────────────────────────────────────────
   async saveJob(userId: string, jobId: string): Promise<SavedJob> {
     const job = await this.jobRepo.findOne({ where: { id: jobId } });
     if (!job) throw new NotFoundException('Job not found');

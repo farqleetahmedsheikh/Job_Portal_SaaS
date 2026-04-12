@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useResumes } from "../../hooks/useResumes";
 import styles from "../styles/resumes.module.css";
+import Link from "next/link";
 
 const MAX = 5;
 
@@ -89,7 +90,7 @@ function ResumeCard({
             <StarOff size={14} />
           </button>
         )}
-        <a
+        <Link
           href={resume.fileUrl}
           target="_blank"
           rel="noopener noreferrer"
@@ -97,15 +98,15 @@ function ResumeCard({
           title="Preview"
         >
           <Eye size={14} />
-        </a>
-        <a
+        </Link>
+        <Link
           href={resume.fileUrl}
           download={resume.originalName}
           className={styles.actionBtn}
           title="Download"
         >
           <Download size={14} />
-        </a>
+        </Link>
 
         {canDelete && !confirm && (
           <button

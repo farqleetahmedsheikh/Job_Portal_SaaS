@@ -5,6 +5,7 @@
 import Link from "next/link";
 import styles from "../../applicant/styles/applicant.module.css";
 import { useSession } from "../../hooks/useSession";
+import Image from "next/image";
 
 interface Application {
   title: string;
@@ -59,7 +60,9 @@ export function RecentApplications({ applications }: Props) {
                 key={`${job.title}-${job.company}`}
                 className={styles["job-row"]}
               >
-                <img
+                <Image
+                  width={40}
+                  height={40}
                   src={`${job.logoUrl}`}
                   alt="Logo"
                   className={styles["job-logo"]}

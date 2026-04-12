@@ -1,3 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /** @format */
 "use client";
 
@@ -154,7 +157,7 @@ export function useInterviews({ mode }: Options) {
           iv.status === "upcoming" &&
           new Date(iv.scheduledAt).toDateString() === now.toDateString(),
       ),
-    [interviews],
+    [interviews, now],
   );
 
   const upcomingList = useMemo(
@@ -164,7 +167,7 @@ export function useInterviews({ mode }: Options) {
         const d = new Date(iv.scheduledAt);
         return d.toDateString() !== now.toDateString() && d > now;
       }),
-    [interviews],
+    [interviews, now],
   );
 
   const pastList = useMemo(
@@ -175,7 +178,7 @@ export function useInterviews({ mode }: Options) {
           iv.status === "cancelled" ||
           (iv.status === "upcoming" && new Date(iv.scheduledAt) < now),
       ),
-    [interviews],
+    [interviews, now],
   );
 
   const filtered = useMemo(

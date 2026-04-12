@@ -1,0 +1,103 @@
+import {
+  SubscriptionPlan,
+  AiMatcherTier,
+  AnalyticsTier,
+  SupportTier,
+  AddonType,
+} from '../common/enums/enums';
+
+export const PLAN_LIMITS = {
+  [SubscriptionPlan.FREE]: {
+    jobPostsPerMonth: 2,
+    applicantsPerJob: 25,
+    maxApplicantsViewable: 10,
+    teamSeats: 1,
+    featuredSlotsPerMonth: 0,
+    aiMatcher: AiMatcherTier.NONE,
+    aiInsights: false,
+    hasTalentDb: false,
+    hasInterviewScheduling: true,
+    hasAutomation: false,
+    analytics: AnalyticsTier.NONE,
+    hasExport: false,
+    hasVerifiedBadge: false,
+    hasSavedSearches: false,
+    hasMarketIntel: false,
+    showHiringFlyBranding: true,
+    support: SupportTier.EMAIL,
+  },
+  [SubscriptionPlan.STARTER]: {
+    jobPostsPerMonth: 5,
+    applicantsPerJob: 50,
+    maxApplicantsViewable: 50,
+    teamSeats: 2,
+    featuredSlotsPerMonth: 0,
+    aiMatcher: AiMatcherTier.BASIC,
+    aiInsights: false,
+    hasTalentDb: false,
+    hasInterviewScheduling: true,
+    hasAutomation: false,
+    analytics: AnalyticsTier.BASIC,
+    hasExport: true,
+    hasVerifiedBadge: false,
+    hasSavedSearches: false,
+    hasMarketIntel: false,
+    showHiringFlyBranding: true,
+    support: SupportTier.PRIORITY,
+  },
+  [SubscriptionPlan.GROWTH]: {
+    jobPostsPerMonth: 15,
+    applicantsPerJob: 100,
+    maxApplicantsViewable: Infinity,
+    teamSeats: 5,
+    featuredSlotsPerMonth: 1,
+    aiMatcher: AiMatcherTier.BASIC,
+    aiInsights: true,
+    hasTalentDb: true,
+    hasInterviewScheduling: true,
+    hasAutomation: true,
+    analytics: AnalyticsTier.ADVANCED,
+    hasExport: true,
+    hasVerifiedBadge: true,
+    hasSavedSearches: true,
+    hasMarketIntel: false,
+    showHiringFlyBranding: false,
+    support: SupportTier.PRIORITY,
+  },
+  [SubscriptionPlan.SCALE]: {
+    jobPostsPerMonth: 30,
+    applicantsPerJob: Infinity,
+    maxApplicantsViewable: Infinity,
+    teamSeats: 10,
+    featuredSlotsPerMonth: 3,
+    aiMatcher: AiMatcherTier.ADVANCED,
+    aiInsights: true,
+    hasTalentDb: true,
+    hasInterviewScheduling: true,
+    hasAutomation: true,
+    analytics: AnalyticsTier.ENTERPRISE,
+    hasExport: true,
+    hasVerifiedBadge: true,
+    hasSavedSearches: true,
+    hasMarketIntel: true,
+    showHiringFlyBranding: false,
+    support: SupportTier.DEDICATED,
+  },
+} as const;
+
+export type PlanLimits = (typeof PLAN_LIMITS)[SubscriptionPlan];
+
+export const PLAN_PRICES: Record<SubscriptionPlan, number> = {
+  [SubscriptionPlan.FREE]: 0,
+  [SubscriptionPlan.STARTER]: 9999,
+  [SubscriptionPlan.GROWTH]: 19999,
+  [SubscriptionPlan.SCALE]: 29999,
+};
+
+export const ADDON_PRICES: Record<AddonType, number> = {
+  [AddonType.EXTRA_POST]: 999,
+  [AddonType.BOOST_CAP]: 1499,
+  [AddonType.FEATURE_JOB]: 1999,
+};
+
+export const VERIFICATION_MONTHLY_PRICE = 3999;

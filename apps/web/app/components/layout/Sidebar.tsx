@@ -18,8 +18,10 @@ import {
   BarChart2,
   FileIcon,
   type LucideIcon,
+  CreditCard,
 } from "lucide-react";
 import styles from "../../styles/sidebar.module.css";
+import Image from "next/image";
 
 // ── Nav config — icon is a component, never a string ─────────────────────────
 interface NavItem {
@@ -81,7 +83,7 @@ const NAVIGATION: Record<"applicant" | "employer", NavSection[]> = {
       items: [
         { label: "Profile", icon: User, href: "/employer/profile" },
         { label: "Analytics", icon: BarChart2, href: "/employer/analytics" },
-        { label: "Settings", icon: Settings, href: "/employer/settings" },
+        { label: "Billing", icon: CreditCard, href: "/employer/billing" },
       ],
     },
   ],
@@ -126,7 +128,7 @@ export function Sidebar({ collapsed, onToggle }: Props) {
   const subtitle =
     role === "applicant"
       ? (user?.applicantProfile?.jobTitle ?? "Applicant")
-      : (user?.company?.companyName ?? "Employer");
+      : (user?.companies?.companyName ?? "Employer");
 
   const sections = NAVIGATION[role];
   const profileHref = `/${role}/profile`;
@@ -178,7 +180,13 @@ export function Sidebar({ collapsed, onToggle }: Props) {
         title={collapsed ? userName : undefined}
       >
         {avatar ? (
-          <img src={avatar} alt={userName} className={styles["user-avatar"]} />
+          <Image
+            src={avatar}
+            alt={userName}
+            className={styles["user-avatar"]}
+            width={40}
+            height={40}
+          />
         ) : (
           <div className={styles["user-avatar"]}>{toInitials(userName)}</div>
         )}

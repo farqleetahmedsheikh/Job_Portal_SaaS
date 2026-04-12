@@ -97,7 +97,7 @@ export function useApplications() {
               role: a.job?.title ?? "Unknown Role",
               company: a.job?.company?.companyName ?? "Unknown Company",
               logo: toInitials(a.job?.company?.companyName ?? "?"),
-              logoUrl: a.job?.company?.logoUrl,
+              logoUrl: a.job?.company?.logoUrl ?? "",
               location: a.job?.location ?? "—",
               type: toJobType(a.job?.locationType),
               salary: `${a.job?.salaryMin} - ${a.job?.salaryMax}`,

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /** @format */
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { api } from "../lib";

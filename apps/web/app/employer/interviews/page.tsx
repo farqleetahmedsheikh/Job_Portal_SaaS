@@ -27,6 +27,7 @@ import {
 import { ScheduleInterviewModal } from "../../components/ui/ScheduleInterviewModal";
 import { RescheduleModal } from "../../components/ui/RescheduleModal";
 import styles from "../styles/emp-interviews.module.css";
+import Link from "next/link";
 
 const TYPE_ICON: Record<InterviewFormat, React.ReactNode> = {
   video: <Video size={13} />,
@@ -127,22 +128,22 @@ function InterviewCard({
           {/* Actions */}
           <div className={styles.cardActions}>
             {iv.meetLink && iv.status === "upcoming" && (
-              <a
+              <Link
                 href={iv.meetLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`}
               >
                 <Video size={12} /> Join
-              </a>
+              </Link>
             )}
             {!iv.meetLink && iv.status === "upcoming" && (
-              <a
+              <Link
                 href={`/employer/interviews/${iv.id}/room`}
                 className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`}
               >
                 <Video size={12} /> Join room
-              </a>
+              </Link>
             )}
             <button
               className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm}`}

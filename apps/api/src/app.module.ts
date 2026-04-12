@@ -3,7 +3,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
-
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/user.module';
 import { ResumesModule } from './modules/resumes/resumes.module';
@@ -22,6 +21,7 @@ import appConfig from './config/app.config';
 import mailConfig from './config/mail.config';
 import redisConfig from './config/redis.config';
 import { InterviewsModule } from './modules/interviews/interviews.module';
+import { BillingModule } from './modules/billing/billing.module';
 
 @Module({
   imports: [
@@ -91,6 +91,7 @@ import { InterviewsModule } from './modules/interviews/interviews.module';
     CodingTestsModule,
     CompaniesModule,
     CloudinaryModule,
+    BillingModule,
   ],
 
   providers: [

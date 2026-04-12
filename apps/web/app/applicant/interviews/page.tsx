@@ -210,7 +210,7 @@ function InterviewCard({ interview }: { interview: Interview }) {
             {/* Actions */}
             <div className={styles["card-actions"]}>
               {isUpcoming && interview.meetLink && (
-                <a
+                <Link
                   href={interview.meetLink}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -218,7 +218,7 @@ function InterviewCard({ interview }: { interview: Interview }) {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Video size={13} /> Join Meeting <ExternalLink size={11} />
-                </a>
+                </Link>
               )}
               {isUpcoming && (
                 <button
@@ -337,14 +337,14 @@ export default function InterviewsPage() {
             </p>
           </div>
           {todayList[0].meetLink && (
-            <a
+            <Link
               href={todayList[0].meetLink}
               target="_blank"
               rel="noopener noreferrer"
               className={`${styles.btn} ${styles["btn-primary"]} ${styles["btn-sm"]}`}
             >
               <Video size={12} /> Join Now
-            </a>
+            </Link>
           )}
         </div>
       )}

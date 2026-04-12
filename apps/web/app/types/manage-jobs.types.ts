@@ -14,6 +14,7 @@ export interface Job {
   applicants: number;
   viewsCount: number;
   newApps: number;
+  isFeatured: boolean;
 }
 
 export const STATUS_META: Record<JobStatus, { label: string; cls: string }> = {

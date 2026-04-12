@@ -4,6 +4,7 @@
 import type { FieldConfig } from "../../config/profile.config";
 import { EmailVerifiedBadge } from "./EmailVerifyBadge";
 import styles from "../../applicant/styles/profile.module.css";
+import Link from "next/link";
 
 interface Props {
   config: FieldConfig;
@@ -84,7 +85,7 @@ export function ProfileField({
           ) : name === "experienceYears" && value ? (
             `${value} year${value === "1" ? "" : "s"}`
           ) : type === "url" && value ? (
-            <a
+            <Link
               href={value}
               target="_blank"
               rel="noopener noreferrer"
@@ -92,7 +93,7 @@ export function ProfileField({
               onClick={(e) => e.stopPropagation()}
             >
               {value.replace(/^https?:\/\//, "")}
-            </a>
+            </Link>
           ) : (
             value || "Not set"
           )}

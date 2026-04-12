@@ -11,7 +11,7 @@ import {
   OneToMany,
   JoinColumn,
 } from 'typeorm';
-import { CompanySize } from '../../../common/enums/enums';
+import { CompanySize, VerificationStatus } from '../../../common/enums/enums';
 import { User } from '../../users/entities/user.entity';
 import { CompanyPerk } from './company-perk.entity';
 import { Job } from 'src/modules/jobs/entities/job.entity';
@@ -75,11 +75,20 @@ export class Company {
   @Column({ name: 'instagram_url', type: 'text', nullable: true })
   instagramUrl?: string;
 
+  @Column({ name: 'is_active', default: true })
+  isActive!: boolean;
+
+  // ── Verification ───────────────────────────────────────
   @Column({ name: 'is_verified', default: false })
   isVerified!: boolean;
 
-  @Column({ name: 'is_active', default: true })
-  isActive!: boolean;
+  @Column({
+    name: 'verification_status',
+    type: 'enum',
+    enum: VerificationStatus,
+    default: VerificationStatus.UNVERIFIED,
+  })
+  verificationStatus!: VerificationStatus;
 
   // Cached counters — updated by DB triggers, never write manually
   @Column({ name: 'active_jobs_count', default: 0 })

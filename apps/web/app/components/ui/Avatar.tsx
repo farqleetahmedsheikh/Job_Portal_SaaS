@@ -30,7 +30,7 @@ export const Avatar = ({ name, src, size = 40 }: AvatarProps) => {
       }}
     >
       {src ? (
-        <img
+        <Image
           src={src}
           alt={name}
           width={size}
