@@ -7,12 +7,15 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Conversation } from './conversation.entity';
 
 // ─── Drop in: src/modules/messaging/entities/message.entity.ts ───────────────
 
+@Index(['conversationId', 'isDeleted', 'createdAt'])
+@Index(['senderId', 'conversationId'])
 @Entity('messages')
 export class Message {
   @PrimaryGeneratedColumn('uuid')

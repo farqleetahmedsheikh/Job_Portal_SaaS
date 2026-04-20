@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Injectable,
   NotFoundException,
@@ -45,7 +44,7 @@ export class ApplicationsService {
     }
 
     const now = new Date();
-    const today = new Date(now.toISOString().split('T')[0]);
+    // const today = new Date(now.toISOString().split('T')[0]);
 
     if (job.deadline) {
       const deadline = new Date(job.deadline);
@@ -122,13 +121,11 @@ export class ApplicationsService {
     userId: string,
     dto: UpdateApplicationStatusDto,
   ) {
-    const app = await this.appOrFail(appId);
-
+    const app = await this.verifyEmployerOwnsApp(appId, userId); // ✅ was appOrFail
     return this.ds.transaction(async (m) => {
       const fromStatus = app.status;
       app.status = dto.status;
       await m.save(Application, app);
-
       await m.save(
         ApplicationStatusHistory,
         m.create(ApplicationStatusHistory, {
@@ -139,7 +136,6 @@ export class ApplicationsService {
           note: dto.note,
         }),
       );
-
       return app;
     });
   }
@@ -221,15 +217,21 @@ export class ApplicationsService {
   }
 
   // ── Employer: Toggle star ───────────────────────────────────────────────────
-  async toggleStar(appId: string) {
-    const app = await this.appOrFail(appId);
+  async toggleStar(appId: string, employerId: string) {
+    // ✅ add employerId param
+    const app = await this.verifyEmployerOwnsApp(appId, employerId);
     app.isStarred = !app.isStarred;
     return this.appRepo.save(app);
   }
 
   // ── Employer: Internal notes ────────────────────────────────────────────────
-  async updateNotes(appId: string, dto: UpdateEmployerNotesDto) {
-    const app = await this.appOrFail(appId);
+  async updateNotes(
+    appId: string,
+    employerId: string,
+    dto: UpdateEmployerNotesDto,
+  ) {
+    // ✅
+    const app = await this.verifyEmployerOwnsApp(appId, employerId);
     app.employerNotes = dto.notes;
     return this.appRepo.save(app);
   }
@@ -266,6 +268,23 @@ export class ApplicationsService {
   private async appOrFail(appId: string): Promise<Application> {
     const app = await this.appRepo.findOneBy({ id: appId });
     if (!app) throw new NotFoundException('Application not found');
+    return app;
+  }
+
+  private async verifyEmployerOwnsApp(
+    appId: string,
+    employerId: string,
+  ): Promise<Application> {
+    const app = await this.appRepo.findOne({
+      where: { id: appId },
+      relations: ['job', 'job.company'],
+    });
+    if (!app) throw new NotFoundException('Application not found');
+    if (app.job?.company?.ownerId !== employerId) {
+      throw new ForbiddenException(
+        'You do not have access to this application',
+      );
+    }
     return app;
   }
 }

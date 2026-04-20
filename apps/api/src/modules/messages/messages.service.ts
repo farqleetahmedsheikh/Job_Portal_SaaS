@@ -41,13 +41,15 @@ export class MessagingService {
     );
 
     if (existing.length) {
-      await this.sendMessage(existing[0].id, userId, {
-        text: dto.firstMessage,
-      });
+      // ✅ Only send if there's an actual message — no more blank messages on re-open
+      if (dto.firstMessage?.trim()) {
+        await this.sendMessage(existing[0].id, userId, {
+          text: dto.firstMessage,
+        });
+      }
       return this.findOne(existing[0].id, userId);
     }
 
-    // ── Create — return convId from transaction, call findOne AFTER it commits ──
     const convId = await this.ds.transaction(async (m) => {
       const conv = m.create(Conversation, { jobId: dto.jobId ?? null });
       await m.save(Conversation, conv);
@@ -60,19 +62,22 @@ export class MessagingService {
         }),
       ]);
 
-      await m.save(
-        Message,
-        m.create(Message, {
-          conversationId: conv.id,
-          senderId: userId,
-          text: dto.firstMessage,
-        }),
-      );
+      // ✅ Only save first message if it has content
+      if (dto.firstMessage?.trim()) {
+        await m.save(
+          Message,
+          m.create(Message, {
+            conversationId: conv.id,
+            senderId: userId,
+            text: dto.firstMessage.trim(),
+          }),
+        );
+      }
 
-      return conv.id; // ← just return the id, don't call findOne inside
+      return conv.id;
     });
 
-    return this.findOne(convId, userId); // ← called AFTER transaction commits
+    return this.findOne(convId, userId);
   }
 
   // ── Inbox ───────────────────────────────────────────────────────────────────

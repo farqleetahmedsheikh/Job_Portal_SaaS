@@ -8,8 +8,8 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
-@Entity('daily_apply_limits')
 @Index(['userId', 'date'], { unique: true })
+@Entity('daily_apply_limits')
 export class DailyApplyLimit {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

@@ -12,8 +12,8 @@ import {
 import { NotifType } from '../../../common/enums/enums';
 import { User } from '../../users/entities/user.entity';
 
-@Entity('notifications')
 @Index(['userId', 'isRead', 'createdAt']) // fast inbox query
+@Entity('notifications')
 export class Notification {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

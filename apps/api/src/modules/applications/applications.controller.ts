@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/require-await */
 import {
   Controller,
   Get,
@@ -21,11 +22,15 @@ import { ApplicationsService } from './applications.service';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { BulkStatusUpdateDto } from './dto/bulk-status-update.dto';
+import { AiMatcherService } from './ai-matcher.service';
 
 @Controller('applications')
 @UseGuards(JwtAuthGuard)
 export class ApplicationsController {
-  constructor(private readonly svc: ApplicationsService) {}
+  constructor(
+    private readonly svc: ApplicationsService,
+    private readonly matcher: AiMatcherService,
+  ) {}
 
   // ── Applicant ───────────────────────────────────────────────────────────────
 
@@ -114,18 +119,22 @@ export class ApplicationsController {
   @Patch(':id/star')
   @Roles(UserRole.EMPLOYER)
   @UseGuards(RolesGuard)
-  toggleStar(@Param('id', ParseUUIDPipe) id: string) {
-    return this.svc.toggleStar(id);
+  toggleStar(
+    @Param('id', ParseUUIDPipe) id: string,
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+  ) {
+    return this.svc.toggleStar(id, user.sub);
   }
 
   @Patch(':id/notes')
   @Roles(UserRole.EMPLOYER)
   @UseGuards(RolesGuard)
   updateNotes(
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateEmployerNotesDto,
   ) {
-    return this.svc.updateNotes(id, dto);
+    return this.svc.updateNotes(id, user.sub, dto);
   }
 
   @Post(':id/view')
@@ -134,6 +143,37 @@ export class ApplicationsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   markViewed(@Param('id', ParseUUIDPipe) id: string) {
     return this.svc.markViewed(id);
+  }
+
+  // POST /api/applications/:id/score  — score one application
+  @Post(':id/score')
+  @Roles(UserRole.EMPLOYER)
+  @UseGuards(RolesGuard)
+  async scoreOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+  ) {
+    const score = await this.matcher.scoreApplication(id, user.sub);
+    return { score };
+  }
+
+  // POST /api/applications/score-job/:jobId  — score all for a job
+  @Post('score-job/:jobId')
+  @Roles(UserRole.EMPLOYER)
+  @UseGuards(RolesGuard)
+  @HttpCode(HttpStatus.ACCEPTED)
+  async scoreJob(
+    @Param('jobId', ParseUUIDPipe) jobId: string,
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+  ) {
+    // ✅ Fire and forget — don't await, don't block the response
+    this.matcher.scoreAllForJob(jobId, user.sub).catch((err) => {
+      // Log but don't surface to user — they already got 202
+      console.error('Background scoring failed:', err);
+    });
+    return {
+      message: 'Scoring started. Results will appear as they complete.',
+    };
   }
 
   // ── Shared (last — catches any :id) ─────────────────────────────────────────

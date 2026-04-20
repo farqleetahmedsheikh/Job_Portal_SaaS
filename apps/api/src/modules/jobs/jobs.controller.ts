@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Controller,
   Get,
@@ -64,14 +62,20 @@ export class JobsController {
 
   // GET /api/jobs?q=&location=&type=&page=
   @Get()
-  browse(@Query() query: QueryJobsDto) {
-    return this.jobsService.findAll(query);
+  browse(
+    @Query() query: QueryJobsDto,
+    @currentUserDecorator.CurrentUser() user?: currentUserDecorator.JwtPayload,
+  ) {
+    return this.jobsService.findAll(query, user?.sub);
   }
 
   // GET /api/jobs/:id
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.jobsService.findOne(id);
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @currentUserDecorator.CurrentUser() user?: currentUserDecorator.JwtPayload,
+  ) {
+    return this.jobsService.findOne(id, user?.sub);
   }
 
   // ── Employer ────────────────────────────────────────────────────────────────
@@ -168,5 +172,27 @@ export class JobsController {
     @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
   ) {
     return this.jobsService.unsaveJob(user.sub, id);
+  }
+
+  // GET /api/jobs/:id/detail  — employer job detail + pipeline summary
+  @Get(':id/detail')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.EMPLOYER)
+  getDetail(
+    @Param('id', ParseUUIDPipe) id: string,
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+  ) {
+    return this.jobsService.getEmployerJobDetail(id, user.sub);
+  }
+
+  // GET /api/jobs/:id/analytics  — gated by plan tier
+  @Get(':id/analytics')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.EMPLOYER)
+  getAnalytics(
+    @Param('id', ParseUUIDPipe) id: string,
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+  ) {
+    return this.jobsService.getJobAnalytics(id, user.sub);
   }
 }

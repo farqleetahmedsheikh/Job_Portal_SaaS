@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/** @format */
-
 import {
   IsString,
   IsEnum,
@@ -9,6 +6,7 @@ import {
   IsArray,
   Min,
   Max,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
@@ -69,4 +67,8 @@ export class QueryJobsDto {
   @IsOptional()
   @IsString()
   sort?: 'newest' | 'salary' | 'relevance';
+
+  @IsOptional()
+  @IsBoolean()
+  matched?: boolean;
 }

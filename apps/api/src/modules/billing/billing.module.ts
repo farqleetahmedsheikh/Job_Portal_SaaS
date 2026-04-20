@@ -14,6 +14,8 @@ import { BillingController } from './billing.controller';
 import { SubscriptionsService } from './subscriptions.service';
 import { LimitsService } from './limits.service';
 import { VerificationService } from './verification.service';
+import { Interview } from '../interviews/entities/interview.entity';
+import { BillingCron } from './billing.cron';
 
 @Global() // LimitsService needed everywhere
 @Module({
@@ -26,6 +28,7 @@ import { VerificationService } from './verification.service';
       VerificationDoc,
       Job,
       Company,
+      Interview,
     ]),
   ],
   controllers: [BillingController],
@@ -34,6 +37,7 @@ import { VerificationService } from './verification.service';
     SubscriptionsService,
     LimitsService,
     VerificationService,
+    BillingCron,
   ],
   exports: [
     LimitsService,

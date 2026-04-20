@@ -17,10 +17,8 @@ import { Job } from '../../jobs/entities/job.entity';
 import { Resume } from '../../resumes/entities/resume.entity';
 import { ApplicationStatusHistory } from './application-status-history.entity';
 
-// ─── Drop in: src/modules/applications/entities/application.entity.ts ────────
-
+@Index(['jobId', 'status', 'appliedAt'])
 @Entity('applications')
-@Index(['jobId', 'applicantId'], { unique: true }) // one application per job per user
 export class Application {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -84,6 +82,16 @@ export class Application {
   @ManyToOne(() => Resume, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'resume_id' })
   resume?: Resume | null;
+
+  @Column({
+    name: 'match_score',
+    type: 'numeric',
+    precision: 5,
+    scale: 2,
+    nullable: true,
+    default: null,
+  })
+  matchScore?: number | null;
 
   @OneToMany(() => ApplicationStatusHistory, (h) => h.application, {
     cascade: true,

@@ -81,6 +81,7 @@ export class UsersService {
       .addSelect('user.passwordHash')
       .where('user.email = :email', { email: email.toLowerCase().trim() })
       .andWhere('user.deletedAt IS NULL')
+      .andWhere('user.isActive = TRUE')
       .getOne();
   }
 

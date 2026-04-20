@@ -7,6 +7,8 @@ import { Company } from '../companies/entities/company.entity';
 import { Application } from '../applications/entities/application.entity';
 import { InterviewsController } from './interviews.controller';
 import { InterviewGateway } from './interview.gateway';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -18,7 +20,7 @@ import { InterviewGateway } from './interview.gateway';
     ]),
   ],
   controllers: [InterviewsController],
-  providers: [InterviewsService, InterviewGateway],
+  providers: [InterviewsService, InterviewGateway, JwtService, ConfigService],
   exports: [InterviewsService],
 })
 export class InterviewsModule {}

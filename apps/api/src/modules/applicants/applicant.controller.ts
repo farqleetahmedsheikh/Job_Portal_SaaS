@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import {
   Body,
   Controller,
@@ -7,7 +5,6 @@ import {
   Param,
   Patch,
   Query,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import { UserRole } from 'src/common/enums/user-role.enum';
@@ -19,6 +16,8 @@ import { SearchApplicantsDto } from './dto/search-applicant.dto';
 import { UpdateEducationsDto } from './dto/update-education.dto';
 import { UpdateExperiencesDto } from './dto/update-experience.dto';
 import { UpdateApplicantProfileDto } from './dto/update-profile.dto';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import * as authService from '../auth/auth.service';
 
 @Controller('applicants')
 @UseGuards(JwtAuthGuard)
@@ -39,48 +38,57 @@ export class ApplicantsController {
   @Get('me')
   @UseGuards(RolesGuard)
   @Roles(UserRole.APPLICANT)
-  getMyProfile(@Req() req: any) {
-    return this.service.getMyProfile(req.user.userId);
+  getMyProfile(@CurrentUser() user: authService.JwtPayload) {
+    return this.service.getMyProfile(user.sub);
   }
 
   // PATCH /api/applicants/me
   @Patch('me')
   @UseGuards(RolesGuard)
   @Roles(UserRole.APPLICANT)
-  updateProfile(@Req() req: any, @Body() dto: UpdateApplicantProfileDto) {
-    return this.service.updateProfile(req.user.userId, dto);
+  updateProfile(
+    @CurrentUser() user: authService.JwtPayload,
+    @Body() dto: UpdateApplicantProfileDto,
+  ) {
+    return this.service.updateProfile(user.sub, dto);
   }
 
   // PATCH /api/applicants/me/educations
   @Patch('me/educations')
   @UseGuards(RolesGuard)
   @Roles(UserRole.APPLICANT)
-  updateEducations(@Req() req: any, @Body() dto: UpdateEducationsDto) {
-    return this.service.updateEducations(req.user.userId, dto);
+  updateEducations(
+    @CurrentUser() user: authService.JwtPayload,
+    @Body() dto: UpdateEducationsDto,
+  ) {
+    return this.service.updateEducations(user.sub, dto);
   }
 
   // PATCH /api/applicants/me/experiences
   @Patch('me/experiences')
   @UseGuards(RolesGuard)
   @Roles(UserRole.APPLICANT)
-  updateExperiences(@Req() req: any, @Body() dto: UpdateExperiencesDto) {
-    return this.service.updateExperiences(req.user.userId, dto);
+  updateExperiences(
+    @CurrentUser() user: authService.JwtPayload,
+    @Body() dto: UpdateExperiencesDto,
+  ) {
+    return this.service.updateExperiences(user.sub, dto);
   }
 
   // PATCH /api/applicants/me/open-to-work  — toggle
   @Patch('me/open-to-work')
   @UseGuards(RolesGuard)
   @Roles(UserRole.APPLICANT)
-  toggleOpenToWork(@Req() req: any) {
-    return this.service.toggleOpenToWork(req.user.userId);
+  toggleOpenToWork(@CurrentUser() user: authService.JwtPayload) {
+    return this.service.toggleOpenToWork(user.sub);
   }
 
   // PATCH /api/applicants/me/visibility  — toggle public/private
   @Patch('me/visibility')
   @UseGuards(RolesGuard)
   @Roles(UserRole.APPLICANT)
-  togglePublic(@Req() req: any) {
-    return this.service.togglePublic(req.user.userId);
+  togglePublic(@CurrentUser() user: authService.JwtPayload) {
+    return this.service.togglePublic(user.sub);
   }
 
   // ── Public / Employer: view someone's profile ──────────────────────────────

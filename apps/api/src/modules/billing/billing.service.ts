@@ -78,6 +78,7 @@ export class BillingService {
   // ── Safepay webhook handler ───────────────────────────────────────────────
   async handleSafepayWebhook(body: any, signature: string): Promise<void> {
     this.verifySafepaySignature(body, signature);
+    if (!signature) throw new BadRequestException('Missing webhook signature');
 
     switch (body.type) {
       case 'payment.success':

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Injectable,
   BadRequestException,
@@ -6,7 +8,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 import { DailyApplyLimit } from './entities/daily-apply-limit.entity';
 import { Subscription } from './entities/subscription.entity';
@@ -36,6 +38,7 @@ export class LimitsService {
     @InjectRepository(Company)
     private readonly companyRepo: Repository<Company>,
     private readonly subscriptions: SubscriptionsService,
+    private readonly ds: DataSource,
   ) {}
 
   // ── Get active plan limits ────────────────────────────────────────────────
@@ -50,36 +53,49 @@ export class LimitsService {
   async checkAndIncrementApplyLimit(userId: string): Promise<void> {
     const today = new Date().toISOString().split('T')[0];
 
-    const record = await this.applyLimitRepo.findOne({
-      where: { userId, date: today },
-    });
+    // ✅ Single atomic upsert — no read-check-write gap
+    const result = await this.ds.query(
+      `INSERT INTO daily_apply_limits (user_id, date, count)
+     VALUES ($1, $2, 1)
+     ON CONFLICT (user_id, date)
+     DO UPDATE SET count = daily_apply_limits.count + 1
+     RETURNING count`,
+      [userId, today],
+    );
 
-    if (record && record.count >= 20) {
+    const count: number = result[0]?.count ?? 1;
+    if (count > 20) {
+      // Rollback the increment we just did
+      await this.ds.query(
+        `UPDATE daily_apply_limits SET count = 20 WHERE user_id = $1 AND date = $2`,
+        [userId, today],
+      );
       throw new BadRequestException(
         'You have reached the daily application limit (20/day). Try again tomorrow.',
       );
     }
-
-    await this.applyLimitRepo.upsert(
-      { userId, date: today, count: (record?.count ?? 0) + 1 },
-      ['userId', 'date'],
-    );
   }
 
   // ── Employer: consume one job post slot ──────────────────────────────────
+  // Need to be confirmed is this code is correct or not
   async consumeJobPostSlot(userId: string): Promise<void> {
     const sub = await this.subscriptions.getOrCreate(userId);
 
-    if (sub.jobPostsRemaining <= 0) {
-      const plan = sub.plan;
-      const limit = PLAN_LIMITS[plan].jobPostsPerMonth;
+    // ✅ Atomic conditional decrement — prevents race condition
+    const result = await this.subRepo
+      .createQueryBuilder()
+      .update(Subscription)
+      .set({ jobPostsRemaining: () => '"job_posts_remaining" - 1' })
+      .where('id = :id AND job_posts_remaining > 0', { id: sub.id })
+      .execute();
+
+    if (result.affected === 0) {
+      const limit = PLAN_LIMITS[sub.plan].jobPostsPerMonth;
       throw new BadRequestException(
         `You've used all ${limit} job posts for this month. ` +
           `Upgrade your plan or purchase an extra post add-on.`,
       );
     }
-
-    await this.subRepo.decrement({ id: sub.id }, 'jobPostsRemaining', 1);
   }
 
   // ── Get applicant cap for new job ─────────────────────────────────────────

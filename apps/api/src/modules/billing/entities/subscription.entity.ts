@@ -15,8 +15,8 @@ import {
 } from '../../../common/enums/enums';
 import { User } from '../../users/entities/user.entity';
 
+@Index(['userId', 'status'])
 @Entity('subscriptions')
-@Index(['userId'], { unique: true })
 export class Subscription {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

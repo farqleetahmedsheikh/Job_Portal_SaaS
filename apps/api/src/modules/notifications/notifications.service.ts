@@ -1,11 +1,15 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  forwardRef,
+  Inject,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification } from './entities/notification.entity';
-// import { MailService } from '../mail/mail.service';
 import { NotifType } from '../../common/enums/enums';
+import { NotificationsGateway } from './notifications.gateway'; // ✅ new
 
 export interface CreateNotifPayload {
   recipientId: string;
@@ -13,9 +17,9 @@ export interface CreateNotifPayload {
   type: NotifType;
   title: string;
   body: string;
-  refId?: string; // uuid of the related entity — persisted
-  refType?: string; // 'application' | 'interview' | 'job' | 'message' — persisted
-  meta?: Record<string, any>; // email template data only — never persisted
+  refId?: string;
+  refType?: string;
+  meta?: Record<string, any>;
 }
 
 @Injectable()
@@ -25,13 +29,13 @@ export class NotificationsService {
   constructor(
     @InjectRepository(Notification)
     private readonly repo: Repository<Notification>,
-    // private readonly mail: MailService,
+    // ✅ forwardRef avoids circular dependency
+    @Inject(forwardRef(() => NotificationsGateway))
+    private readonly gateway: NotificationsGateway,
   ) {}
 
-  // ── Single entry point ─────────────────────────────────────────────────────
-
   async notify(payload: CreateNotifPayload): Promise<void> {
-    await this.repo.save(
+    const saved = await this.repo.save(
       this.repo.create({
         userId: payload.recipientId,
         type: payload.type,
@@ -39,15 +43,23 @@ export class NotificationsService {
         body: payload.body,
         refId: payload.refId,
         refType: payload.refType,
-        // meta is intentionally not persisted
       }),
     );
 
-    // await this.sendEmailIfNeeded(payload);
+    // ✅ Push real-time to the user if they're connected
+    this.gateway.emitToUser(payload.recipientId, {
+      id: saved.id,
+      type: saved.type,
+      title: saved.title,
+      body: saved.body,
+      refId: saved.refId,
+      refType: saved.refType,
+      read: false,
+      createdAt: saved.createdAt,
+    });
   }
 
-  // ── Queries ────────────────────────────────────────────────────────────────
-
+  // rest of methods unchanged...
   findAll(userId: string, unreadOnly: boolean): Promise<Notification[]> {
     return this.repo.find({
       where: { userId, ...(unreadOnly ? { isRead: false } : {}) },
@@ -59,8 +71,6 @@ export class NotificationsService {
     const count = await this.repo.count({ where: { userId, isRead: false } });
     return { count };
   }
-
-  // ── Mutations ──────────────────────────────────────────────────────────────
 
   async markRead(id: string, userId: string): Promise<void> {
     const notif = await this.repo.findOne({ where: { id, userId } });

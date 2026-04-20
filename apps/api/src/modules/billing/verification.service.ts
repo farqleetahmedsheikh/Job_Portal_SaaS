@@ -2,7 +2,6 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -57,7 +56,9 @@ export class VerificationService {
     await this.subRepo.update(
       { userId },
       {
-        verificationStatus: VerificationStatus.PENDING,
+        verificationStatus: hasVerification
+          ? VerificationStatus.VERIFIED
+          : VerificationStatus.PENDING,
       },
     );
 

@@ -59,7 +59,7 @@ export class ApplicantsService {
     for (const key of Object.keys(data) as (keyof UpsertApplicantData)[]) {
       const value = data[key];
       if (value !== undefined) {
-        (profile as any)[key] = value;
+        Object.assign(profile, { [key]: value });
       }
     }
 

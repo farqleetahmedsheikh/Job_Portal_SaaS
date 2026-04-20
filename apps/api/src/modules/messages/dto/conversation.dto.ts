@@ -16,6 +16,7 @@ export class CreateConversationDto {
 
   @IsString()
   @MinLength(1)
+  @IsOptional()
   @MaxLength(4000)
-  firstMessage!: string; // send first message atomically with conversation creation
+  firstMessage?: string; // send first message atomically with conversation creation
 }

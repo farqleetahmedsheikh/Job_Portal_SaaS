@@ -8,6 +8,7 @@ import {
   Headers,
   HttpCode,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard, Roles } from '../../common/guards/role.guard';
@@ -102,6 +103,10 @@ export class BillingController {
     @Body() body: any,
     @Headers('x-safepay-signature') signature: string,
   ) {
+    // ✅ Reject immediately with 400 not 500
+    if (!signature) {
+      throw new BadRequestException('Missing webhook signature');
+    }
     return this.billing.handleSafepayWebhook(body, signature);
   }
 }

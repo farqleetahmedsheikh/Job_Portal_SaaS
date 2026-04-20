@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -21,6 +22,8 @@ import { UpdateJobDto } from './dto/update-job.dto';
 import { QueryJobsDto } from './dto/query-job.dto';
 import { ChangeJobStatusDto } from './dto/change-job-status.dto';
 import { LimitsService } from '../billing/limits.service'; // ← new
+import { ApplicantProfile } from '../applicants/entities/applicant-profile.entity';
+import { AnalyticsTier } from '../../common/enums/enums';
 
 @Injectable()
 export class JobsService {
@@ -34,6 +37,8 @@ export class JobsService {
     private readonly companyRepo: Repository<Company>,
     private readonly dataSource: DataSource,
     private readonly limitsService: LimitsService, // ← new
+    @InjectRepository(ApplicantProfile)
+    private readonly profileRepo: Repository<ApplicantProfile>,
   ) {}
 
   // ── Employer: Create ────────────────────────────────────────────────────────
@@ -156,7 +161,7 @@ export class JobsService {
   }
 
   // ── Public: Browse with filters ─────────────────────────────────────────────
-  async findAll(query: QueryJobsDto) {
+  async findAll(query: QueryJobsDto, userId?: string) {
     const {
       q,
       location,
@@ -169,10 +174,21 @@ export class JobsService {
       page = 1,
       limit = 20,
       sort = 'newest',
+      matched = false,
     } = query;
 
     const now = new Date();
     const today = now.toISOString().split('T')[0];
+
+    // Fetch applicant skills if matched feed requested
+    let applicantSkills: string[] = [];
+    if (matched && userId) {
+      const profile = await this.profileRepo.findOne({
+        where: { userId },
+        select: ['skills'],
+      });
+      applicantSkills = profile?.skills ?? [];
+    }
 
     const qb = this.jobRepo
       .createQueryBuilder('j')
@@ -183,7 +199,7 @@ export class JobsService {
       .andWhere('(j.expires_at IS NULL OR j.expires_at > :now)', { now });
 
     if (q)
-      qb.andWhere('(j.title ILIKE :q OR j.skills::text ILIKE :q)', {
+      qb.andWhere('(j.title ILIKE :q OR j.description ILIKE :q)', {
         q: `%${q}%`,
       });
     if (location)
@@ -197,8 +213,22 @@ export class JobsService {
     if (companyId) qb.andWhere('j.company_id = :companyId', { companyId });
     if (skills?.length) qb.andWhere('j.skills @> :skills', { skills });
 
-    // ── Featured jobs always float to top ────────────────────────────────────
-    qb.addOrderBy('j.isFeatured', 'DESC'); // ← new
+    // ── Skill match scoring ─────────────────────────────────────────────────
+    if (applicantSkills.length > 0) {
+      // Add a computed match_score: count of overlapping skills
+      qb.addSelect(
+        `(SELECT COUNT(*) FROM unnest(j.skills) s WHERE s = ANY(:applicantSkills))`,
+        'match_score',
+      ).setParameter('applicantSkills', applicantSkills);
+
+      qb.addOrderBy(
+        `(SELECT COUNT(*) FROM unnest(j.skills) s WHERE s = ANY(:applicantSkills))`,
+        'DESC',
+      );
+    }
+
+    // Featured always floats to top within same match tier
+    qb.addOrderBy('j.isFeatured', 'DESC');
 
     if (sort === 'salary') qb.addOrderBy('j.salaryMax', 'DESC', 'NULLS LAST');
     else if (sort === 'relevance') qb.addOrderBy('j.applicantsCount', 'ASC');
@@ -211,37 +241,54 @@ export class JobsService {
 
     return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
-
   // ── Public: Single job ──────────────────────────────────────────────────────
-  async findOne(jobId: string): Promise<Job> {
+  async findOne(jobId: string, viewerId?: string): Promise<Job> {
     const job = await this.jobRepo.findOne({
       where: { id: jobId },
       relations: ['company', 'company.perks'],
     });
     if (!job) throw new NotFoundException('Job not found');
-    await this.jobRepo.increment({ id: jobId }, 'viewsCount', 1);
+
+    // ✅ Only increment if viewer is not the job owner
+    if (!viewerId || job.postedById !== viewerId) {
+      await this.jobRepo.increment({ id: jobId }, 'viewsCount', 1);
+    }
     return job;
   }
 
-  // ── Employer: Applicant pipeline for one job ────────────────────────────────
   async getApplicants(jobId: string, userId: string) {
-    await this.findOwnedOrFail(jobId, userId);
+    const job = await this.findOwnedOrFail(jobId, userId); // ✅ no view increment
 
-    // ── Enforce viewable limit based on employer's plan ───────────────────────
     const viewLimit =
-      await this.limitsService.getViewableApplicantLimit(userId); // ← new
+      await this.limitsService.getViewableApplicantLimit(userId);
 
-    return this.dataSource
+    const applicants = await this.dataSource
       .getRepository(Application)
       .createQueryBuilder('a')
       .innerJoinAndSelect('a.applicant', 'u')
       .leftJoinAndSelect('u.applicantProfile', 'ap')
       .leftJoinAndSelect('a.resume', 'r')
       .leftJoinAndSelect('a.statusHistory', 'sh')
-      .where('a.job_id = :jobId', { jobId })
-      .orderBy('a.applied_at', 'DESC')
-      .take(viewLimit) // ← new
+      .where('a.jobId = :jobId', { jobId })
+      .orderBy('a.appliedAt', 'DESC')
+      .take(viewLimit)
       .getMany();
+
+    // ✅ Return job info alongside applicants — frontend needs no second call
+    return {
+      job: {
+        id: job.id,
+        title: job.title,
+        status: job.status,
+        location: job.location,
+        type: job.type,
+        applicantCount: job.applicantCount,
+        applicantCap: job.applicantCap,
+      },
+      applicants,
+      total: applicants.length,
+      viewLimit,
+    };
   }
 
   // ── Employer: All jobs for my company ───────────────────────────────────────
@@ -302,5 +349,142 @@ export class JobsService {
     if (job.company?.ownerId !== userId)
       throw new ForbiddenException('You do not own this job');
     return job;
+  }
+  // ── Employer: Job analytics (gated by plan) ──────────────────────────────
+  async getJobAnalytics(jobId: string, userId: string) {
+    await this.findOwnedOrFail(jobId, userId);
+
+    const limits = await this.limitsService.getLimits(userId);
+    const tier = limits.analytics;
+
+    if (tier === AnalyticsTier.NONE) {
+      throw new ForbiddenException(
+        'Analytics are not available on your current plan. Upgrade to Starter or above.',
+      );
+    }
+
+    // Base metrics — available on all paid plans
+    const job = await this.jobRepo.findOne({
+      where: { id: jobId },
+      relations: ['company'],
+    });
+
+    const applications = await this.dataSource
+      .getRepository(Application)
+      .createQueryBuilder('a')
+      .select('a.status', 'status')
+      .addSelect('COUNT(*)', 'count')
+      .where('a.job_id = :jobId', { jobId })
+      .groupBy('a.status')
+      .getRawMany();
+
+    const totalApps = applications.reduce((s, r) => s + Number(r.count), 0);
+    const statusBreakdown = Object.fromEntries(
+      applications.map((r) => [r.status, Number(r.count)]),
+    );
+
+    const applyRate = job!.viewsCount
+      ? Math.round((totalApps / job!.viewsCount) * 100 * 10) / 10
+      : 0;
+
+    const base = {
+      jobId,
+      title: job!.title,
+      status: job!.status,
+      viewsCount: job!.viewsCount ?? 0,
+      totalApplications: totalApps,
+      applyRate, // %
+      statusBreakdown,
+      tier,
+    };
+
+    if (tier === AnalyticsTier.BASIC) return base;
+
+    // ADVANCED + ENTERPRISE — time-to-fill, daily views trend, funnel
+    const dailyViews = await this.dataSource
+      .query(
+        `SELECT DATE(created_at) as date, COUNT(*) as views
+     FROM job_views
+     WHERE job_id = $1 AND created_at > NOW() - INTERVAL '30 days'
+     GROUP BY DATE(created_at)
+     ORDER BY date ASC`,
+        [jobId],
+      )
+      .catch(() => []); // graceful if job_views table doesn't exist yet
+
+    const shortlisted = statusBreakdown['shortlisted'] ?? 0;
+    const interviewed = statusBreakdown['interview'] ?? 0;
+    const offered = statusBreakdown['offered'] ?? 0;
+
+    const advanced = {
+      ...base,
+      funnel: [
+        { stage: 'Views', count: job!.viewsCount ?? 0 },
+        { stage: 'Applied', count: totalApps },
+        { stage: 'Shortlisted', count: shortlisted },
+        { stage: 'Interviewed', count: interviewed },
+        { stage: 'Offered', count: offered },
+      ],
+      dailyViews,
+      publishedAt: job!.publishedAt,
+    };
+
+    if (tier === AnalyticsTier.ADVANCED) return advanced;
+
+    // ENTERPRISE — market intel, benchmark data
+    const avgAppsPerJob = await this.dataSource
+      .query(
+        `SELECT AVG(cnt) as avg FROM (
+       SELECT COUNT(*) as cnt FROM applications a
+       JOIN jobs j ON j.id = a.job_id
+       WHERE j.type = $1 AND j.experience_level = $2
+       GROUP BY a.job_id
+     ) sub`,
+        [job!.type, job!.experienceLevel],
+      )
+      .catch(() => [{ avg: null }]);
+
+    return {
+      ...advanced,
+      benchmark: {
+        avgApplicationsForSimilarJobs: Math.round(
+          Number(avgAppsPerJob[0]?.avg ?? 0),
+        ),
+        yourPerformance:
+          totalApps > Number(avgAppsPerJob[0]?.avg ?? 0) ? 'above' : 'below',
+      },
+    };
+  }
+
+  // ── Employer: Full job detail view with pipeline summary ─────────────────
+  async getEmployerJobDetail(jobId: string, userId: string) {
+    const job = await this.findOwnedOrFail(jobId, userId);
+
+    const pipeline = await this.dataSource
+      .getRepository(Application)
+      .createQueryBuilder('a')
+      .select('a.status', 'status')
+      .addSelect('COUNT(*)', 'count')
+      .where('a.jobId = :jobId', { jobId })
+      .groupBy('a.status')
+      .getRawMany();
+
+    const recentApplicants = await this.dataSource
+      .getRepository(Application)
+      .createQueryBuilder('a')
+      .innerJoinAndSelect('a.applicant', 'u')
+      .leftJoinAndSelect('u.applicantProfile', 'ap')
+      .where('a.jobId = :jobId', { jobId })
+      .orderBy('a.appliedAt', 'DESC')
+      .take(5)
+      .getMany();
+
+    return {
+      job,
+      pipelineSummary: Object.fromEntries(
+        pipeline.map((r) => [r.status, Number(r.count)]),
+      ),
+      recentApplicants,
+    };
   }
 }

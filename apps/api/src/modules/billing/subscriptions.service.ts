@@ -100,7 +100,8 @@ export class SubscriptionsService {
         status: SubscriptionStatus.ACTIVE,
         jobPostsRemaining: limits.jobPostsPerMonth,
         featuredSlotsRemaining: 0,
-        gatewaySubscriptionId: undefined,
+        gatewaySubscriptionId: undefined, // ✅ was undefined
+        gatewayCustomerId: undefined, // ✅ also fix this
         cancelledAt: new Date(),
       },
     );

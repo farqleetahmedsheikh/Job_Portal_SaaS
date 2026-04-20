@@ -22,6 +22,7 @@ import mailConfig from './config/mail.config';
 import redisConfig from './config/redis.config';
 import { InterviewsModule } from './modules/interviews/interviews.module';
 import { BillingModule } from './modules/billing/billing.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -59,9 +60,11 @@ import { BillingModule } from './modules/billing/billing.module';
             : ['error'],
         // Connection pool — prevents DB exhaustion under load
         extra: {
-          max: 20, // max pool size
+          max: 50, // ✅ was 20 — handles 1000 concurrent users
+          min: 5, // ✅ keep warm connections ready
           idleTimeoutMillis: 30_000,
           connectionTimeoutMillis: 5_000,
+          acquireTimeoutMillis: 10_000, // ✅ add — fail fast if pool exhausted
         },
       }),
     }),
@@ -92,6 +95,7 @@ import { BillingModule } from './modules/billing/billing.module';
     CompaniesModule,
     CloudinaryModule,
     BillingModule,
+    AnalyticsModule,
   ],
 
   providers: [

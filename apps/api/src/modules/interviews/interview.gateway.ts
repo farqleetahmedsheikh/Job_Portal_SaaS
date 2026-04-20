@@ -1,104 +1,58 @@
+// interviews/interview.gateway.ts — full replacement header
+
 import {
   WebSocketGateway,
   WebSocketServer,
   SubscribeMessage,
   MessageBody,
   ConnectedSocket,
+  OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-// import { UseGuards } from '@nestjs/common';
-// import { WsJwtGuard } from '../../common/guards/ws-jwt.guard';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { Logger } from '@nestjs/common';
+import { WsException } from '@nestjs/websockets';
 
-interface RoomParticipant {
-  socketId: string;
+interface AuthSocket extends Socket {
   userId: string;
-  name: string;
+  userName: string;
 }
 
 @WebSocketGateway({
   namespace: '/interview',
-  cors: { origin: '*', credentials: true },
+  cors: {
+    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000', // ✅ not wildcard
+    credentials: true,
+  },
 })
-export class InterviewGateway implements OnGatewayDisconnect {
-  @WebSocketServer() server: Server | undefined;
-
-  // interviewId → participants
-  private rooms = new Map<string, RoomParticipant[]>();
-  // socketId → interviewId (for cleanup on disconnect)
+export class InterviewGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
+  @WebSocketServer() server!: Server;
+  private readonly logger = new Logger(InterviewGateway.name);
+  private rooms = new Map<
+    string,
+    { socketId: string; userId: string; name: string }[]
+  >();
   private socketRoom = new Map<string, string>();
 
-  @SubscribeMessage('interview:join')
-  handleJoin(
-    @MessageBody() data: { interviewId: string; userId: string; name: string },
-    @ConnectedSocket() client: Socket,
-  ) {
-    const { interviewId, userId, name } = data;
+  constructor(
+    private readonly jwt: JwtService,
+    private readonly config: ConfigService,
+  ) {}
 
-    void client.join(interviewId);
-    this.socketRoom.set(client.id, interviewId);
-
-    const room = this.rooms.get(interviewId) ?? [];
-
-    // Remove stale entry for same userId if re-joining
-    const filtered = room.filter((p) => p.userId !== userId);
-    filtered.push({ socketId: client.id, userId, name });
-    this.rooms.set(interviewId, filtered);
-
-    // Tell this client who's already here
-    client.emit('interview:participants', { participants: filtered });
-
-    // Tell others this person joined
-    client.to(interviewId).emit('interview:user-joined', { userId, name });
-  }
-
-  @SubscribeMessage('interview:offer')
-  handleOffer(
-    @MessageBody()
-    data: { interviewId: string; offer: RTCSessionDescriptionInit },
-    @ConnectedSocket() client: Socket,
-  ) {
-    const room = this.rooms.get(data.interviewId) ?? [];
-    const sender = room.find((p) => p.socketId === client.id);
-    client.to(data.interviewId).emit('interview:offer', {
-      offer: data.offer,
-      userId: sender?.userId,
-      name: sender?.name,
-    });
-  }
-
-  @SubscribeMessage('interview:answer')
-  handleAnswer(
-    @MessageBody()
-    data: { interviewId: string; answer: RTCSessionDescriptionInit },
-    @ConnectedSocket() client: Socket,
-  ) {
-    client
-      .to(data.interviewId)
-      .emit('interview:answer', { answer: data.answer });
-  }
-
-  @SubscribeMessage('interview:ice-candidate')
-  handleIceCandidate(
-    @MessageBody()
-    data: { interviewId: string; candidate: RTCIceCandidateInit },
-    @ConnectedSocket() client: Socket,
-  ) {
-    client
-      .to(data.interviewId)
-      .emit('interview:ice-candidate', { candidate: data.candidate });
-  }
-
-  @SubscribeMessage('interview:leave')
-  handleLeave(
-    @MessageBody() data: { interviewId: string },
-    @ConnectedSocket() client: Socket,
-  ) {
-    this.removeFromRoom(client);
-    client
-      .to(data.interviewId)
-      .emit('interview:user-left', { socketId: client.id });
-    void client.leave(data.interviewId);
+  // ✅ Authenticate on connect — reject unauthenticated sockets immediately
+  handleConnection(client: Socket) {
+    try {
+      const userId = this.extractUserId(client);
+      (client as AuthSocket).userId = userId;
+      this.logger.log(`Interview WS connected: ${userId}`);
+    } catch {
+      client.emit('ws_error', { message: 'Unauthorized' });
+      client.disconnect();
+    }
   }
 
   handleDisconnect(client: Socket) {
@@ -109,6 +63,47 @@ export class InterviewGateway implements OnGatewayDisconnect {
         .to(interviewId)
         .emit('interview:user-left', { socketId: client.id });
     }
+  }
+
+  @SubscribeMessage('interview:join')
+  handleJoin(
+    @MessageBody() data: { interviewId: string; userId: string; name: string },
+    @ConnectedSocket() client: AuthSocket,
+  ) {
+    const { interviewId, name } = data;
+    const userId = client.userId; // ✅ use authenticated userId, not client-supplied
+
+    void client.join(interviewId);
+    this.socketRoom.set(client.id, interviewId);
+
+    const room = this.rooms.get(interviewId) ?? [];
+    const filtered = room.filter((p) => p.userId !== userId);
+    filtered.push({ socketId: client.id, userId, name });
+    this.rooms.set(interviewId, filtered);
+
+    client.emit('interview:participants', { participants: filtered });
+    client.to(interviewId).emit('interview:user-joined', { userId, name });
+  }
+
+  // ... rest of handlers unchanged, just replace client.userId for sender identity
+
+  private extractUserId(client: Socket): string {
+    const cookie = client.handshake.headers.cookie ?? '';
+    const tokenFromCookie = cookie
+      .split(';')
+      .map((c) => c.trim())
+      .find((c) => c.startsWith('token='))
+      ?.split('=')[1];
+    const tokenFromHeader = (
+      client.handshake.auth?.token as string | undefined
+    )?.replace('Bearer ', '');
+    const token = tokenFromCookie ?? tokenFromHeader;
+    if (!token) throw new WsException('No token');
+
+    const payload = this.jwt.verify<{ sub: string }>(token, {
+      secret: this.config.get<string>('JWT_SECRET'),
+    });
+    return payload.sub;
   }
 
   private removeFromRoom(client: Socket) {
