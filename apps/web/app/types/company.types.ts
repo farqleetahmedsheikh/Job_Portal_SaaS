@@ -24,7 +24,7 @@ export interface Company {
   linkedinUrl: string | null;
   twitterUrl: string | null;
   instagramUrl: string | null;
-  isVerified: boolean;
+  verificationStatus: "pending" | "verified" | "rejected" | "unverified";
   perks: string[];
 }
 

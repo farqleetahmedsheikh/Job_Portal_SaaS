@@ -1,7 +1,9 @@
 /** @format */
+
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { io, Socket } from "socket.io-client";
 import { api } from "../lib";
 import { API_BASE } from "../constants";
 
@@ -12,13 +14,19 @@ export interface Notification {
   body: string;
   href: string;
   read: boolean;
-  createdAt: string; // ISO
+  refType?: "application" | "interview" | "job" | "message"; // ← add
+  refId?: string;
+  createdAt: string;
 }
+
+const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:9000";
 
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const socketRef = useRef<Socket | null>(null);
 
+  // ── Initial fetch ──────────────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
     api<Notification[]>(`${API_BASE}/notifications`, "GET")
@@ -29,12 +37,32 @@ export function useNotifications() {
         }
       })
       .catch(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       });
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  // ── WebSocket for real-time ────────────────────────────────────────────────
+  useEffect(() => {
+    const socket = io(`${SOCKET_URL}/notifications`, {
+      withCredentials: true,
+      transports: ["websocket"],
+    });
+
+    socket.on("new_notification", (notif: Notification) => {
+      // Prepend new notification and derive href from refType
+      const withHref = {
+        ...notif,
+        href: resolveHref(notif),
+      };
+      setNotifications((prev) => [withHref, ...prev]);
+    });
+
+    socketRef.current = socket;
+    return () => {
+      socket.disconnect();
     };
   }, []);
 
@@ -53,4 +81,25 @@ export function useNotifications() {
   }, []);
 
   return { notifications, loading, unreadCount, markRead, markAllRead };
+}
+
+// ── Derive link from notification refType ──────────────────────────────────
+function resolveHref(n: {
+  refType?: string;
+  refId?: string;
+  href?: string;
+}): string {
+  if (n.href) return n.href;
+  switch (n.refType) {
+    case "application":
+      return `/applications/${n.refId ?? ""}`;
+    case "interview":
+      return `/interviews/${n.refId ?? ""}`;
+    case "job":
+      return `/jobs/${n.refId ?? ""}`;
+    case "message":
+      return `/messages`;
+    default:
+      return "/notifications";
+  }
 }

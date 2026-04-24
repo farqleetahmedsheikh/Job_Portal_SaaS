@@ -150,6 +150,8 @@ export default function InterviewRoomPage() {
     error,
     duration,
     formatDuration,
+    chatMessages, // ✅ from hook — real WebSocket messages
+    sendChatMessage, // ✅ from hook — sends via WebSocket
     joinCall,
     toggleAudio,
     toggleVideo,
@@ -270,19 +272,32 @@ export default function InterviewRoomPage() {
               ✕
             </button>
           </div>
+
           <div className={styles.chatMessages}>
-            {messages.length === 0 ? (
+            {chatMessages.length === 0 ? ( // ✅ was: messages.length
               <p className={styles.chatEmpty}>No messages yet</p>
             ) : (
-              messages.map((m, i) => (
-                <div key={i} className={styles.chatMsg}>
-                  <span className={styles.chatFrom}>{m.from}</span>
-                  <span className={styles.chatText}>{m.text}</span>
-                  <span className={styles.chatTime}>{m.time}</span>
-                </div>
-              ))
+              chatMessages.map(
+                (
+                  m, // ✅ was: messages.map
+                ) => (
+                  <div key={m.id} className={styles.chatMsg}>
+                    <span className={styles.chatFrom}>{m.senderName}</span>{" "}
+                    {/* ✅ was: m.from */}
+                    <span className={styles.chatText}>{m.message}</span>{" "}
+                    {/* ✅ was: m.text */}
+                    <span className={styles.chatTime}>
+                      {new Date(m.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                ),
+              )
             )}
           </div>
+
           <div className={styles.chatInput}>
             <input
               value={chatMsg}
@@ -290,17 +305,7 @@ export default function InterviewRoomPage() {
               placeholder="Type a message…"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && chatMsg.trim()) {
-                  setMessages((p) => [
-                    ...p,
-                    {
-                      from: user?.fullName ?? "You",
-                      text: chatMsg.trim(),
-                      time: new Date().toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }),
-                    },
-                  ]);
+                  sendChatMessage(chatMsg.trim()); // ✅ was: setMessages(p => [...p, {...}])
                   setChatMsg("");
                 }
               }}

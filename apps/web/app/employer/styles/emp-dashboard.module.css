@@ -1,516 +1,715 @@
 /** @format */
 
+/* ── Page ────────────────────────────────────────────────────────────────────*/
 .page {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 32px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 24px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
 }
 
+/* ── Header ──────────────────────────────────────────────────────────────────*/
 .header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .title {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0 0 4px;
-    letter-spacing: -.4px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+  letter-spacing: -0.4px;
 }
 
 .subtitle {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
 }
 
 .headerActions {
-    display: flex;
-    gap: 10px;
-    align-items: center;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
 }
 
-.alertDot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--status-danger);
-}
-
-/* Stat cards */
+/* ── Stat cards ──────────────────────────────────────────────────────────────*/
 .statsGrid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
 }
 
 .statCard {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.statCard:hover {
+  border-color: rgba(var(--glow-rgb), 0.2);
+  box-shadow: var(--shadow-md);
+}
+
+/* Accent bar — colour injected per-card via --card-accent CSS custom property */
+.statCard::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--card-accent, rgba(var(--glow-rgb), 0.3));
 }
 
 .statTop {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
 }
 
 .statIcon {
-    width: 38px;
-    height: 38px;
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .statValue {
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--text-primary);
-    margin: 0 0 4px;
-    letter-spacing: -1px;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
 }
 
 .statLabel {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 3px;
 }
 
 .statDelta {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 0;
 }
 
-/* Grid layout */
+/* ── Grid layout ─────────────────────────────────────────────────────────────*/
 .grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
 }
 
 .cardWide {
-    grid-column: 1 / -1;
+  grid-column: 1 / -1;
 }
 
-/* Cards */
+/* ── Card base ───────────────────────────────────────────────────────────────*/
 .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
 }
 
 .cardHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 8px;
 }
 
 .cardTitle {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
 }
 
 .cardLink {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 12px;
-    color: var(--color-secondary);
-    text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  color: var(--status-info);
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: opacity 0.15s;
 }
 
 .cardLink:hover {
-    opacity: .8;
+  opacity: 0.75;
 }
 
-/* Application rows */
+/* ── Empty state ─────────────────────────────────────────────────────────────*/
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ── Error message ───────────────────────────────────────────────────────────*/
+.errorMsg {
+  color: var(--status-danger);
+  font-size: 14px;
+  text-align: center;
+  padding: 48px 24px;
+  /*
+     * No --danger-rgb token exists yet.
+     * Raw values match var(--status-danger): #f43f5e → 244, 63, 94
+     * Add --danger-rgb: 244, 63, 94 to tokens.css to clean these up.
+     */
+  background: rgba(244, 63, 94, 0.05);
+  border: 1px solid rgba(244, 63, 94, 0.15);
+  border-radius: var(--radius);
+}
+
+/* ── Application rows ────────────────────────────────────────────────────────*/
 .appList {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .appRow {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
-    text-decoration: none;
-    transition: background .1s;
-    margin: 0 -20px;
-    padding-left: 20px;
-    padding-right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  transition: background var(--transition);
+  margin: 0 -20px;
 }
 
 .appRow:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .appRow:hover {
-    background: rgba(var(--glow-rgb), .03);
+  background: var(--surface-hover);
 }
 
 .appAvatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, rgba(var(--glow-rgb), .18), rgba(var(--glow-rgb), .05));
-    border: 1px solid rgba(var(--glow-rgb), .2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 800;
-    color: var(--color-secondary);
-    flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--glow-rgb), 0.18),
+    rgba(var(--glow-rgb), 0.05)
+  );
+  border: 1px solid rgba(var(--glow-rgb), 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--status-info);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.appAvatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .appInfo {
-    flex: 1;
-    min-width: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 .appName {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .appRole {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .appRight {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 3px;
-    flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .appTime {
-    font-size: 10px;
-    color: var(--text-muted);
+  font-size: 10px;
+  color: var(--text-muted);
 }
 
-/* Status chips */
+/* ── Status chips ────────────────────────────────────────────────────────────*/
 .statusChip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 99px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
 }
 
 .sNew {
-    background: rgba(99, 102, 241, .1);
-    color: #818cf8;
+  /* glow-rgb (79,70,229) is your indigo — appropriate for "new/unread" */
+  background: rgba(var(--glow-rgb), 0.1);
+  color: var(--text-link);
 }
 
 .sReviewing {
-    background: rgba(234, 179, 8, .1);
-    color: #f59e0b;
+  /*
+     * No --warning-rgb token.
+     * Raw values match var(--status-warning): #f97316 → 249, 115, 22
+     * Add --warning-rgb: 249, 115, 22 to tokens.css to clean this up.
+     */
+  background: rgba(249, 115, 22, 0.1);
+  color: var(--status-warning);
 }
 
 .sInterview {
-    background: rgba(var(--glow-rgb), .12);
-    color: var(--color-secondary);
+  background: rgba(var(--glow-rgb), 0.12);
+  color: var(--status-info);
 }
 
 .sOffered {
-    background: rgba(34, 197, 94, .1);
-    color: var(--status-success);
+  /*
+     * No --success-rgb token.
+     * Raw values match var(--status-success): #34d9b3 → 52, 217, 179
+     * Add --success-rgb: 52, 217, 179 to tokens.css to clean this up.
+     */
+  background: rgba(52, 217, 179, 0.1);
+  color: var(--status-success);
 }
 
 .sRejected {
-    background: rgba(239, 68, 68, .1);
-    color: var(--status-danger);
+  /* same as errorMsg — awaiting --danger-rgb token */
+  background: rgba(244, 63, 94, 0.1);
+  color: var(--status-danger);
 }
 
-/* Interviews */
+/* ── Interviews ──────────────────────────────────────────────────────────────*/
+.ivList {
+  display: flex;
+  flex-direction: column;
+}
+
 .ivRow {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
 }
 
-.ivRow:last-of-type {
-    border-bottom: none;
+.ivRow:last-child {
+  border-bottom: none;
 }
 
 .ivAvatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, rgba(var(--glow-rgb), .18), rgba(var(--glow-rgb), .05));
-    border: 1px solid rgba(var(--glow-rgb), .2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 800;
-    color: var(--color-secondary);
-    flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--glow-rgb), 0.18),
+    rgba(var(--glow-rgb), 0.05)
+  );
+  border: 1px solid rgba(var(--glow-rgb), 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--status-info);
+  flex-shrink: 0;
 }
 
 .ivInfo {
-    flex: 1;
-    min-width: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 .ivName {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ivRole {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 0;
 }
 
 .ivRight {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
-    flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .ivTime {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 11px;
-    color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .ivType {
-    font-size: 10px;
-    font-weight: 600;
-    padding: 2px 7px;
-    border-radius: 99px;
-    background: rgba(var(--glow-rgb), .1);
-    color: var(--color-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  background: rgba(var(--glow-rgb), 0.1);
+  color: var(--status-info);
 }
 
-/* Job table */
+/* ── Inline states for shared components ─────────────────────────────────────*/
+.inlineLoading,
+.inlineEmpty {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 20px 0;
+  text-align: center;
+}
+
+.inlineError {
+  font-size: 12px;
+  color: var(--status-danger);
+  padding: 16px 0;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* ── Job table ───────────────────────────────────────────────────────────────*/
 .jobTable {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .jobTableHead {
-    display: grid;
-    grid-template-columns: 1fr 100px 80px 80px 80px 80px 70px;
-    gap: 8px;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 100px 80px 90px 80px 80px 70px;
+  gap: 8px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--border);
 }
 
 .jobTableHead span {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
 }
 
 .jobTableRow {
-    display: grid;
-    grid-template-columns: 1fr 100px 80px 80px 80px 80px 70px;
-    gap: 8px;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border);
-    align-items: center;
+  display: grid;
+  grid-template-columns: 1fr 100px 80px 90px 80px 80px 70px;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  transition: background var(--transition);
 }
 
 .jobTableRow:last-child {
-    border-bottom: none;
+  border-bottom: none;
+}
+
+.jobTableRow:hover {
+  background: var(--surface-hover);
+  margin: 0 -20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  border-radius: var(--radius-sm);
 }
 
 .jobTitle {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .jobStat {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 12px;
-    color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 .jobMeta {
-    font-size: 12px;
-    color: var(--text-muted);
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .jobDays {
-    font-size: 12px;
-    font-weight: 600;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.jobDaysUrgent {
+  color: var(--status-danger);
+}
+
+.jobDaysNormal {
+  color: var(--text-muted);
 }
 
 .jobStatus {
-    font-size: 11px;
-    font-weight: 700;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .jobActive {
-    color: var(--status-success);
+  color: var(--status-success);
 }
 
 .jobPaused {
-    color: #f59e0b;
+  color: var(--status-warning);
 }
 
-/* Quick actions */
+/* ── Quick actions ───────────────────────────────────────────────────────────*/
 .quickActions {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.quickActionsTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 14px;
 }
 
 .quickAction {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
-    border-radius: var(--radius-sm);
-    text-decoration: none;
-    color: var(--text-secondary);
-    font-size: 13px;
-    font-weight: 500;
-    transition: all .15s;
-    border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all var(--transition);
+  border: 1px solid transparent;
 }
 
 .quickAction:hover {
-    background: rgba(var(--glow-rgb), .05);
-    color: var(--text-primary);
-    border-color: var(--border);
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  border-color: var(--border);
 }
 
 .quickIcon {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    background: rgba(var(--glow-rgb), .08);
-    border: 1px solid rgba(var(--glow-rgb), .15);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-secondary);
-    flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: rgba(var(--glow-rgb), 0.08);
+  border: 1px solid rgba(var(--glow-rgb), 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--status-info);
+  flex-shrink: 0;
+  transition: background var(--transition);
 }
 
-/* Buttons */
+.quickAction:hover .quickIcon {
+  background: rgba(var(--glow-rgb), 0.14);
+}
+
+.quickChevron {
+  margin-left: auto;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform var(--transition);
+}
+
+.quickAction:hover .quickChevron {
+  transform: translateX(2px);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────────*/
 .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    border: none;
-    text-decoration: none;
-    transition: all .15s;
-    white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: all var(--transition);
+  white-space: nowrap;
+  font-family: inherit;
+  line-height: 1;
 }
 
 .btnFull {
-    width: 100%;
-    justify-content: center;
+  width: 100%;
+  justify-content: center;
 }
 
 .btnSm {
-    padding: 5px 10px;
-    font-size: 11px;
+  padding: 5px 10px;
+  font-size: 11px;
 }
 
 .btnPrimary {
-    background: var(--color-secondary);
-    color: #fff;
+  background: var(--status-info);
+  color: #fff;
 }
 
 .btnPrimary:hover {
-    filter: brightness(1.08);
+  /* No pressed-state token — scale brightness relative to the token value */
+  filter: brightness(1.1);
 }
 
 .btnGhost {
-    background: transparent;
-    color: var(--text-secondary);
-    border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
 }
 
 .btnGhost:hover {
-    background: var(--surface-hover);
-    color: var(--text-primary);
+  background: var(--surface-hover);
+  color: var(--text-primary);
 }
 
+/* ── Skeleton ────────────────────────────────────────────────────────────────*/
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--border) 25%,
+    /* cosmetic shimmer highlight — intentionally a fixed white alpha, not a token */
+    rgba(255, 255, 255, 0.04) 50%,
+    var(--border) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────────*/
 @media (max-width: 900px) {
-    .statsGrid {
-        grid-template-columns: repeat(2, 1fr);
-    }
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 
-    .grid {
-        grid-template-columns: 1fr;
-    }
+  .grid {
+    grid-template-columns: 1fr;
+  }
 
-    .cardWide {
-        grid-column: auto;
-    }
+  .cardWide {
+    grid-column: auto;
+  }
 
-    .jobTableHead,
-    .jobTableRow {
-        grid-template-columns: 1fr 80px 60px 60px;
-    }
+  .jobTableHead,
+  .jobTableRow {
+    grid-template-columns: 1fr 80px 70px 70px;
+  }
 
-    .jobTableHead span:nth-child(5),
-    .jobTableHead span:nth-child(6),
-    .jobTableHead span:last-child,
-    .jobTableRow>span:nth-child(5),
-    .jobTableRow>span:nth-child(6),
-    .jobTableRow>a {
-        display: none;
-    }
+  .jobTableHead span:nth-child(5),
+  .jobTableHead span:nth-child(6),
+  .jobTableHead span:last-child,
+  .jobTableRow > span:nth-child(5),
+  .jobTableRow > span:nth-child(6),
+  .jobTableRow > a {
+    display: none;
+  }
 }
 
-@media (max-width: 480px) {
-    .statsGrid {
-        grid-template-columns: 1fr 1fr;
-    }
+@media (max-width: 640px) {
+  .page {
+    padding: 20px 16px 48px;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .headerActions {
+    flex-direction: row;
+  }
+
+  .statValue {
+    font-size: 24px;
+  }
 }

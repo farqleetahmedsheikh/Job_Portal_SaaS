@@ -1,4 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/**
+ * eslint-disable @typescript-eslint/no-explicit-any
+ *
+ * @format
+ */
+
 /** @format */
 "use client";
 
@@ -91,9 +96,9 @@ export function ApplicantsView({ id }: Props) {
             <p className={styles.subtitle}>
               {applicants.length} applicants
               {job?.location ? ` · ${job.location}` : ""}
-              {job?.locationType ? ` (${job.locationType})` : ""}
-              {job?.createdAt
-                ? ` · Posted ${new Date(job.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+              {job?.type ? ` · ${job.type}` : ""}
+              {job?.applicantCap
+                ? ` · ${job.applicantCount ?? applicants.length}/${job.applicantCap} cap`
                 : ""}
             </p>
           </div>

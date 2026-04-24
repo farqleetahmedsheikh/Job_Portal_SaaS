@@ -76,6 +76,7 @@ export function useChat(currentUserId: string) {
     socket.on("connect", () => setConnected(true));
     socket.on("disconnect", () => setConnected(false));
 
+    // ── NEW_MESSAGE handler fix (snake_case to match Conversation interface) ──
     socket.on(EV.NEW_MESSAGE, (msg: ChatMessage) => {
       setMessages((prev) => {
         if (prev.some((m) => m.id === msg.id)) return prev;
@@ -86,10 +87,11 @@ export function useChat(currentUserId: string) {
           c.id === msg.conversationId
             ? {
                 ...c,
-                lastMessage: msg.text,
-                lastMessageAt: msg.createdAt,
-                lastMessageSenderId: msg.senderId,
-                unreadCount:
+                last_message: msg.text, // ✅ was lastMessage
+                last_message_at: msg.createdAt, // ✅ was lastMessageAt
+                last_message_sender_id: msg.senderId, // ✅ was lastMessageSenderId
+                // ✅ was unreadCount
+                unread_count:
                   activeConvId === c.id
                     ? 0
                     : c.unread_count + (msg.senderId !== currentUserId ? 1 : 0),
@@ -163,25 +165,29 @@ export function useChat(currentUserId: string) {
     [activeConvId],
   );
 
-  // ── Start conversation by user ID (find-or-create) ────────────────────────
+  // ── startConversation — no more blank firstMessage ─────────────────────────
   const startConversation = useCallback(
     async (otherUserId: string) => {
-      const existing = conversations.find((c) => c.other_user_id === otherUserId);
+      const existing = conversations.find(
+        (c) => c.other_user_id === otherUserId,
+      );
       if (existing) {
         openConversation(existing.id);
         return;
       }
 
       try {
-        const conv = await api<Conversation>(
+        const conv = await api<{ id: string }>(
           `${API_BASE}/messaging/conversations`,
           "POST",
-          {
-            recipientId: otherUserId, // ← was otherUserId
-            firstMessage: " ", // ← required by backend, blank placeholder
-          },
+          { recipientId: otherUserId }, // ✅ no firstMessage at all
         );
-        setConversations((prev) => [conv, ...prev]);
+        // Refresh inbox so the new conversation appears with correct shape
+        const inbox = await api<Conversation[]>(
+          `${API_BASE}/messaging/inbox`,
+          "GET",
+        );
+        setConversations(inbox);
         openConversation(conv.id);
       } catch (err) {
         console.error(err);
@@ -189,7 +195,6 @@ export function useChat(currentUserId: string) {
     },
     [conversations, openConversation],
   );
-
   // ── Send message ───────────────────────────────────────────────────────────
   const sendMessage = useCallback(
     (text: string) => {

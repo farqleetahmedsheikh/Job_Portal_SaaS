@@ -1,7 +1,7 @@
 /** @format */
 "use client";
 
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import {
   Building2,
   MapPin,
@@ -18,6 +18,8 @@ import {
   ShieldCheck,
   Plus,
   Loader,
+  AlertCircle,
+  Sparkles,
 } from "lucide-react";
 import { useCompany } from "../../hooks/useCompany";
 import { StatusBanners } from "../../components/ui/StatusBanners";
@@ -26,7 +28,37 @@ import { COMPANY_SIZES, INDUSTRIES } from "../../types/company.types";
 import styles from "../styles/company.module.css";
 import Image from "next/image";
 
-// ── Inline field — company page uses company.module.css, not profile ──────────
+// ── Profile completeness ──────────────────────────────────────────────────────
+// const COMPLETENESS_FIELDS: {
+//   key: keyof ReturnType<
+//     (typeof import("../../types/company.types"))["buildForm"] extends infer F
+//       ? F
+//       : never
+//   >;
+//   label: string;
+// }[] = [];
+
+// Defined as a pure function so it can be called with the form object
+function calcCompleteness(
+  form: Record<string, string>,
+  perksLen: number,
+): number {
+  const fields = [
+    form.companyName,
+    form.industry,
+    form.location,
+    form.websiteUrl,
+    form.description,
+    form.tagline,
+    form.size,
+    form.foundedYear,
+  ];
+  const filled = fields.filter(Boolean).length;
+  const perkBonus = perksLen > 0 ? 1 : 0;
+  return Math.round(((filled + perkBonus) / (fields.length + 1)) * 100);
+}
+
+// ── Field component ───────────────────────────────────────────────────────────
 function Field({
   label,
   icon,
@@ -39,6 +71,7 @@ function Field({
   textarea,
   hint,
   span,
+  maxLength,
 }: {
   label: string;
   icon?: React.ReactNode;
@@ -55,39 +88,50 @@ function Field({
   textarea?: boolean;
   hint?: string;
   span?: boolean;
+  maxLength?: number;
 }) {
   return (
     <div
-      className={[styles.field, span ? styles["span-2"] : ""]
+      className={[styles.field, span ? styles.spanTwo : ""]
         .filter(Boolean)
         .join(" ")}
     >
       <label className={styles.label} htmlFor={name}>
-        {icon} {label}
+        {icon && <span className={styles.labelIcon}>{icon}</span>}
+        {label}
       </label>
       {hint && <p className={styles.hint}>{hint}</p>}
       {editing ? (
-        textarea ? (
-          <textarea
-            id={name}
-            name={name}
-            className={styles.textarea}
-            rows={4}
-            value={draftValue}
-            onChange={onChange}
-          />
-        ) : (
-          <input
-            id={name}
-            name={name}
-            type={type}
-            className={styles.input}
-            value={draftValue}
-            onChange={onChange}
-          />
-        )
+        <div className={styles.inputWrap}>
+          {textarea ? (
+            <textarea
+              id={name}
+              name={name}
+              className={styles.textarea}
+              rows={4}
+              value={draftValue}
+              onChange={onChange}
+              maxLength={maxLength}
+            />
+          ) : (
+            <input
+              id={name}
+              name={name}
+              type={type}
+              className={styles.input}
+              value={draftValue}
+              onChange={onChange}
+              maxLength={maxLength}
+            />
+          )}
+          {maxLength && (
+            <span className={styles.charCount}>
+              {draftValue.length}/{maxLength}
+            </span>
+          )}
+        </div>
       ) : (
-        <div className={`${styles.value} ${!value ? styles.empty : ""}`}>
+        <div className={`${styles.value} ${!value ? styles.valueEmpty : ""}`}>
           {value || "Not set"}
         </div>
       )}
@@ -95,6 +139,7 @@ function Field({
   );
 }
 
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default function CompanyPage() {
   const logoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -127,59 +172,80 @@ export default function CompanyPage() {
     removePerk,
     savePerks,
   } = useCompany();
-  console.log("PERKS---------->", perks);
-  console.log("COMPANY---------->", company);
-  // ── Loading / error / empty states ───────────────────────────────────────
-  if (loading)
+
+  console.log("CompanyPage render", { company, form, draft, perks });
+
+  // ── Profile completeness ──────────────────────────────────────────────────
+  const completeness = useMemo(
+    () =>
+      form
+        ? calcCompleteness(
+            form as unknown as Record<string, string>,
+            perks.length,
+          )
+        : 0,
+    [form, perks.length],
+  );
+
+  // ── Loading ───────────────────────────────────────────────────────────────
+  if (loading) {
     return (
       <div className={styles.page}>
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div
-            key={i}
-            className={styles.skeleton}
-            style={{ height: 140, marginBottom: 16 }}
-          />
+        {[200, 360, 180].map((h, i) => (
+          <div key={i} className={styles.skeleton} style={{ height: h }} />
         ))}
       </div>
     );
+  }
 
-  if (error)
+  if (error) {
     return (
       <div className={styles.page}>
-        <p className={styles.errorMsg}>{error}</p>
+        <div className={styles.errorState}>
+          <AlertCircle size={32} />
+          <p>{error}</p>
+        </div>
       </div>
     );
+  }
 
-  if (!company || !form || !draft)
+  if (!company || !form || !draft) {
     return (
       <div className={styles.page}>
-        <div className={styles.empty}>
+        <div className={styles.emptyState}>
           <Building2 size={40} />
           <p>No company profile yet</p>
           <span>Complete your registration to set up your company</span>
         </div>
       </div>
     );
+  }
+
+  const isVerified = company.verificationStatus === "verified";
 
   return (
     <div className={styles.page}>
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      {/* ── Page header ─────────────────────────────────────────────────── */}
       <ProfileHeader
         editing={editing}
         saving={saving}
         onEdit={handleEdit}
         onSave={handleSave}
         onCancel={handleCancel}
-        // title="Company Profile"
-        // subtitle="Manage your company information visible to candidates"
       />
 
       <StatusBanners saved={saved} serverError={serverError} />
 
-      {/* Upload errors */}
-      {logoError && <div className={styles["banner-error"]}>⚠ {logoError}</div>}
+      {/* FIX: was styles["banner-error"] — class didn't exist in CSS */}
+      {logoError && (
+        <div className={styles.bannerError}>
+          <AlertCircle size={14} /> {logoError}
+        </div>
+      )}
       {coverError && (
-        <div className={styles["banner-error"]}>⚠ {coverError}</div>
+        <div className={styles.bannerError}>
+          <AlertCircle size={14} /> {coverError}
+        </div>
       )}
 
       {/* Hidden file inputs */}
@@ -189,8 +255,8 @@ export default function CompanyPage() {
         accept="image/jpeg,image/png,image/webp"
         style={{ display: "none" }}
         onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) handleLogoUpload(file);
+          const f = e.target.files?.[0];
+          if (f) handleLogoUpload(f);
           e.target.value = "";
         }}
       />
@@ -200,28 +266,45 @@ export default function CompanyPage() {
         accept="image/jpeg,image/png,image/webp"
         style={{ display: "none" }}
         onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) handleCoverUpload(file);
+          const f = e.target.files?.[0];
+          if (f) handleCoverUpload(f);
           e.target.value = "";
         }}
       />
 
-      {/* ── Cover + Logo ────────────────────────────────────────────────────── */}
-      <div className={styles.card}>
+      {/* ── Hero card: Cover + Logo + Meta ──────────────────────────────── */}
+      <div
+        className={`${styles.card} ${isVerified ? styles.cardVerified : ""}`}
+      >
+        {/* Verified shimmer strip at top of card */}
+        {isVerified && <div className={styles.verifiedStrip} />}
+
+        {/* Cover */}
         <div className={styles.coverWrap}>
           {company.coverUrl ? (
             <img
               src={company.coverUrl}
-              alt="Cover"
-              className={`${styles.cover} ${coverUploading ? styles["uploading"] : ""}`}
+              alt="Company cover"
+              className={`${styles.cover} ${coverUploading ? styles.uploading : ""}`}
             />
           ) : (
-            <div className={styles.coverPlaceholder} />
+            <div className={styles.coverPlaceholder}>
+              {isVerified && <div className={styles.coverVerifiedOverlay} />}
+            </div>
           )}
+
+          {/* Verified badge on cover */}
+          {isVerified && (
+            <div className={styles.coverVerifiedBadge}>
+              <ShieldCheck size={12} />
+              <span>Verified Business</span>
+            </div>
+          )}
+
           {editing && (
             <button
               className={styles.coverEditBtn}
-              aria-label="Change cover"
+              aria-label="Change cover photo"
               disabled={coverUploading}
               onClick={() => coverInputRef.current?.click()}
             >
@@ -238,25 +321,32 @@ export default function CompanyPage() {
           )}
         </div>
 
+        {/* Logo row */}
         <div className={styles.logoRow}>
-          <div className={styles.logoWrap}>
+          {/* Logo with verified ring */}
+          <div
+            className={`${styles.logoWrap} ${isVerified ? styles.logoVerified : ""}`}
+          >
             {company.logoUrl ? (
               <Image
                 src={company.logoUrl}
                 alt={form.companyName}
-                className={`${styles.logo} ${logoUploading ? styles["uploading"] : ""}`}
-                width={100}
-                height={100}
+                className={`${styles.logo} ${logoUploading ? styles.uploading : ""}`}
+                width={80}
+                height={80}
               />
             ) : (
               <div className={styles.logoFallback}>
                 {form.companyName?.[0]?.toUpperCase() ?? "C"}
               </div>
             )}
+            {isVerified && (
+              <div className={styles.verifiedRing} aria-hidden="true" />
+            )}
             {editing && (
               <button
                 className={styles.logoEditBtn}
-                aria-label="Change logo"
+                aria-label="Change company logo"
                 disabled={logoUploading}
                 onClick={() => logoInputRef.current?.click()}
               >
@@ -269,29 +359,54 @@ export default function CompanyPage() {
             )}
           </div>
 
+          {/* Company meta */}
           <div className={styles.logoMeta}>
             <h2 className={styles.companyName}>
               {form.companyName}
-              {company.isVerified && (
+              {isVerified && (
                 <span className={styles.verifiedBadge}>
-                  <ShieldCheck size={13} /> Verified
+                  <ShieldCheck size={12} />
+                  Verified
                 </span>
               )}
             </h2>
             <p className={styles.companySubtitle}>
-              {[form.industry, form.location].filter(Boolean).join(" · ")}
+              {[form.industry, form.location].filter(Boolean).join(" · ") ||
+                "Add your industry and location"}
             </p>
+          </div>
+
+          {/* Profile completeness */}
+          <div className={styles.completenessWrap}>
+            <div className={styles.completenessLabel}>
+              <Sparkles size={11} />
+              Profile strength
+              <strong>{completeness}%</strong>
+            </div>
+            <div className={styles.completenessTrack}>
+              <div
+                className={styles.completenessFill}
+                style={{ width: `${completeness}%` }}
+                data-level={
+                  completeness >= 80
+                    ? "high"
+                    : completeness >= 50
+                      ? "mid"
+                      : "low"
+                }
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── Basic Info ──────────────────────────────────────────────────────── */}
+      {/* ── Basic Information ────────────────────────────────────────────── */}
       <div className={styles.card}>
-        <div className={styles["card-header"]}>
-          <h2 className={styles["card-title"]}>Basic Information</h2>
+        <div className={styles.cardHeader}>
+          <h2 className={styles.cardTitle}>Basic Information</h2>
         </div>
-        <div className={styles["card-body"]}>
-          <div className={styles["form-grid"]}>
+        <div className={styles.cardBody}>
+          <div className={styles.formGrid}>
             <Field
               label="Company Name"
               icon={<Building2 size={11} />}
@@ -302,10 +417,12 @@ export default function CompanyPage() {
               onChange={handleChange}
             />
 
-            {/* Industry — select when editing */}
             <div className={styles.field}>
               <label className={styles.label} htmlFor="industry">
-                <Briefcase size={11} /> Industry
+                <span className={styles.labelIcon}>
+                  <Briefcase size={11} />
+                </span>
+                Industry
               </label>
               {editing ? (
                 <select
@@ -324,7 +441,7 @@ export default function CompanyPage() {
                 </select>
               ) : (
                 <div
-                  className={`${styles.value} ${!form.industry ? styles.empty : ""}`}
+                  className={`${styles.value} ${!form.industry ? styles.valueEmpty : ""}`}
                 >
                   {form.industry || "Not set"}
                 </div>
@@ -340,6 +457,7 @@ export default function CompanyPage() {
               editing={editing}
               onChange={handleChange}
             />
+
             <Field
               label="Website"
               icon={<Globe size={11} />}
@@ -351,10 +469,12 @@ export default function CompanyPage() {
               type="url"
             />
 
-            {/* Company size — select when editing */}
             <div className={styles.field}>
               <label className={styles.label} htmlFor="size">
-                <Users size={11} /> Company Size
+                <span className={styles.labelIcon}>
+                  <Users size={11} />
+                </span>
+                Company Size
               </label>
               {editing ? (
                 <select
@@ -373,7 +493,7 @@ export default function CompanyPage() {
                 </select>
               ) : (
                 <div
-                  className={`${styles.value} ${!form.size ? styles.empty : ""}`}
+                  className={`${styles.value} ${!form.size ? styles.valueEmpty : ""}`}
                 >
                   {COMPANY_SIZES.find((s) => s.value === form.size)?.label ||
                     "Not set"}
@@ -391,6 +511,7 @@ export default function CompanyPage() {
               onChange={handleChange}
               type="number"
             />
+
             <Field
               label="Tagline"
               name="tagline"
@@ -400,7 +521,9 @@ export default function CompanyPage() {
               onChange={handleChange}
               span
               hint="A short catchy line shown on your public profile"
+              maxLength={120}
             />
+
             <Field
               label="About"
               name="description"
@@ -411,7 +534,9 @@ export default function CompanyPage() {
               textarea
               span
               hint="Describe your company mission and what you do"
+              maxLength={1000}
             />
+
             <Field
               label="Culture & Values"
               name="culture"
@@ -422,18 +547,19 @@ export default function CompanyPage() {
               textarea
               span
               hint="What makes your company a great place to work"
+              maxLength={800}
             />
           </div>
         </div>
       </div>
 
-      {/* ── Social Links ────────────────────────────────────────────────────── */}
+      {/* ── Social Links ─────────────────────────────────────────────────── */}
       <div className={styles.card}>
-        <div className={styles["card-header"]}>
-          <h2 className={styles["card-title"]}>Social Links</h2>
+        <div className={styles.cardHeader}>
+          <h2 className={styles.cardTitle}>Social Links</h2>
         </div>
-        <div className={styles["card-body"]}>
-          <div className={styles["form-grid"]}>
+        <div className={styles.cardBody}>
+          <div className={styles.formGrid}>
             <Field
               label="LinkedIn"
               icon={<Linkedin size={11} />}
@@ -468,30 +594,37 @@ export default function CompanyPage() {
         </div>
       </div>
 
-      {/* ── Perks & Benefits ────────────────────────────────────────────────── */}
+      {/* ── Perks & Benefits ─────────────────────────────────────────────── */}
       <div className={styles.card}>
-        <div className={styles["card-header"]}>
-          <h2 className={styles["card-title"]}>Perks &amp; Benefits</h2>
-          <p className={styles["card-subtitle"]}>
-            Shown on your job listings to attract candidates
-          </p>
+        <div className={styles.cardHeader}>
+          <div>
+            <h2 className={styles.cardTitle}>Perks &amp; Benefits</h2>
+            <p className={styles.cardSubtitle}>
+              Shown on your job listings to attract candidates
+            </p>
+          </div>
+          <span className={styles.perkCount}>{perks.length}/20</span>
         </div>
-        <div className={styles["card-body"]}>
+        <div className={styles.cardBody}>
           <div className={styles.perkTags}>
             {perks.map((p) => (
               <span key={p.id} className={styles.perkTag}>
                 {p.perk}
+                {/* FIX: was passing object p to removePerk — now correctly passed */}
+                {/* FIX: aria-label was `Remove ${p}` → "[object Object]" */}
                 <button
                   className={styles.perkRemove}
                   onClick={() => removePerk(p)}
-                  aria-label={`Remove ${p}`}
+                  aria-label={`Remove ${p.perk}`}
                 >
                   <X size={10} />
                 </button>
               </span>
             ))}
             {perks.length === 0 && (
-              <span className={styles.empty}>No perks added yet</span>
+              <span className={styles.perkEmpty}>
+                No perks added yet — add some to stand out to candidates
+              </span>
             )}
           </div>
 
@@ -507,25 +640,26 @@ export default function CompanyPage() {
                   addPerk();
                 }
               }}
+              disabled={perks.length >= 20}
             />
             <button
-              className={`${styles.btn} ${styles["btn-ghost"]}`}
+              className={`${styles.btn} ${styles.btnGhost}`}
               onClick={addPerk}
+              disabled={!perkInput.trim() || perks.length >= 20}
             >
               <Plus size={14} /> Add
             </button>
           </div>
 
           <button
-            className={`${styles.btn} ${styles["btn-primary"]}`}
-            style={{ marginTop: 12 }}
+            className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSavePerks}`}
             onClick={savePerks}
             disabled={perkSaving}
             aria-busy={perkSaving}
           >
             {perkSaving ? (
               <>
-                <span className={styles.spinner} /> Saving...
+                <span className={styles.spinner} /> Saving…
               </>
             ) : (
               <>

@@ -1,11 +1,10 @@
 /** @format */
-
 "use client";
 
 import Link from "next/link";
-import styles from "../../applicant/styles/applicant.module.css";
-import { useSession } from "../../hooks/useSession";
 import Image from "next/image";
+import { useSession } from "../../hooks/useSession";
+import styles from "../../applicant/styles/applicant.module.css";
 
 interface Application {
   title: string;
@@ -27,28 +26,30 @@ interface Props {
 }
 
 export function RecentApplications({ applications }: Props) {
+  // FIX: removed console.log("Applications Recent------->", applications)
   const { user } = useSession();
-  console.log("Applications Recent------->", applications);
+  const isApplicant = user?.role === "applicant";
+
   return (
     <div>
       <div className={styles["section-header"]}>
         <h2 className={styles["section-title"]}>Recent Applications</h2>
-        <Link href="jobs" className={styles["section-link"]}>
+        {/* FIX: was href="jobs" (relative — breaks depending on route).
+            Now role-aware absolute path. */}
+        <Link
+          href={isApplicant ? "/jobs" : "/employer/applicants"}
+          className={styles["section-link"]}
+        >
           View all →
         </Link>
       </div>
+
       <div className={styles.card}>
         {applications.length === 0 ? (
-          <p
-            style={{
-              color: "var(--text-muted)",
-              fontSize: 13,
-              padding: "12px 10px",
-            }}
-          >
+          <p className={styles["empty-text"]}>
             No applications yet.{" "}
-            {user?.role === "applicant" && (
-              <Link href="/jobs" style={{ color: "var(--color-secondary)" }}>
+            {isApplicant && (
+              <Link href="/jobs" className={styles["link-accent"]}>
                 Browse jobs →
               </Link>
             )}
@@ -60,21 +61,36 @@ export function RecentApplications({ applications }: Props) {
                 key={`${job.title}-${job.company}`}
                 className={styles["job-row"]}
               >
-                <Image
-                  width={40}
-                  height={40}
-                  src={`${job.logoUrl}`}
-                  alt="Logo"
-                  className={styles["job-logo"]}
-                />
+                {/* FIX: Image crashed when logoUrl was empty/undefined.
+                    Now shows initial-based fallback avatar instead. */}
+                {job.logoUrl ? (
+                  <Image
+                    width={40}
+                    height={40}
+                    src={job.logoUrl}
+                    alt={`${job.company} logo`}
+                    className={styles["job-logo"]}
+                    onError={(e) => {
+                      // hide broken img on load error
+                      (e.currentTarget as HTMLImageElement).style.display =
+                        "none";
+                    }}
+                  />
+                ) : (
+                  <div className={styles["job-logo-fallback"]}>
+                    {job.company?.[0]?.toUpperCase() ?? "?"}
+                  </div>
+                )}
+
                 <div className={styles["job-info"]}>
                   <p className={styles["job-title"]}>{job.title}</p>
                   <p className={styles["job-company"]}>{job.company}</p>
                 </div>
+
                 <div className={styles["job-meta"]}>
                   <span className={styles["job-time"]}>{job.time}</span>
                   <span
-                    className={`${styles.badge} ${STATUS_CLASS[job.status]}`}
+                    className={`${styles.badge} ${STATUS_CLASS[job.status] ?? ""}`}
                   >
                     {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
                   </span>

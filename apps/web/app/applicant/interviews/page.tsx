@@ -85,7 +85,7 @@ function InterviewCard({ interview }: { interview: Interview }) {
   const isUpcoming = interview.status === "upcoming";
 
   // All panelists come from panelists[] — no separate interviewers[]
-  const primaryInterviewer = interview.id;
+  const primaryInterviewer = interview.panelists[0]?.name ?? "—";
   const extraInterviewers = interview.panelists.slice(1).map((p) => p.name);
 
   // Fallback initials when no logo URL
@@ -218,6 +218,15 @@ function InterviewCard({ interview }: { interview: Interview }) {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Video size={13} /> Join Meeting <ExternalLink size={11} />
+                </Link>
+              )}
+              {isUpcoming && !interview.meetLink && (
+                <Link
+                  href={`/applicant/interviews/${interview.id}/room`}
+                  className={`${styles.btn} ${styles["btn-primary"]}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Video size={13} /> Join Room
                 </Link>
               )}
               {isUpcoming && (

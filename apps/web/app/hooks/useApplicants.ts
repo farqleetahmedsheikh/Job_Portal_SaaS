@@ -11,8 +11,10 @@ export interface JobMeta {
   id: string;
   title: string;
   location: string;
-  locationType: string;
-  createdAt: string;
+  type: string;
+  status: string;
+  applicantCount: number;
+  applicantCap: number;
 }
 
 interface Options {
@@ -64,37 +66,38 @@ export function useApplicants({ id }: Options) {
   const [selected, setSelected] = useState<string[]>([]);
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!id) {
-      setLoading(false);
-      return;
-    }
+useEffect(() => {
+  if (!id) {
+    setLoading(false);
+    return;
+  }
 
-    let cancelled = false;
-    setLoading(true);
+  let cancelled = false;
+  setLoading(true);
 
-    Promise.all([
-      api<JobMeta>(`${API_BASE}/jobs/${id}`, "GET"),
-      api<any[]>(`${API_BASE}/applications?jobId=${id}`, "GET"),
-    ])
-      .then(([jobData, appData]) => {
-        if (!cancelled) {
-          setJob(jobData);
-          setApplicants(appData.map(normalise)); // ← normalise here
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err.message);
-          setLoading(false);
-        }
-      });
+  // ✅ Single call — no more GET /jobs/:id which increments viewsCount
+  api<{ job: JobMeta; applicants: any[]; total: number; viewLimit: number }>(
+    `${API_BASE}/jobs/${id}/applicants`,
+    "GET",
+  )
+    .then(({ job: jobData, applicants: appData }) => {
+      if (!cancelled) {
+        setJob(jobData);
+        setApplicants(appData.map(normalise));
+        setLoading(false);
+      }
+    })
+    .catch((err) => {
+      if (!cancelled) {
+        setError(err instanceof Error ? err.message : "Failed to load");
+        setLoading(false);
+      }
+    });
 
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
+  return () => {
+    cancelled = true;
+  };
+}, [id]);
 
   // ── Mutations ─────────────────────────────────────────────────────────────
   const toggleStar = useCallback((appId: string) => {

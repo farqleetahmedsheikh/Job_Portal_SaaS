@@ -1,21 +1,12 @@
 /** @format */
-// app/employer/analytics/analytics.types.ts
 
-export type DateRange = "7d" | "30d" | "90d" | "12m";
+export type DateRange = "7d" | "30d" | "90d";
 
-export interface OverviewStats {
-  totalViews: number;
-  totalApplications: number;
-  hireRate: number; // 0–100 percent
-  avgTimeToHire: number; // days
-  viewsDelta: number; // percent change vs previous period
-  applicationsDelta: number;
-  hireRateDelta: number;
-  timeToHireDelta: number;
-}
+// Exported so page.tsx can use it for series toggle state
+export type SeriesKey = "views" | "applications" | "offers";
 
 export interface ChartPoint {
-  label: string; // "Mar 1", "Week 12", etc.
+  label: string;
   views: number;
   applications: number;
   offers: number;
@@ -24,7 +15,7 @@ export interface ChartPoint {
 export interface FunnelStage {
   stage: string;
   count: number;
-  pct: number; // relative to first stage
+  pct: number;
 }
 
 export interface TopJob {
@@ -42,10 +33,30 @@ export interface SourceBreakdown {
   pct: number;
 }
 
+export interface AnalyticsOverview {
+  totalViews: number;
+  viewsDelta: number;
+  totalApplications: number;
+  applicationsDelta: number;
+  hireRate: number;
+  hireRateDelta: number;
+  avgTimeToHire: number;
+  timeToHireDelta: number;
+}
+
 export interface AnalyticsData {
-  overview: OverviewStats;
+  overview: AnalyticsOverview;
   chart: ChartPoint[];
   funnel: FunnelStage[];
   topJobs: TopJob[];
   sources: SourceBreakdown[];
+  tier: string;
+  // raw backend pass-through fields for plan-gate checks
+  totalJobs: number;
+  activeJobs: number;
+  totalViews: number;
+  totalApplications: number;
+  avgApplyRate: number;
+  trend: unknown[];
+  pipeline: { status: string; count: number }[];
 }

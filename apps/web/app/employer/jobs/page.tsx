@@ -266,12 +266,16 @@ function AddonsModal({ onClose }: { onClose: () => void }) {
               margin: 0,
             }}
           >
-            Want a <strong>Verified badge</strong> on all your job posts?{" "}
+            Want a{" "}
+            <strong style={{ color: "var(--status-success)" }}>
+              Verified badge
+            </strong>{" "}
+            on all your job posts?{" "}
             <Link
               href="/employer/billing"
               style={{ color: "var(--color-text-info)" }}
             >
-              PKR 2,999/month — manage in Billing →
+              PKR 3,999/month — manage in Billing →
             </Link>
           </p>
         </div>

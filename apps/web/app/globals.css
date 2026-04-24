@@ -236,3 +236,6 @@ input:-webkit-autofill:focus {
 .visually-hidden {
   visibility: hidden;
 }
+
+h1 { font-size: clamp(24px, 4vw, 36px); }
+h2 { font-size: clamp(20px, 3vw, 28px); }

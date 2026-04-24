@@ -3,6 +3,7 @@
 export type JobStatus = "active" | "paused" | "draft" | "closed" | "expired";
 
 export interface Job {
+  interviewCount: number;
   id: string;
   title: string;
   type: string;

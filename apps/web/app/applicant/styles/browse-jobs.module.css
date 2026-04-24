@@ -750,6 +750,38 @@
     color: #fff;
 }
 
+.match-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.match-toggle:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.match-toggle-on {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.match-toggle-on:hover {
+  color: #fff;
+  opacity: 0.9;
+}
+
 /* ── Responsive ── */
 @media (max-width: 1024px) {
     .filters {

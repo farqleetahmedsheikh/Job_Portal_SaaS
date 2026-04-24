@@ -2,9 +2,9 @@
 
 /* ── Page ────────────────────────────────────────────────────────────────────*/
 .page {
-    max-width: 1100px;
+    max-width: 1120px;
     margin: 0 auto;
-    padding: 28px 24px;
+    padding: 28px 24px 48px;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -19,18 +19,39 @@
     flex-wrap: wrap;
 }
 
-.headerLeft h1 {
+.headerLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* FIX: renamed from inline h1/p selectors to explicit classes for clarity */
+.pageTitle {
     font-size: 22px;
     font-weight: 700;
     color: var(--text-primary);
-    margin: 0 0 4px;
-    letter-spacing: -.4px;
+    margin: 0;
+    letter-spacing: -0.4px;
 }
 
-.headerLeft p {
+.pageSub {
     font-size: 13px;
     color: var(--text-muted);
     margin: 0;
+}
+
+.headerActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* ── Last updated ────────────────────────────────────────────────────────────*/
+.lastUpdated {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin: -10px 0 0;
 }
 
 /* ── Range picker ────────────────────────────────────────────────────────────*/
@@ -44,7 +65,7 @@
 }
 
 .rangeBtn {
-    padding: 6px 14px;
+    padding: 5px 13px;
     border-radius: calc(var(--radius-sm) - 2px);
     font-size: 12px;
     font-weight: 500;
@@ -52,7 +73,7 @@
     background: transparent;
     border: none;
     cursor: pointer;
-    transition: all .15s;
+    transition: color 0.15s, background 0.15s;
     white-space: nowrap;
 }
 
@@ -60,10 +81,69 @@
     color: var(--text-primary);
 }
 
+/* FIX: replaced var(--color-secondary) which was undefined */
 .rangeBtnActive {
-    background: rgba(var(--glow-rgb), .15);
-    color: var(--color-secondary);
+    background: rgba(79, 142, 247, 0.15);
+    color: #4f8ef7;
     font-weight: 600;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────────*/
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: all 0.15s;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btnGhost {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+.btnGhost:hover:not(:disabled) {
+    background: rgba(var(--glow-rgb), 0.05);
+    color: var(--text-primary);
+}
+
+.btnIcon {
+    padding: 7px 9px;
+}
+
+.btnPrimary {
+    background: #4f8ef7;
+    color: #fff;
+    border: 1px solid transparent;
+}
+
+.btnPrimary:hover {
+    background: #3b7de8;
+}
+
+/* ── Spinning animation ──────────────────────────────────────────────────────*/
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spinning {
+    animation: spin 0.7s linear infinite;
 }
 
 /* ── Stat cards grid ─────────────────────────────────────────────────────────*/
@@ -76,6 +156,8 @@
 .statCard {
     background: var(--bg-card);
     border: 1px solid var(--border);
+    /* FIX: accent top border using CSS custom property set inline */
+    border-top: 2px solid var(--card-accent, var(--border));
     border-radius: var(--radius);
     padding: 18px 20px;
     display: flex;
@@ -83,20 +165,25 @@
     gap: 10px;
     position: relative;
     overflow: hidden;
-    transition: border-color .2s, box-shadow .2s;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
 }
 
+/* FIX: replaced var(--card-rgb) which was undefined with var(--glow-rgb) */
 .statCard::before {
     content: "";
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at top left, rgba(var(--card-rgb), .06) 0%, transparent 60%);
+    background: radial-gradient(
+        ellipse at top left,
+        rgba(var(--glow-rgb), 0.04) 0%,
+        transparent 60%
+    );
     pointer-events: none;
 }
 
 .statCard:hover {
-    border-color: rgba(var(--glow-rgb), .2);
     box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
 }
 
 .statTop {
@@ -116,7 +203,7 @@
 }
 
 .statDelta {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 3px;
     font-size: 11px;
@@ -126,17 +213,17 @@
 }
 
 .deltaPos {
-    background: rgba(52, 217, 179, .1);
+    background: rgba(52, 217, 179, 0.1);
     color: var(--status-success);
 }
 
 .deltaNeg {
-    background: rgba(244, 63, 94, .1);
+    background: rgba(244, 63, 94, 0.1);
     color: var(--status-danger);
 }
 
 .deltaNeut {
-    background: rgba(var(--glow-rgb), .08);
+    background: rgba(var(--glow-rgb), 0.08);
     color: var(--text-muted);
 }
 
@@ -144,14 +231,15 @@
     font-size: 28px;
     font-weight: 800;
     color: var(--text-primary);
-    letter-spacing: -.6px;
+    letter-spacing: -0.6px;
     line-height: 1;
+    font-variant-numeric: tabular-nums;
 }
 
 .statLabel {
     font-size: 12px;
-    font-weight: 500;
-    color: var(--text-muted);
+    font-weight: 600;
+    color: var(--text-secondary);
 }
 
 .statSub {
@@ -159,7 +247,7 @@
     color: var(--text-muted);
 }
 
-/* ── Two-col layout ──────────────────────────────────────────────────────────*/
+/* ── Two-col layouts ─────────────────────────────────────────────────────────*/
 .row {
     display: grid;
     gap: 14px;
@@ -179,6 +267,13 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     overflow: hidden;
+    transition: opacity 0.2s;
+}
+
+/* FIX: visual feedback when re-fetching on range change */
+.cardRefreshing {
+    opacity: 0.6;
+    pointer-events: none;
 }
 
 .cardHeader {
@@ -186,6 +281,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 18px 20px 14px;
+    gap: 12px;
 }
 
 .cardTitle {
@@ -198,29 +294,24 @@
 .cardSub {
     font-size: 12px;
     color: var(--text-muted);
-    margin: 4px 0 0;
+    margin: 3px 0 0;
 }
 
 .cardBody {
     padding: 0 20px 20px;
 }
 
-/* ── Line / bar chart ────────────────────────────────────────────────────────*/
+/* ── Chart ───────────────────────────────────────────────────────────────────*/
 .chartWrap {
     position: relative;
-    height: 220px;
     padding: 0 4px;
 }
 
 .chartSvg {
     width: 100%;
-    height: 100%;
+    height: auto;
+    display: block;
     overflow: visible;
-}
-
-.chartGrid line {
-    stroke: var(--border);
-    stroke-dasharray: 4 4;
 }
 
 .chartAxisLabel {
@@ -229,19 +320,52 @@
     font-family: inherit;
 }
 
-/* Legend */
+/* Empty chart state */
+.chartEmpty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 48px 20px;
+    color: var(--text-muted);
+}
+
+.chartEmpty p {
+    font-size: 13px;
+    margin: 0;
+}
+
+/* Legend — FIX: converted to buttons for series toggle interaction */
 .chartLegend {
     display: flex;
-    gap: 16px;
+    gap: 4px;
     padding: 10px 20px 16px;
+    flex-wrap: wrap;
 }
 
 .legendItem {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
     font-size: 12px;
     color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    padding: 4px 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+}
+
+.legendItem:hover {
+    background: rgba(var(--glow-rgb), 0.05);
+    border-color: var(--border);
+}
+
+/* FIX: dimmed state when series is hidden */
+.legendItemOff {
+    opacity: 0.4;
 }
 
 .legendDot {
@@ -249,34 +373,44 @@
     height: 8px;
     border-radius: 50%;
     flex-shrink: 0;
+    transition: background 0.2s;
 }
 
 /* Tooltip */
 .tooltip {
     position: absolute;
     background: var(--bg-card);
-    border: 1px solid rgba(var(--glow-rgb), .25);
+    border: 1px solid rgba(var(--glow-rgb), 0.2);
     border-radius: var(--radius-sm);
-    padding: 8px 12px;
+    padding: 10px 13px;
     font-size: 12px;
     color: var(--text-primary);
     pointer-events: none;
     box-shadow: var(--shadow-md);
     white-space: nowrap;
     z-index: 10;
-    transition: opacity .1s;
+    min-width: 130px;
 }
 
 .tooltipLabel {
     font-weight: 700;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     color: var(--text-secondary);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
 .tooltipRow {
     display: flex;
     align-items: center;
     gap: 6px;
+    padding: 1px 0;
+}
+
+.tooltipSeries {
+    flex: 1;
+    color: var(--text-muted);
 }
 
 .tooltipDot {
@@ -290,7 +424,7 @@
 .funnelList {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 14px;
     padding: 0 20px 20px;
 }
 
@@ -312,6 +446,23 @@
     color: var(--text-secondary);
 }
 
+/* FIX: container for count + drop-off side by side */
+.funnelMeta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Drop-off indicator between funnel stages */
+.funnelDropOff {
+    font-size: 11px;
+    color: var(--status-danger);
+    font-weight: 500;
+    background: rgba(244, 63, 94, 0.08);
+    padding: 1px 6px;
+    border-radius: 99px;
+}
+
 .funnelCount {
     font-size: 13px;
     font-weight: 700;
@@ -320,15 +471,21 @@
 
 .funnelTrack {
     height: 6px;
-    background: var(--border);
+    background: rgba(var(--glow-rgb), 0.08);
     border-radius: 99px;
     overflow: hidden;
+}
+
+@keyframes barGrow {
+    from {
+        width: 0 !important;
+    }
 }
 
 .funnelFill {
     height: 100%;
     border-radius: 99px;
-    transition: width .6s var(--ease-spring);
+    animation: barGrow 0.6s var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) both;
 }
 
 .funnelPct {
@@ -336,81 +493,11 @@
     color: var(--text-muted);
 }
 
-/* ── Top jobs table ──────────────────────────────────────────────────────────*/
-.jobsTable {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.jobsTableHead th {
-    padding: 10px 12px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: .4px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-}
-
-.jobsTableRow {
-    border-bottom: 1px solid var(--border);
-    transition: background .12s;
-}
-
-.jobsTableRow:last-child {
-    border-bottom: none;
-}
-
-.jobsTableRow:hover {
-    background: rgba(var(--glow-rgb), .03);
-}
-
-.jobsTableRow td {
-    padding: 11px 12px;
-    font-size: 13px;
-    color: var(--text-primary);
-    vertical-align: middle;
-}
-
-.jobTitle2 {
-    font-weight: 600;
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.jobStatusChip {
-    display: inline-flex;
-    align-items: center;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 2px 9px;
-    border-radius: 99px;
-}
-
-.statusActive {
-    background: rgba(52, 217, 179, .1);
-    color: var(--status-success);
-}
-
-.statusPaused {
-    background: rgba(249, 115, 22, .1);
-    color: var(--status-warning);
-}
-
-.statusClosed {
-    background: rgba(var(--glow-rgb), .08);
-    color: var(--text-muted);
-}
-
 /* ── Source breakdown ────────────────────────────────────────────────────────*/
 .sourceList {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
     padding: 0 20px 20px;
 }
 
@@ -439,7 +526,7 @@
 
 .sourceTrack {
     height: 5px;
-    background: var(--border);
+    background: rgba(var(--glow-rgb), 0.08);
     border-radius: 99px;
     overflow: hidden;
 }
@@ -447,21 +534,220 @@
 .sourceFill {
     height: 100%;
     border-radius: 99px;
-    transition: width .6s var(--ease-spring);
+    animation: barGrow 0.55s var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) both;
+}
+
+/* ── Empty states ────────────────────────────────────────────────────────────*/
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 36px 20px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.emptyState p {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.emptyState span {
+    font-size: 12px;
+    max-width: 240px;
+    line-height: 1.5;
+}
+
+/* ── Top jobs table ──────────────────────────────────────────────────────────*/
+/* FIX: scroll wrapper for mobile overflow */
+.tableScroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.jobsTable {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 560px;
+}
+
+/* FIX: .jobsTableHead class now applied to <thead> — selector works */
+.jobsTableHead th {
+    padding: 10px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    background: rgba(var(--glow-rgb), 0.02);
+}
+
+.jobsTableRow {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.12s;
+}
+
+.jobsTableRow:last-child {
+    border-bottom: none;
+}
+
+.jobsTableRow:hover {
+    background: rgba(var(--glow-rgb), 0.03);
+}
+
+.jobsTableRow td {
+    padding: 12px 12px;
+    font-size: 13px;
+    color: var(--text-primary);
+    vertical-align: middle;
+}
+
+/* FIX: display:block + overflow needed for text-overflow to work */
+.jobTitle2 {
+    display: block;
+    font-weight: 600;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-primary);
+}
+
+/* Numeric column alignment */
+.numCell {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+}
+
+/* FIX: replaced inline style for hire rate with CSS classes */
+.rateGood {
+    color: var(--status-success);
+    font-weight: 600;
+}
+
+.rateOk {
+    color: var(--status-warning);
+    font-weight: 600;
+}
+
+.rateLow {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.tableViewLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.15s;
+    white-space: nowrap;
+}
+
+.tableViewLink:hover {
+    color: #4f8ef7;
+}
+
+.jobStatusChip {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 99px;
+}
+
+.statusActive {
+    background: rgba(52, 217, 179, 0.1);
+    color: var(--status-success);
+}
+
+.statusPaused {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--status-warning);
+}
+
+.statusClosed {
+    background: rgba(var(--glow-rgb), 0.08);
+    color: var(--text-muted);
+}
+
+/* Empty table state */
+.tableEmpty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 48px 20px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.tableEmpty p {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.tableEmpty span {
+    font-size: 12px;
+}
+
+/* ── Error state ─────────────────────────────────────────────────────────────*/
+.errorState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 80px 24px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.errorState svg {
+    color: var(--status-danger);
+    opacity: 0.7;
+}
+
+.errorState h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.errorState p {
+    font-size: 13px;
+    margin: 0;
 }
 
 /* ── Skeleton ────────────────────────────────────────────────────────────────*/
-.skeleton {
-    background: linear-gradient(90deg, var(--border) 25%, rgba(255, 255, 255, .04) 50%, var(--border) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.4s infinite;
-    border-radius: var(--radius-sm);
-}
-
 @keyframes shimmer {
     to {
         background-position: -200% 0;
     }
+}
+
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--border) 25%,
+        rgba(255, 255, 255, 0.04) 50%,
+        var(--border) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: var(--radius-sm);
 }
 
 .skeletonGrid {
@@ -471,12 +757,12 @@
 }
 
 .skeletonCard {
-    height: 120px;
+    height: 124px;
     border-radius: var(--radius);
 }
 
 .skeletonChart {
-    height: 280px;
+    height: 290px;
     border-radius: var(--radius);
 }
 
@@ -491,38 +777,10 @@
     border-radius: var(--radius);
 }
 
-/* ── Empty / error ───────────────────────────────────────────────────────────*/
-.errorMsg {
-    color: var(--status-danger);
-    font-size: 14px;
-    text-align: center;
-    padding: 60px;
-}
-
-/* ── Buttons ─────────────────────────────────────────────────────────────────*/
-.btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 14px;
-    border-radius: var(--radius-sm);
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    border: none;
-    text-decoration: none;
-    transition: all .15s;
-    white-space: nowrap;
-}
-
-.btnGhost {
-    background: transparent;
-    color: var(--text-secondary);
-    border: 1px solid var(--border);
-}
-
-.btnGhost:hover {
-    background: rgba(var(--glow-rgb), .05);
+/* FIX: added missing skeletonFull for bottom card */
+.skeletonFull {
+    height: 200px;
+    border-radius: var(--radius);
 }
 
 /* ── Responsive ──────────────────────────────────────────────────────────────*/
@@ -538,18 +796,39 @@
     .row3 {
         grid-template-columns: 1fr 1fr;
     }
+
+    .skeletonRow {
+        grid-template-columns: 1fr;
+    }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 640px) {
+    .page {
+        padding: 16px 16px 40px;
+    }
+
     .statsGrid {
         grid-template-columns: 1fr 1fr;
     }
 
-    .row3 {
-        grid-template-columns: 1fr;
+    .statValue {
+        font-size: 24px;
     }
 
-    .page {
-        padding: 16px;
+    .header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .headerActions {
+        justify-content: flex-start;
+    }
+
+    .skeletonGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .row3 {
+        grid-template-columns: 1fr;
     }
 }

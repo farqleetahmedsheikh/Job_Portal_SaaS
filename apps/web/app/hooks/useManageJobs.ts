@@ -13,6 +13,7 @@ export function useManageJobs() {
   const [filter, setFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -38,32 +39,42 @@ export function useManageJobs() {
 
   // ── Toggle active ↔ paused — optimistic ──────────────────────────────────
   const toggleStatus = useCallback(
-    (id: string) => {
-      setJobs((prev) =>
-        prev.map((j) =>
-          j.id === id
-            ? {
-                ...j,
-                status:
-                  j.status === "active" ? "paused" : ("active" as JobStatus),
-              }
-            : j,
-        ),
-      );
+    async (id: string, newStatus: JobStatus) => {
       const job = jobs.find((j) => j.id === id);
-      const next = job?.status === "active" ? "paused" : "active";
-      api(`${API_BASE}/jobs/${id}/status`, "PATCH", { status: next }).catch(
-        () => {
-          // rollback
-          setJobs((prev) =>
-            prev.map((j) => (j.id === id ? { ...j, status: job!.status } : j)),
-          );
-        },
+      if (!job) return;
+
+      // Block expired → active without billing
+      if (job.status === "expired" && newStatus === "active") {
+        setShowUpgradeModal(true);
+        return;
+      }
+
+      // Confirm closing a job with late-stage applicants
+      if (newStatus === "closed" && (job.interviewCount ?? 0) > 0) {
+        if (
+          !confirm(
+            `This job has ${job.interviewCount} applicants in the interview stage. Close anyway?`,
+          )
+        )
+          return;
+      }
+
+      // Optimistic update + rollback
+      setJobs((prev) =>
+        prev.map((j) => (j.id === id ? { ...j, status: newStatus } : j)),
       );
+      try {
+        await api(`${API_BASE}/jobs/${id}/status`, "PATCH", {
+          status: newStatus,
+        });
+      } catch {
+        setJobs((prev) =>
+          prev.map((j) => (j.id === id ? { ...j, status: job.status } : j)),
+        );
+      }
     },
     [jobs],
   );
-
   // ── Duplicate ─────────────────────────────────────────────────────────────
   const duplicateJob = useCallback(async (id: string) => {
     try {

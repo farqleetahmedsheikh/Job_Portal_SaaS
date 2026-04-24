@@ -6,6 +6,13 @@ import { api } from "../lib";
 import { API_BASE } from "../constants";
 import type { Company, CompanyForm } from "../types/company.types";
 
+// ── Perk type — exported so page.tsx can import it ────────────────────────────
+// FIX: was string[] — API returns {id, perk}[] objects
+export interface Perk {
+  id: string;
+  perk: string;
+}
+
 function buildForm(c: Company): CompanyForm {
   return {
     companyName: c.companyName ?? "",
@@ -30,13 +37,13 @@ async function uploadImage(url: string, file: File): Promise<Company> {
 
   const res = await fetch(url, {
     method: "PATCH",
-    credentials: "include", // httpOnly JWT cookie
-    body: formData, // browser sets Content-Type + boundary automatically
+    credentials: "include",
+    body: formData,
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err?.message ?? "Upload failed");
+    throw new Error((err as { message?: string })?.message ?? "Upload failed");
   }
 
   return res.json() as Promise<Company>;
@@ -55,16 +62,14 @@ export function useCompany() {
   const [form, setForm] = useState<CompanyForm | null>(null);
   const [draft, setDraft] = useState<CompanyForm | null>(null);
 
-  // Perks
-  const [perks, setPerks] = useState<string[]>([]);
+  // FIX: was string[] — API returns {id, perk}[] objects
+  const [perks, setPerks] = useState<Perk[]>([]);
   const [perkInput, setPerkInput] = useState("");
   const [perkSaving, setPerkSaving] = useState(false);
 
-  // Logo upload
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoError, setLogoError] = useState<string | null>(null);
 
-  // Cover upload
   const [coverUploading, setCoverUploading] = useState(false);
   const [coverError, setCoverError] = useState<string | null>(null);
 
@@ -79,13 +84,16 @@ export function useCompany() {
         if (c) {
           setForm(buildForm(c));
           setDraft(buildForm(c));
-          setPerks(c.perks ?? []);
+          // FIX: c.perks from API is {id, perk}[] — cast correctly
+          setPerks((c.perks as unknown as Perk[]) ?? []);
         }
         setLoading(false);
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         if (!cancelled) {
-          setError(err.message);
+          setError(
+            err instanceof Error ? err.message : "Failed to load company",
+          );
           setLoading(false);
         }
       });
@@ -204,23 +212,28 @@ export function useCompany() {
   );
 
   // ── Perks ─────────────────────────────────────────────────────────────────
+
+  // FIX: was pushing raw string — now creates a proper Perk object
   const addPerk = useCallback(() => {
-    const p = perkInput.trim();
-    if (!p || perks.includes(p) || perks.length >= 20) return;
-    setPerks((prev) => [...prev, p]);
+    const text = perkInput.trim();
+    if (!text || perks.some((p) => p.perk === text) || perks.length >= 20)
+      return;
+    setPerks((prev) => [...prev, { id: `temp-${Date.now()}`, perk: text }]);
     setPerkInput("");
   }, [perkInput, perks]);
 
-  const removePerk = useCallback((p: string) => {
-    setPerks((prev) => prev.filter((x) => x !== p));
+  // FIX: was (p: string) filtering by string equality — now takes Perk, filters by id
+  const removePerk = useCallback((perk: Perk) => {
+    setPerks((prev) => prev.filter((p) => p.id !== perk.id));
   }, []);
 
+  // FIX: backend receives string[] — map Perk objects to their perk strings
   const savePerks = useCallback(async () => {
     if (!company) return;
     setPerkSaving(true);
     try {
       await api(`${API_BASE}/companies/${company.id}/perks`, "PATCH", {
-        perks,
+        perks: perks.map((p) => p.perk),
       });
     } catch (err) {
       setServerError(
@@ -245,15 +258,12 @@ export function useCompany() {
     handleEdit,
     handleCancel,
     handleSave,
-    // logo
     logoUploading,
     logoError,
     handleLogoUpload,
-    // cover
     coverUploading,
     coverError,
     handleCoverUpload,
-    // perks
     perks,
     perkInput,
     setPerkInput,

@@ -3,6 +3,7 @@
 export type AppStatus =
   | "applied"
   | "reviewing"
+  | "shortlisted"
   | "interview"
   | "offered"
   | "rejected"
@@ -16,7 +17,7 @@ export interface Application {
   id: string;
   role: string;
   company: string;
-  logo: string
+  logo: string;
   logoUrl: string; // initials fallback
   location: string;
   type: JobType;

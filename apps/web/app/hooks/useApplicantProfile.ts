@@ -1,6 +1,6 @@
 /** @format */
 import { useState, useEffect, useCallback } from "react";
-import { api } from "../lib/api";
+import { api } from "../lib/index";
 import { API_BASE } from "../constants";
 import { AppStatus } from "../types/applicants.types";
 

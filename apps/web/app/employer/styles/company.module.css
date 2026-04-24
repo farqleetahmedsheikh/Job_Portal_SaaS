@@ -1,124 +1,147 @@
 /** @format */
 
-/* ── Page shell ──────────────────────────────────────────────────────────────*/
+/* ── Page ────────────────────────────────────────────────────────────────────*/
 .page {
     max-width: 860px;
     margin: 0 auto;
-    padding: 28px 24px;
+    padding: 28px 24px 56px;
     display: flex;
     flex-direction: column;
-    gap: 18px;
-}
-
-.page-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
     gap: 16px;
-    flex-wrap: wrap;
-}
-
-.page-title {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0 0 4px;
-    letter-spacing: -.4px;
-}
-
-.page-subtitle {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin: 0;
-}
-
-.form-actions {
-    display: flex;
-    gap: 10px;
-    flex-shrink: 0;
 }
 
 /* ── Banners ─────────────────────────────────────────────────────────────────*/
-.save-banner {
+/* FIX: renamed from banner-error (which didn't exist) to bannerError */
+.bannerError {
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 10px 16px;
-    background: rgba(52, 217, 179, .1);
-    border: 1px solid rgba(52, 217, 179, .25);
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--status-success);
-}
-
-.error-banner {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    background: rgba(244, 63, 94, .08);
-    border: 1px solid rgba(244, 63, 94, .25);
+    background: rgba(244, 63, 94, 0.08);
+    border: 1px solid rgba(244, 63, 94, 0.22);
     border-radius: var(--radius-sm);
     font-size: 13px;
     font-weight: 500;
     color: var(--status-danger);
 }
 
-.errorMsg {
-    color: var(--status-danger);
-    font-size: 14px;
-    text-align: center;
-    padding: 40px;
-}
-
-/* ── Card ────────────────────────────────────────────────────────────────────*/
+/* ── Card base ───────────────────────────────────────────────────────────────*/
 .card {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     overflow: hidden;
+    transition: border-color 0.2s;
 }
 
-.card-header {
+/* ── Verified card treatment ─────────────────────────────────────────────────*/
+/* Glowing border for verified companies */
+.cardVerified {
+    border-color: rgba(52, 217, 179, 0.35);
+    box-shadow: 0 0 0 1px rgba(52, 217, 179, 0.12), 0 4px 24px rgba(52, 217, 179, 0.06);
+}
+
+/* Animated iridescent shimmer strip at top of verified card */
+.verifiedStrip {
+    height: 3px;
+    background: linear-gradient(
+        90deg,
+        #34d9b3 0%,
+        #4f8ef7 35%,
+        #a78bfa 60%,
+        #34d9b3 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmerStrip 3s linear infinite;
+}
+
+@keyframes shimmerStrip {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ── Card header / body ──────────────────────────────────────────────────────*/
+.cardHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
     padding: 18px 20px 0;
+    gap: 12px;
 }
 
-.card-title {
+.cardTitle {
     font-size: 14px;
     font-weight: 700;
     color: var(--text-primary);
-    margin: 0 0 4px;
+    margin: 0 0 3px;
 }
 
-.card-subtitle {
+.cardSubtitle {
     font-size: 12px;
     color: var(--text-muted);
-    margin: 0 0 4px;
+    margin: 0;
 }
 
-.card-body {
+.cardBody {
     padding: 18px 20px 20px;
 }
 
-/* ── Cover + Logo header card ────────────────────────────────────────────────*/
+/* ── Cover ───────────────────────────────────────────────────────────────────*/
 .coverWrap {
     position: relative;
-    height: 140px;
+    height: 160px;
     overflow: hidden;
+    background: var(--bg-app);
 }
 
 .cover {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: opacity 0.2s;
 }
 
 .coverPlaceholder {
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, rgba(var(--glow-rgb), .2) 0%, rgba(var(--glow-rgb), .06) 50%, var(--bg-card) 100%);
-    background-size: cover;
+    background: linear-gradient(
+        135deg,
+        rgba(var(--glow-rgb), 0.18) 0%,
+        rgba(var(--glow-rgb), 0.06) 50%,
+        var(--bg-card) 100%
+    );
+}
+
+/* Subtle verified watermark overlay on cover */
+.coverVerifiedOverlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(52, 217, 179, 0.08) 0%,
+        transparent 60%
+    );
+    pointer-events: none;
+}
+
+/* Verified badge on cover photo */
+.coverVerifiedBadge {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px 4px 8px;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(52, 217, 179, 0.4);
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #34d9b3;
+    letter-spacing: 0.2px;
 }
 
 .coverEditBtn {
@@ -129,81 +152,167 @@
     align-items: center;
     gap: 6px;
     padding: 5px 12px;
-    background: rgba(0, 0, 0, .45);
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     color: #fff;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: var(--radius-sm);
     font-size: 12px;
+    font-weight: 500;
     cursor: pointer;
-    backdrop-filter: blur(4px);
+    transition: background 0.15s;
 }
 
+.coverEditBtn:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.65);
+}
+
+.coverEditBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* ── Logo row ────────────────────────────────────────────────────────────────*/
 .logoRow {
     display: flex;
     align-items: flex-end;
-    gap: 14px;
-    padding: 0 20px 18px;
-    margin-top: -28px;
+    gap: 16px;
+    padding: 0 20px 20px;
+    margin-top: -32px;
+    flex-wrap: wrap;
 }
 
+/* Logo wrapper — position:relative needed for ring + edit btn */
 .logoWrap {
     position: relative;
     flex-shrink: 0;
 }
 
 .logo {
-    width: 64px;
-    height: 64px;
-    border-radius: var(--radius-sm);
+    width: 72px;
+    height: 72px;
+    border-radius: 14px;
     object-fit: cover;
     border: 3px solid var(--bg-card);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+    display: block;
+    transition: opacity 0.2s;
 }
 
 .logoFallback {
-    width: 64px;
-    height: 64px;
-    border-radius: var(--radius-sm);
-    background: linear-gradient(135deg, rgba(var(--glow-rgb), .25), rgba(var(--glow-rgb), .06));
+    width: 72px;
+    height: 72px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(var(--glow-rgb), 0.22), rgba(var(--glow-rgb), 0.07));
     border: 3px solid var(--bg-card);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
+    font-size: 26px;
     font-weight: 800;
-    color: var(--color-secondary);
-    box-shadow: var(--shadow-md);
+    color: #4f8ef7;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Verified ring around logo */
+.logoVerified .logo,
+.logoVerified .logoFallback {
+    border-color: transparent;
+}
+
+.verifiedRing {
+    position: absolute;
+    inset: -4px;
+    border-radius: 17px;
+    background: linear-gradient(135deg, #34d9b3, #4f8ef7, #a78bfa, #34d9b3);
+    background-size: 300% 300%;
+    animation: rotateRing 4s linear infinite;
+    z-index: -1;
+}
+
+/* Mask the ring so only the border shows */
+.logoVerified {
+    position: relative;
+    z-index: 0;
+}
+
+.logoVerified::before {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: 17px;
+    background: linear-gradient(135deg, #34d9b3, #4f8ef7, #a78bfa, #34d9b3);
+    background-size: 300% 300%;
+    animation: rotateRing 4s linear infinite;
+    z-index: -1;
+}
+
+.logoVerified::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    background: var(--bg-card);
+    z-index: -1;
+    /* slightly inset to reveal ~3px of the gradient ring */
+    margin: 0;
+    transform: scale(1.045);
+    transform-origin: center;
+}
+
+@keyframes rotateRing {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 .logoEditBtn {
     position: absolute;
-    bottom: -4px;
-    right: -4px;
-    width: 22px;
-    height: 22px;
+    bottom: -5px;
+    right: -5px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    background: var(--color-secondary);
+    background: #4f8ef7;
     border: 2px solid var(--bg-card);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     color: #fff;
+    transition: background 0.15s, transform 0.15s;
+    z-index: 2;
 }
 
+.logoEditBtn:hover:not(:disabled) {
+    background: #3b7de8;
+    transform: scale(1.1);
+}
+
+.logoEditBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* ── Company meta ────────────────────────────────────────────────────────────*/
 .logoMeta {
+    flex: 1;
+    min-width: 0;
     padding-bottom: 4px;
 }
 
 .companyName {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 800;
     color: var(--text-primary);
-    margin: 0 0 4px;
+    margin: 0 0 5px;
     display: flex;
     align-items: center;
     gap: 8px;
-    letter-spacing: -.3px;
+    flex-wrap: wrap;
+    letter-spacing: -0.35px;
+    line-height: 1.2;
 }
 
 .companySubtitle {
@@ -212,25 +321,76 @@
     margin: 0;
 }
 
+/* Verified inline badge (next to name) */
 .verifiedBadge {
     display: inline-flex;
     align-items: center;
     gap: 4px;
     font-size: 11px;
     font-weight: 700;
-    color: var(--status-success);
-    padding: 3px 10px;
-    background: rgba(52, 217, 179, .1);
-    border: 1px solid rgba(52, 217, 179, .2);
+    color: #34d9b3;
+    padding: 3px 9px 3px 7px;
+    background: rgba(52, 217, 179, 0.1);
+    border: 1px solid rgba(52, 217, 179, 0.25);
     border-radius: 99px;
     white-space: nowrap;
+    letter-spacing: 0.2px;
+}
+
+/* ── Profile completeness ────────────────────────────────────────────────────*/
+.completenessWrap {
+    flex-shrink: 0;
+    width: 140px;
+    padding-bottom: 6px;
+    align-self: flex-end;
+}
+
+.completenessLabel {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+}
+
+.completenessLabel strong {
+    margin-left: auto;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.completenessTrack {
+    height: 4px;
+    background: rgba(var(--glow-rgb), 0.1);
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.completenessFill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Color-coded by level */
+.completenessFill[data-level="low"] {
+    background: var(--status-danger);
+}
+
+.completenessFill[data-level="mid"] {
+    background: var(--status-warning);
+}
+
+.completenessFill[data-level="high"] {
+    background: #34d9b3;
 }
 
 /* ── Form grid ───────────────────────────────────────────────────────────────*/
-.form-grid {
+.formGrid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: 18px;
 }
 
 .field {
@@ -239,7 +399,8 @@
     gap: 5px;
 }
 
-.span-2 {
+/* FIX: renamed from span-2 (hyphen breaks camelCase access) to spanTwo */
+.spanTwo {
     grid-column: 1 / -1;
 }
 
@@ -247,15 +408,38 @@
     display: flex;
     align-items: center;
     gap: 5px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.labelIcon {
+    display: flex;
+    align-items: center;
+    opacity: 0.7;
 }
 
 .hint {
     font-size: 11px;
     color: var(--text-muted);
     margin: 0;
+    line-height: 1.4;
+}
+
+/* Input wrapper for char count */
+.inputWrap {
+    position: relative;
+}
+
+.charCount {
+    position: absolute;
+    bottom: 8px;
+    right: 10px;
+    font-size: 10px;
+    color: var(--text-muted);
+    pointer-events: none;
 }
 
 .input,
@@ -267,14 +451,16 @@
     font-size: 13px;
     color: var(--text-primary);
     outline: none;
-    transition: border-color .15s;
+    transition: border-color 0.15s, box-shadow 0.15s;
     width: 100%;
     box-sizing: border-box;
+    font-family: inherit;
 }
 
 .input:focus,
 .select:focus {
-    border-color: rgba(var(--glow-rgb), .4);
+    border-color: rgba(var(--glow-rgb), 0.45);
+    box-shadow: 0 0 0 3px rgba(var(--glow-rgb), 0.08);
 }
 
 .input::placeholder {
@@ -291,39 +477,58 @@
     outline: none;
     resize: vertical;
     font-family: inherit;
-    line-height: 1.6;
+    line-height: 1.65;
     width: 100%;
     box-sizing: border-box;
-    transition: border-color .15s;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    /* Space for charCount */
+    padding-bottom: 24px;
 }
 
 .textarea:focus {
-    border-color: rgba(var(--glow-rgb), .4);
+    border-color: rgba(var(--glow-rgb), 0.45);
+    box-shadow: 0 0 0 3px rgba(var(--glow-rgb), 0.08);
 }
 
 .textarea::placeholder {
     color: var(--text-muted);
 }
 
+/* Read-only value display */
 .value {
     font-size: 13px;
     color: var(--text-primary);
-    line-height: 1.5;
+    line-height: 1.55;
     padding: 2px 0;
+    word-break: break-word;
 }
 
-.empty {
+/* FIX: renamed from .empty to .valueEmpty — .empty was defined twice, second
+   definition (the flex centered empty state) was overriding this one */
+.valueEmpty {
     color: var(--text-muted);
     font-style: italic;
 }
 
 /* ── Perks ───────────────────────────────────────────────────────────────────*/
+.perkCount {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 3px 8px;
+    background: rgba(var(--glow-rgb), 0.07);
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    align-self: flex-start;
+}
+
 .perkTags {
     display: flex;
     flex-wrap: wrap;
     gap: 7px;
     margin-bottom: 14px;
-    min-height: 32px;
+    min-height: 34px;
+    align-items: flex-start;
 }
 
 .perkTag {
@@ -332,11 +537,16 @@
     gap: 5px;
     font-size: 12px;
     font-weight: 500;
-    padding: 4px 10px;
+    padding: 5px 6px 5px 11px;
     border-radius: 99px;
-    background: rgba(var(--glow-rgb), .1);
-    color: var(--color-secondary);
-    border: 1px solid rgba(var(--glow-rgb), .2);
+    background: rgba(var(--glow-rgb), 0.09);
+    color: #4f8ef7;
+    border: 1px solid rgba(var(--glow-rgb), 0.18);
+    transition: background 0.12s;
+}
+
+.perkTag:hover {
+    background: rgba(var(--glow-rgb), 0.14);
 }
 
 .perkRemove {
@@ -344,60 +554,105 @@
     border: none;
     cursor: pointer;
     color: inherit;
-    opacity: .6;
+    opacity: 0.5;
     display: flex;
     align-items: center;
-    padding: 0;
+    padding: 2px;
     line-height: 1;
+    border-radius: 50%;
+    transition: opacity 0.12s, color 0.12s, background 0.12s;
 }
 
 .perkRemove:hover {
     opacity: 1;
     color: var(--status-danger);
+    background: rgba(244, 63, 94, 0.1);
+}
+
+/* FIX: renamed from .empty to .perkEmpty — avoids conflict with .emptyState */
+.perkEmpty {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 6px 0;
 }
 
 .perkInputRow {
     display: flex;
     gap: 8px;
+    margin-bottom: 12px;
 }
 
 .perkInputRow .input {
     flex: 1;
 }
 
-/* ── Empty / skeleton ────────────────────────────────────────────────────────*/
-.empty {
+.btnSavePerks {
+    margin-top: 4px;
+}
+
+/* ── Empty / error full-page states ─────────────────────────────────────────*/
+/* FIX: renamed from .empty to .emptyState — the old .empty was defined twice
+   and the second definition (italic muted text) silently overrode this one */
+.emptyState {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    padding: 60px 24px;
+    gap: 10px;
+    padding: 80px 24px;
     color: var(--text-muted);
     text-align: center;
 }
 
-.empty p {
-    font-size: 15px;
+.emptyState p {
+    font-size: 16px;
     font-weight: 600;
     color: var(--text-secondary);
     margin: 0;
 }
 
-.empty span {
+.emptyState span {
     font-size: 13px;
+    max-width: 280px;
+    line-height: 1.5;
 }
 
+.errorState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 80px 24px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.errorState svg {
+    color: var(--status-danger);
+    opacity: 0.75;
+}
+
+.errorState p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* ── Skeleton ────────────────────────────────────────────────────────────────*/
 .skeleton {
-    background: linear-gradient(90deg, var(--border) 25%, rgba(255, 255, 255, .04) 50%, var(--border) 75%);
+    background: linear-gradient(
+        90deg,
+        var(--border) 25%,
+        rgba(255, 255, 255, 0.04) 50%,
+        var(--border) 75%
+    );
     background-size: 200% 100%;
     animation: shimmer 1.4s infinite;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius);
 }
 
 @keyframes shimmer {
-    to {
-        background-position: -200% 0;
-    }
+    to { background-position: -200% 0; }
 }
 
 /* ── Buttons ─────────────────────────────────────────────────────────────────*/
@@ -413,71 +668,98 @@
     cursor: pointer;
     border: none;
     text-decoration: none;
-    transition: all .15s;
+    transition: all 0.15s;
     white-space: nowrap;
+    font-family: inherit;
+    line-height: 1;
 }
 
-.btn-primary {
-    background: var(--color-secondary);
+.btnPrimary {
+    background: #4f8ef7;
     color: #fff;
+    border: 1px solid transparent;
 }
 
-.btn-primary:hover {
-    filter: brightness(1.08);
+.btnPrimary:hover:not(:disabled) {
+    background: #3b7de8;
 }
 
-.btn-primary:disabled {
-    opacity: .6;
+.btnPrimary:disabled {
+    opacity: 0.6;
     cursor: not-allowed;
 }
 
-.btn-ghost {
+.btnGhost {
     background: transparent;
     color: var(--text-secondary);
     border: 1px solid var(--border);
 }
 
-.btn-ghost:hover {
-    background: rgba(255, 255, 255, .04);
+.btnGhost:hover:not(:disabled) {
+    background: rgba(var(--glow-rgb), 0.05);
+    color: var(--text-primary);
 }
 
-.btn-ghost:disabled {
-    opacity: .5;
+.btnGhost:disabled {
+    opacity: 0.45;
     cursor: not-allowed;
 }
 
-/* ── Spinner ─────────────────────────────────────────────────────────────────*/
+/* ── Spinner / spin ──────────────────────────────────────────────────────────*/
 .spinner {
     width: 13px;
     height: 13px;
-    border: 2px solid rgba(255, 255, 255, .3);
+    border: 2px solid rgba(255, 255, 255, 0.3);
     border-top-color: #fff;
     border-radius: 50%;
-    animation: spin .6s linear infinite;
+    animation: spinAnim 0.6s linear infinite;
     display: inline-block;
+    flex-shrink: 0;
 }
 
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+/* FIX: .spin was missing — only .spinner existed. Loader icons had no animation */
+.spin {
+    animation: spinAnim 0.7s linear infinite;
+}
+
+@keyframes spinAnim {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Uploading state ─────────────────────────────────────────────────────────*/
+.uploading {
+    opacity: 0.55;
 }
 
 /* ── Responsive ──────────────────────────────────────────────────────────────*/
 @media (max-width: 640px) {
-    .form-grid {
+    .page {
+        padding: 16px 16px 48px;
+    }
+
+    .formGrid {
         grid-template-columns: 1fr;
     }
 
-    .span-2 {
+    .spanTwo {
         grid-column: 1;
-    }
-
-    .page-header {
-        flex-direction: column;
     }
 
     .logoRow {
         flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .completenessWrap {
+        width: 100%;
+        order: 3;
+    }
+
+    .coverWrap {
+        height: 120px;
+    }
+
+    .companyName {
+        font-size: 17px;
     }
 }

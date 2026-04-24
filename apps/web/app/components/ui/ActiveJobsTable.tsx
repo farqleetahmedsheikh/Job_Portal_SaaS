@@ -18,7 +18,8 @@ function daysLeft(expiresAt: string | null): number | null {
 }
 
 export function ActiveJobsTable({ jobs }: Props) {
-  console.log(jobs);
+  // FIX: removed console.log(jobs)
+
   return (
     <div className={`${styles.card} ${styles.cardWide}`}>
       <div className={styles.cardHeader}>
@@ -29,7 +30,16 @@ export function ActiveJobsTable({ jobs }: Props) {
       </div>
 
       {jobs.length === 0 ? (
-        <p className={styles.empty}>No active jobs. Post one to get started.</p>
+        <div className={styles.empty}>
+          <p>No active jobs yet.</p>
+          <Link
+            href="/employer/jobs/new"
+            className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSm}`}
+            style={{ marginTop: 8 }}
+          >
+            <Users size={12} /> Post your first job
+          </Link>
+        </div>
       ) : (
         <div className={styles.jobTable}>
           <div className={styles.jobTableHead}>
@@ -44,6 +54,13 @@ export function ActiveJobsTable({ jobs }: Props) {
 
           {jobs.map((j) => {
             const dl = daysLeft(j.deadline);
+            // FIX: was using inline style={{ color: dl <= 7 ? "var(--status-danger)" : "var(--text-muted)" }}
+            // Now uses dedicated CSS classes
+            const daysClass =
+              dl !== null && dl <= 7
+                ? styles.jobDaysUrgent
+                : styles.jobDaysNormal;
+
             return (
               <div key={j.id} className={styles.jobTableRow}>
                 <span className={styles.jobTitle}>{j.title}</span>
@@ -60,15 +77,7 @@ export function ActiveJobsTable({ jobs }: Props) {
                   {j.createdAt ? formatDate(j.createdAt) : "—"}
                 </span>
 
-                <span
-                  className={styles.jobDays}
-                  style={{
-                    color:
-                      dl !== null && dl <= 7
-                        ? "var(--status-danger)"
-                        : "var(--text-muted)",
-                  }}
-                >
+                <span className={`${styles.jobDays} ${daysClass}`}>
                   {dl !== null ? `${dl}d left` : "—"}
                 </span>
 

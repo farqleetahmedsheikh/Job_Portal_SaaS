@@ -389,6 +389,219 @@
     animation: slideIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* ── Section list (education / experience) ── */
+.section-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.section-item:hover {
+  border-color: rgba(var(--glow-rgb, 79, 70, 229), 0.25);
+}
+
+/* ── View mode ── */
+.section-view {
+  display: flex;
+  gap: 14px;
+  padding: 16px 20px;
+  align-items: flex-start;
+}
+
+.section-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(var(--glow-rgb, 79, 70, 229), 0.1);
+  color: var(--color-secondary);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.section-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.section-primary {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.section-secondary {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.section-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.section-desc {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+/* ── Edit mode ── */
+.section-form {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.section-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-form-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.remove-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid rgba(244, 63, 94, 0.2);
+  background: transparent;
+  color: #f43f5e;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.remove-btn:hover {
+  background: rgba(244, 63, 94, 0.08);
+}
+
+/* ── Form grid inside section ── */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.col-span-2 {
+  grid-column: span 2;
+}
+
+/* ── Checkbox row ── */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--color-secondary);
+  cursor: pointer;
+}
+
+/* ── Add button ── */
+.add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 9px;
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+  justify-content: center;
+}
+
+.add-btn:hover {
+  border-color: var(--color-secondary);
+  color: var(--color-secondary);
+  background: rgba(var(--glow-rgb, 79, 70, 229), 0.04);
+}
+
+/* ── Empty note ── */
+.empty-note {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 8px 0;
+}
+
+/* ── Skill chips inside experience view ── */
+.skill-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.skill-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 500;
+  background: rgba(var(--glow-rgb, 79, 70, 229), 0.08);
+  color: var(--color-secondary);
+  border: 1px solid rgba(var(--glow-rgb, 79, 70, 229), 0.15);
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .col-span-2 {
+    grid-column: span 1;
+  }
+
+  .section-view {
+    padding: 14px 16px;
+  }
+
+  .section-form {
+    padding: 14px 16px;
+  }
+}
+
 @keyframes slideIn {
     from {
         opacity: 0;

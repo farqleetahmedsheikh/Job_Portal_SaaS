@@ -11,13 +11,13 @@
 .title {
     font-size: 22px;
     font-weight: 500;
-    color: var(--color-text-primary);
+    color: var(--text-primary);
     margin: 0 0 4px;
 }
 
 .subtitle {
     font-size: 14px;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     margin: 0;
 }
 
@@ -27,7 +27,7 @@
     align-items: center;
     gap: 8px;
     background: var(--color-background-danger);
-    color: var(--color-text-danger);
+    color: var(--status-danger);
     border: 1px solid var(--color-border-danger);
     border-radius: var(--border-radius-md);
     padding: 12px 16px;
@@ -37,7 +37,7 @@
 
 /* ── Skeleton ── */
 .skeleton {
-    background: var(--color-background-secondary);
+    background: var(--bg-card);
     animation: shimmer 1.4s infinite;
 }
 
@@ -59,8 +59,8 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 24px;
-    background: var(--color-background-secondary);
-    border: 1px solid var(--color-border-tertiary);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: var(--border-radius-lg);
     padding: 20px 24px;
     margin-bottom: 24px;
@@ -79,7 +79,7 @@
     gap: 6px;
     font-size: 16px;
     font-weight: 500;
-    color: var(--color-text-primary);
+    color: var(--text-primary);
 }
 
 .current-renews {
@@ -87,13 +87,13 @@
     align-items: center;
     gap: 4px;
     font-size: 12px;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     margin: 0;
 }
 
 .verified-badge {
     background: var(--color-background-success);
-    color: var(--color-text-success);
+    color: var(--status-success);
     border: 1px solid var(--color-border-success);
     border-radius: 20px;
     font-size: 11px;
@@ -119,43 +119,43 @@
     align-items: center;
     gap: 6px;
     font-size: 12px;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
 }
 
 .quota-count {
     margin-left: auto;
     font-weight: 500;
-    color: var(--color-text-primary);
+    color: var(--text-primary);
 }
 
 .quota-danger {
-    color: var(--color-text-danger) !important;
+    color: var(--status-danger) !important;
 }
 
 .quota-warn {
-    color: var(--color-text-warning) !important;
+    color: var(--status-warning) !important;
 }
 
 .quota-track {
     height: 5px;
-    background: var(--color-border-tertiary);
+    background: var(--border);
     border-radius: 99px;
     overflow: hidden;
 }
 
 .quota-fill {
     height: 100%;
-    background: var(--color-text-info);
+    background: var(--status-info);
     border-radius: 99px;
     transition: width 0.3s ease;
 }
 
 .quota-fill-danger {
-    background: var(--color-text-danger);
+    background: var(--status-danger);
 }
 
 .quota-fill-warn {
-    background: var(--color-text-warning);
+    background: var(--status-warning);
 }
 
 /* ── Tabs ── */
@@ -176,18 +176,18 @@
     cursor: pointer;
     border: none;
     background: transparent;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     transition: all 0.15s;
 }
 
 .tab:hover {
-    background: var(--color-background-secondary);
-    color: var(--color-text-primary);
+    background: var(--bg-card);
+    color: var(--text-primary);
 }
 
 .tab-active {
-    background: var(--color-background-secondary) !important;
-    color: var(--color-text-primary) !important;
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
 }
 
 /* ══════════════════════════════════════════════
@@ -202,8 +202,8 @@
 
 .plan-card {
     position: relative;
-    background: var(--color-background-primary);
-    border: 1.5px solid var(--color-border-tertiary);
+    background: var(--bg-card);
+    border: 1.5px solid var(--border);
     border-radius: 16px;
     padding: 0;
     display: flex;
@@ -217,7 +217,7 @@
 }
 
 .plan-card:hover {
-    border-color: var(--color-border-secondary);
+    border-color: var(--border);
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
@@ -227,9 +227,9 @@
     position: absolute;
     top: 14px;
     right: 14px;
-    background: var(--color-background-info);
-    color: var(--color-text-info);
-    border: 1px solid var(--color-border-info);
+    background: var(--status-info);
+    color: var(--text-primary);
+    border: 1px solid var(--status-info);
     border-radius: 20px;
     font-size: 10px;
     font-weight: 600;
@@ -242,20 +242,20 @@
 
 /* ── Highlighted (most popular) card ── */
 .plan-card-highlight {
-    border-color: var(--color-border-info) !important;
-    box-shadow: 0 0 0 1px var(--color-border-info);
+    border-color: var(--status-info) !important;
+    box-shadow: 0 0 0 1px var(--status-info);
 }
 
 .plan-card-highlight:hover {
     box-shadow:
         0 8px 28px rgba(0, 0, 0, 0.12),
-        0 0 0 1px var(--color-border-info);
+        0 0 0 1px var(--status-info);
 }
 
 /* ── Current plan card ── */
 .plan-card-current {
-    border-color: var(--color-border-success) !important;
-    box-shadow: 0 0 0 1px var(--color-border-success);
+    border-color: var(--status-success) !important;
+    box-shadow: 0 0 0 1px var(--status-success);
 }
 
 /* ── Card top band (colored accent) ── */
@@ -263,12 +263,12 @@
     content: "";
     display: block;
     height: 4px;
-    background: var(--color-border-tertiary);
+    background: var(--color-accent);
     transition: background 0.2s;
 }
 
 .plan-card-highlight::before {
-    background: var(--color-border-info);
+    background: var(--status-info);
 }
 
 .plan-card-current::before {
@@ -288,7 +288,7 @@
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
 }
 
 /* ── Price block ── */
@@ -302,7 +302,7 @@
 .plan-price-currency {
     font-size: 14px;
     font-weight: 500;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     align-self: flex-start;
     padding-top: 4px;
 }
@@ -310,20 +310,20 @@
 .plan-price-amount {
     font-size: 36px;
     font-weight: 600;
-    color: var(--color-text-primary);
+    color: var(--text-primary);
     letter-spacing: -0.02em;
 }
 
 .plan-price-period {
     font-size: 13px;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     margin-left: 2px;
 }
 
 /* ── Divider ── */
 .plan-divider {
     height: 1px;
-    background: var(--color-border-tertiary);
+    background: var(--color-accent);
     margin: 16px 20px 0;
 }
 
@@ -343,12 +343,12 @@
     align-items: flex-start;
     gap: 8px;
     font-size: 12.5px;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     line-height: 1.4;
 }
 
 .plan-features li svg {
-    color: var(--color-text-success);
+    color: var(--status-success);
     flex-shrink: 0;
     margin-top: 1px;
 }
@@ -388,26 +388,26 @@
 
 .plan-btn-current {
     background: var(--color-background-success);
-    color: var(--color-text-success);
+    color: var(--status-success);
 }
 
 .plan-btn-upgrade {
-    background: var(--color-text-primary);
-    color: var(--color-background-primary);
+    background: var(--text-primary);
+    color: var(--bg-card);
 }
 
 .plan-btn-downgrade {
     background: transparent;
-    color: var(--color-text-secondary);
-    border: 1.5px solid var(--color-border-tertiary);
+    color: var(--text-secondary);
+    border: 1.5px solid var(--color-accent);
 }
 
 /* ── Billing history ── */
 .history-table {
-    background: var(--color-background-secondary);
+    background: var(--bg-card);
     border-radius: var(--border-radius-lg);
     overflow: hidden;
-    border: 1px solid var(--color-border-tertiary);
+    border: 1px solid var(--color-accent);
 }
 
 .table {
@@ -420,15 +420,15 @@
     padding: 12px 16px;
     text-align: left;
     font-weight: 500;
-    color: var(--color-text-secondary);
-    border-bottom: 1px solid var(--color-border-tertiary);
-    background: var(--color-background-tertiary);
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--color-accent);
+    background: var(--color-accent);
 }
 
 .table td {
     padding: 12px 16px;
-    color: var(--color-text-primary);
-    border-bottom: 1px solid var(--color-border-tertiary);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--color-accent);
 }
 
 .table tr:last-child td {
@@ -436,7 +436,7 @@
 }
 
 .table tbody tr:hover {
-    background: var(--color-background-tertiary);
+    background: var(--color-accent);
 }
 
 .event-badge {
@@ -448,37 +448,38 @@
 }
 
 .event-subscription_charge {
-    background: var(--color-background-info);
-    color: var(--color-text-info);
+    background: var(--status-info);
+    color: var(--status-info);
 }
 
 .event-addon_charge {
-    background: var(--color-background-warning);
-    color: var(--color-text-warning);
+    background: var(--status-warning);
+    color: var(--status-warning);
 }
 
 .event-refund {
-    background: var(--color-background-success);
-    color: var(--color-text-success);
+    background: var(--status-success);
+    color: var(--status-success);
+    color: var(--status-success);
 }
 
 .event-dispute {
-    background: var(--color-background-danger);
-    color: var(--color-text-danger);
+    background: var(--status-danger);
+    color: var(--status-danger);
 }
 
 .amount-refund {
-    color: var(--color-text-success);
+    color: var(--status-success);
 }
 
 .amount-charge {
-    color: var(--color-text-primary);
+    color: var(--text-primary);
 }
 
 .ref-id {
     font-family: var(--font-mono);
     font-size: 11px;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
 }
 
 .empty {
@@ -487,7 +488,7 @@
     align-items: center;
     gap: 8px;
     padding: 48px;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     font-size: 13px;
 }
 
@@ -506,8 +507,8 @@
 
 .upgrade-modal {
     position: relative;
-    background: var(--color-background-primary);
-    border: 1px solid var(--color-border-tertiary);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: 20px;
     padding: 32px 28px;
     max-width: 420px;
@@ -522,11 +523,11 @@
     position: absolute;
     top: 16px;
     right: 16px;
-    background: var(--color-background-secondary);
+    background: var(--bg-card);
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     width: 28px;
     height: 28px;
     display: flex;
@@ -536,37 +537,37 @@
 }
 
 .modal-close:hover {
-    background: var(--color-border-tertiary);
+    background: var(--border);
 }
 
 .upgrade-icon {
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    background: var(--color-background-warning);
+    background: var(--status-warning);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-text-warning);
+    color: var(--text-primary);
 }
 
 .upgrade-title {
     font-size: 18px;
     font-weight: 500;
-    color: var(--color-text-primary);
+    color: var(--text-primary);
     margin: 0;
 }
 
 .upgrade-body {
     font-size: 14px;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     margin: 0;
     line-height: 1.6;
 }
 
 .upgrade-plan-preview {
-    background: var(--color-background-secondary);
-    border: 1px solid var(--color-border-tertiary);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: var(--border-radius-md);
     padding: 14px 16px;
     display: flex;
@@ -577,7 +578,7 @@
 .upgrade-plan-name {
     font-size: 14px;
     font-weight: 500;
-    color: var(--color-text-primary);
+    color: var(--text-primary);
 }
 
 .upgrade-features {
@@ -594,11 +595,11 @@
     align-items: center;
     gap: 6px;
     font-size: 12px;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
 }
 
 .upgrade-features li svg {
-    color: var(--color-text-success);
+    color: var(--status-success);
 }
 
 .upgrade-actions {
@@ -610,8 +611,8 @@
 .upgrade-btn {
     padding: 12px;
     border-radius: var(--border-radius-md);
-    background: var(--color-text-primary);
-    color: var(--color-background-primary);
+    background: var(--text-primary);
+    color: var(--bg-card);
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
@@ -629,13 +630,13 @@
     background: none;
     border: none;
     font-size: 13px;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     cursor: pointer;
     text-align: center;
 }
 
 .upgrade-skip:hover {
-    color: var(--color-text-primary);
+    color: var(--text-primary);
 }
 
 /* ── Job post quota banner ── */
@@ -644,8 +645,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    background: var(--color-background-secondary);
-    border: 1px solid var(--color-border-tertiary);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: var(--border-radius-md);
     padding: 10px 14px;
     margin-bottom: 16px;
@@ -659,7 +660,7 @@
 
 .quota-banner-warn {
     border-color: var(--color-border-warning) !important;
-    background: var(--color-background-warning) !important;
+    background: var(--status-warning) !important;
 }
 
 .quota-banner-left {
@@ -677,26 +678,26 @@
 .quota-banner-label {
     font-size: 13px;
     font-weight: 500;
-    color: var(--color-text-primary);
+    color: var(--text-primary);
     display: block;
 }
 
 .quota-banner-count {
     font-size: 12px;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     display: block;
 }
 
 .icon-danger {
-    color: var(--color-text-danger);
+    color: var(--status-danger);
 }
 
 .quota-upgrade-btn {
     display: flex;
     align-items: center;
     gap: 4px;
-    background: var(--color-text-primary);
-    color: var(--color-background-primary);
+    background: var(--text-primary);
+    color: var(--bg-card);
     border: none;
     border-radius: var(--border-radius-md);
     padding: 6px 12px;
@@ -716,8 +717,8 @@
     display: flex;
     align-items: center;
     gap: 14px;
-    background: var(--color-background-secondary);
-    border: 1px solid var(--color-border-tertiary);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: var(--border-radius-md);
     padding: 16px 20px;
     margin-top: 8px;
@@ -727,11 +728,11 @@
     width: 36px;
     height: 36px;
     border-radius: 10px;
-    background: var(--color-background-tertiary);
+    background: var(--color-accent);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     flex-shrink: 0;
 }
 
@@ -745,20 +746,20 @@
 .gate-title {
     font-size: 13px;
     font-weight: 500;
-    color: var(--color-text-primary);
+    color: var(--text-primary);
 }
 
 .gate-sub {
     font-size: 12px;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
 }
 
 .gate-btn {
     display: flex;
     align-items: center;
     gap: 4px;
-    background: var(--color-text-primary);
-    color: var(--color-background-primary);
+    background: var(--text-primary);
+    color: var(--bg-card);
     border: none;
     border-radius: var(--border-radius-md);
     padding: 8px 14px;
@@ -775,8 +776,8 @@
 
 /* ── Pending badge ── */
 .pending-badge {
-    background: var(--color-background-warning);
-    color: var(--color-text-warning);
+    background: var(--status-warning);
+    color: var(--status-warning);
     border: 1px solid var(--color-border-warning);
     border-radius: 20px;
     font-size: 11px;
@@ -787,7 +788,7 @@
 .tab-verified-dot {
     width: 6px;
     height: 6px;
-    background: var(--color-text-success);
+    background: var(--status-success);
     border-radius: 50%;
     flex-shrink: 0;
 }
@@ -795,7 +796,7 @@
 /* ── Section desc ── */
 .section-desc {
     font-size: 13px;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     margin: 0 0 20px;
 }
 
@@ -815,15 +816,15 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    background: var(--color-background-secondary);
-    border: 1px solid var(--color-border-tertiary);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: var(--border-radius-lg);
     padding: 16px 20px;
     transition: border-color 0.15s;
 }
 
 .addon-card:hover {
-    border-color: var(--color-border-secondary);
+    border-color: var(--border);
 }
 
 .addon-icon {
@@ -846,18 +847,18 @@
 .addon-title {
     font-size: 14px;
     font-weight: 500;
-    color: var(--color-text-primary);
+    color: var(--text-primary);
 }
 
 .addon-desc {
     font-size: 12px;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     line-height: 1.5;
 }
 
 .addon-note {
     font-size: 11px;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     margin-top: 4px;
     font-style: italic;
 }
@@ -873,13 +874,13 @@
 .addon-price {
     font-size: 14px;
     font-weight: 500;
-    color: var(--color-text-primary);
+    color: var(--text-primary);
     white-space: nowrap;
 }
 
 .addon-btn {
-    background: var(--color-text-primary);
-    color: var(--color-background-primary);
+    background: var(--text-primary);
+    color: var(--bg-card);
     border: none;
     border-radius: var(--border-radius-md);
     padding: 7px 18px;
@@ -917,13 +918,13 @@
 .verify-status-banner[data-status="verified"] {
     background: var(--color-background-success);
     border: 1px solid var(--color-border-success);
-    color: var(--color-text-success);
+    color: var(--status-success);
 }
 
 .verify-status-banner[data-status="pending"] {
-    background: var(--color-background-warning);
+    background: var(--status-warning);
     border: 1px solid var(--color-border-warning);
-    color: var(--color-text-warning);
+    color: var(--status-warning);
 }
 
 .verify-status-banner>div {
@@ -942,8 +943,8 @@
 }
 
 .verify-what {
-    background: var(--color-background-secondary);
-    border: 1px solid var(--color-border-tertiary);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: var(--border-radius-lg);
     padding: 20px;
 }
@@ -951,7 +952,7 @@
 .verify-what-title {
     font-size: 14px;
     font-weight: 500;
-    color: var(--color-text-primary);
+    color: var(--text-primary);
     margin: 0 0 14px;
 }
 
@@ -966,11 +967,11 @@
     align-items: center;
     gap: 10px;
     font-size: 13px;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
 }
 
 .verify-benefit-icon {
-    color: var(--color-text-success);
+    color: var(--status-success);
     flex-shrink: 0;
 }
 
@@ -980,8 +981,8 @@
     justify-content: space-between;
     gap: 16px;
     flex-wrap: wrap;
-    background: var(--color-background-secondary);
-    border: 1.5px solid var(--color-border-info);
+    background: var(--bg-card);
+    border: 1.5px solid var(--status-info);
     border-radius: var(--border-radius-lg);
     padding: 20px 24px;
 }
@@ -995,12 +996,12 @@
 .verify-pricing-label {
     font-size: 15px;
     font-weight: 500;
-    color: var(--color-text-primary);
+    color: var(--text-primary);
 }
 
 .verify-pricing-sub {
     font-size: 12px;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
 }
 
 .verify-pricing-right {
@@ -1011,7 +1012,7 @@
 
 .verify-price {
     font-size: 22px;
-    color: var(--color-text-primary);
+    color: var(--text-primary);
 }
 
 .verify-price strong {
@@ -1020,12 +1021,12 @@
 
 .verify-price span {
     font-size: 13px;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
 }
 
 .verify-btn {
-    background: var(--color-text-primary);
-    color: var(--color-background-primary);
+    background: var(--text-primary);
+    color: var(--bg-card);
     border: none;
     border-radius: var(--border-radius-md);
     padding: 10px 20px;
@@ -1047,22 +1048,22 @@
 
 .verify-pending-label {
     font-size: 13px;
-    color: var(--color-text-warning);
+    color: var(--status-warning);
     font-weight: 500;
 }
 
 .verify-active-label {
     font-size: 13px;
-    color: var(--color-text-success);
+    color: var(--status-success);
     font-weight: 500;
 }
 
 .verify-note {
     font-size: 12px;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     line-height: 1.6;
     margin: 0;
     padding: 12px 16px;
-    background: var(--color-background-tertiary);
+    background: var(--color-accent);
     border-radius: var(--border-radius-md);
 }

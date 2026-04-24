@@ -17,8 +17,6 @@ import {
   Moon,
   Sun,
   Monitor,
-  ToggleLeft,
-  ToggleRight,
   Download,
   LogOut,
   AlertTriangle,
@@ -29,6 +27,7 @@ import { useRouter } from "next/navigation";
 import { useUser } from "../../store/session.store";
 import { useSessionStore } from "../../store/session.store";
 import styles from "../styles/setting.module.css";
+import { useTheme } from "../../components/theme/ThemeProvider";
 
 // ─── Types ────────────────────────────────────────────────
 type ThemeOption = "light" | "dark" | "system";
@@ -290,7 +289,7 @@ function PrivacySection() {
 
 // ─── Section: Appearance ──────────────────────────────────
 function AppearanceSection() {
-  const [theme, setTheme] = useState<ThemeOption>("system");
+  const { theme, toggle } = useTheme();
   const [density, setDensity] = useState<"comfortable" | "compact">(
     "comfortable",
   );
@@ -310,7 +309,7 @@ function AppearanceSection() {
             <button
               key={t.key}
               className={`${styles["theme-btn"]} ${theme === t.key ? styles["theme-active"] : ""}`}
-              onClick={() => setTheme(t.key)}
+              onClick={() => toggle()}
             >
               <div className={styles["theme-icon"]}>{t.icon}</div>
               <span>{t.label}</span>

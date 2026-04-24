@@ -6,7 +6,7 @@ import {
   Users,
   Calendar,
   CheckCircle2,
-  TrendingUp,
+  // TrendingUp,
 } from "lucide-react";
 import type { EmployerStats } from "../../types/emp-dashboard.types";
 import styles from "../../employer/styles/emp-dashboard.module.css";
@@ -74,7 +74,7 @@ export function StatsGrid({ stats }: Props) {
             >
               {s.icon}
             </div>
-            <TrendingUp size={14} style={{ color: "var(--status-success)" }} />
+            {/* <TrendingUp size={14} style={{ color: "var(--status-success)" }} /> */}
           </div>
           <p className={styles.statValue}>{s.value}</p>
           <p className={styles.statLabel}>{s.label}</p>

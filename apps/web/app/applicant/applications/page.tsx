@@ -46,17 +46,23 @@ const STATUS_CONFIG: Record<
     cls: "s-reviewing",
     step: 2,
   },
+  shortlisted: {
+    label: "Shortlisted",
+    icon: <BookmarkCheck size={11} />,
+    cls: "s-shortlisted",
+    step: 3,
+  },
   interview: {
     label: "Interview",
     icon: <Calendar size={11} />,
     cls: "s-interview",
-    step: 3,
+    step: 4,
   },
   offered: {
     label: "Offered",
     icon: <CheckCircle2 size={11} />,
     cls: "s-offered",
-    step: 4,
+    step: 5,
   },
   rejected: {
     label: "Rejected",
@@ -72,12 +78,13 @@ const STATUS_CONFIG: Record<
   },
 };
 
-const PIPELINE_STEPS = ["Applied", "Reviewing", "Interview", "Offered"];
+const PIPELINE_STEPS = ["Applied", "Reviewing", "Shortlisted", "Interview", "Offered"];
 
 const STATUS_FILTERS = [
   { key: "all", label: "All" },
   { key: "applied", label: "Applied" },
   { key: "reviewing", label: "Reviewing" },
+  { key: "shortlisted", label: "Shortlisted" },
   { key: "interview", label: "Interview" },
   { key: "offered", label: "Offered" },
   { key: "rejected", label: "Rejected" },
@@ -141,7 +148,9 @@ function ApplicationRow({
         </div>
 
         <div className={styles["row-status"]}>
-          <span className={`${styles["status-chip"]} ${styles["cfg-cls"]}`}>
+          <span
+            className={`${styles["status-chip"]} ${cfg ? styles[cfg.cls] : ""}`}
+          >
             {cfg?.icon || ""} {cfg?.label || ""}
           </span>
         </div>

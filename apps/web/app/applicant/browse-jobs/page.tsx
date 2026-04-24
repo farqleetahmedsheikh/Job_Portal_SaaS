@@ -194,6 +194,7 @@ export default function BrowseJobsPage() {
     resetFilters, activeChips,
     savedIds, toggleSave,
     profileSkills,
+    toggleMatchedOnly,
   } = useBrowseJobs();
 
   return (
@@ -214,9 +215,11 @@ export default function BrowseJobsPage() {
           <span className={styles["filter-label"]}>Job Type</span>
           {JOB_TYPES.map((type) => (
             <label key={type} className={styles["check-row"]}>
-              <input type="checkbox"
+              <input
+                type="checkbox"
                 checked={filters.types.has(type)}
-                onChange={() => toggleSet("types", type)} />
+                onChange={() => toggleSet("types", type)}
+              />
               <span className={styles["check-text"]}>{type}</span>
             </label>
           ))}
@@ -227,9 +230,11 @@ export default function BrowseJobsPage() {
           <span className={styles["filter-label"]}>Work Mode</span>
           {MODES.map((mode) => (
             <label key={mode} className={styles["check-row"]}>
-              <input type="checkbox"
+              <input
+                type="checkbox"
                 checked={filters.modes.has(mode)}
-                onChange={() => toggleSet("modes", mode)} />
+                onChange={() => toggleSet("modes", mode)}
+              />
               <span className={styles["check-text"]}>{mode}</span>
             </label>
           ))}
@@ -240,9 +245,11 @@ export default function BrowseJobsPage() {
           <span className={styles["filter-label"]}>Experience</span>
           {EXPERIENCE.map((exp) => (
             <label key={exp} className={styles["check-row"]}>
-              <input type="checkbox"
+              <input
+                type="checkbox"
                 checked={filters.experience.has(exp)}
-                onChange={() => toggleSet("experience", exp)} />
+                onChange={() => toggleSet("experience", exp)}
+              />
               <span className={styles["check-text"]}>{EXP_LABELS[exp]}</span>
             </label>
           ))}
@@ -252,12 +259,20 @@ export default function BrowseJobsPage() {
         <div className={styles["filter-group"]}>
           <span className={styles["filter-label"]}>Salary (PKR k / yr)</span>
           <div className={styles["salary-inputs"]}>
-            <input className={styles["salary-input"]} placeholder="Min"
-              type="number" value={filters.salaryMin}
-              onChange={(e) => setSalary("salaryMin", e.target.value)} />
-            <input className={styles["salary-input"]} placeholder="Max"
-              type="number" value={filters.salaryMax}
-              onChange={(e) => setSalary("salaryMax", e.target.value)} />
+            <input
+              className={styles["salary-input"]}
+              placeholder="Min"
+              type="number"
+              value={filters.salaryMin}
+              onChange={(e) => setSalary("salaryMin", e.target.value)}
+            />
+            <input
+              className={styles["salary-input"]}
+              placeholder="Max"
+              type="number"
+              value={filters.salaryMax}
+              onChange={(e) => setSalary("salaryMax", e.target.value)}
+            />
           </div>
         </div>
       </aside>
@@ -276,11 +291,26 @@ export default function BrowseJobsPage() {
             />
           </div>
 
-          <select className={styles["sort-select"]} value={sort}
-            onChange={(e) => setSort(e.target.value as typeof sort)}>
+          {/* ✅ Matched-only toggle — only show when applicant has skills */}
+          {profileSkills.length > 0 && (
+            <button
+              onClick={toggleMatchedOnly}
+              className={`${styles["match-toggle"]} ${filters.matchedOnly ? styles["match-toggle-on"] : ""}`}
+            >
+              <Sparkles size={13} />
+              {filters.matchedOnly ? "Matched only" : "All jobs"}
+            </button>
+          )}
+
+          <select
+            className={styles["sort-select"]}
+            value={sort}
+            onChange={(e) => setSort(e.target.value as typeof sort)}
+          >
             <option value="newest">Latest First</option>
-            <option value="match"  disabled={!profileSkills.length}>
-              Best Match {!profileSkills.length ? "(add skills to profile)" : ""}
+            <option value="match" disabled={!profileSkills.length}>
+              Best Match{" "}
+              {!profileSkills.length ? "(add skills to profile)" : ""}
             </option>
             <option value="salary">Highest Salary</option>
           </select>
@@ -296,19 +326,33 @@ export default function BrowseJobsPage() {
             <Sparkles size={14} />
             Sorted by match with your skills:
             {profileSkills.slice(0, 5).map((s) => (
-              <span key={s} className={styles.matchBannerSkill}>{s}</span>
+              <span key={s} className={styles.matchBannerSkill}>
+                {s}
+              </span>
             ))}
             {profileSkills.length > 5 && (
-              <span className={styles.matchBannerSkill}>+{profileSkills.length - 5} more</span>
+              <span className={styles.matchBannerSkill}>
+                +{profileSkills.length - 5} more
+              </span>
             )}
           </div>
         )}
 
         {/* No profile skills hint */}
         {sort === "match" && profileSkills.length === 0 && (
-          <div className={styles.matchBanner} style={{ borderColor: "rgba(249,115,22,.3)", background: "rgba(249,115,22,.06)", color: "var(--status-warning)" }}>
+          <div
+            className={styles.matchBanner}
+            style={{
+              borderColor: "rgba(249,115,22,.3)",
+              background: "rgba(249,115,22,.06)",
+              color: "var(--status-warning)",
+            }}
+          >
             Add skills to your profile to see how well you match each job.
-            <Link href="/applicant/profile" style={{ color: "inherit", fontWeight: 600, marginLeft: 6 }}>
+            <Link
+              href="/applicant/profile"
+              style={{ color: "inherit", fontWeight: 600, marginLeft: 6 }}
+            >
               Update profile →
             </Link>
           </div>
@@ -318,7 +362,11 @@ export default function BrowseJobsPage() {
         {activeChips.length > 0 && (
           <div className={styles.chips}>
             {activeChips.map((chip) => (
-              <button key={chip.label} className={styles.chip} onClick={chip.clear}>
+              <button
+                key={chip.label}
+                className={styles.chip}
+                onClick={chip.clear}
+              >
                 {chip.label} <span className={styles["chip-x"]}>×</span>
               </button>
             ))}
@@ -327,13 +375,21 @@ export default function BrowseJobsPage() {
 
         {/* Error */}
         {error && (
-          <p style={{ color: "var(--status-danger)", padding: "20px 0", fontSize: 14 }}>
+          <p
+            style={{
+              color: "var(--status-danger)",
+              padding: "20px 0",
+              fontSize: 14,
+            }}
+          >
             {error}
           </p>
         )}
 
         {/* Jobs */}
-        {loading ? <JobSkeleton /> : (
+        {loading ? (
+          <JobSkeleton />
+        ) : (
           <>
             {jobs.length === 0 ? (
               <div className={styles.empty}>
