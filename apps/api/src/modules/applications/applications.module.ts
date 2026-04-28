@@ -6,10 +6,12 @@ import { ApplicationStatusHistory } from './entities/application-status-history.
 import { ApplicationsController } from './applications.controller';
 import { ApplicationsService } from './applications.service';
 import { AiMatcherService } from './ai-matcher.service';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Application, ApplicationStatusHistory, Job]),
+    NotificationsModule,
   ],
   controllers: [ApplicationsController],
   providers: [ApplicationsService, AiMatcherService],

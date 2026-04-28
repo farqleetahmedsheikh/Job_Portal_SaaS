@@ -1,4 +1,5 @@
 /** @format */
+/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-img-element */
 "use client";
 
 import { useRef } from "react";

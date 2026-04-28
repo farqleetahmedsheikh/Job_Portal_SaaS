@@ -1,4 +1,5 @@
 /** @format */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from "react";
 import { api } from "../lib";
 import { API_BASE } from "../constants";
@@ -21,7 +22,6 @@ export function useResumes() {
 
     api<Resume[]>(`${API_BASE}/resumes`, "GET")
       .then((data) => {
-        console.log("Resumes Data------->", data);
         if (!cancelled) {
           setResumes(data);
           setLoading(false);

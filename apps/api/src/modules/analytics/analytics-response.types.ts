@@ -29,10 +29,40 @@ export interface PipelineRow {
 export interface TopJobRow {
   id: string;
   title: string;
-  status: 'active' | 'paused' | 'closed';
+  status: string;
   views: number;
   applications: number;
+  interviews: number;
+  hires: number;
   applyRate: number;
+  conversionRate: number;
+  isFeatured: boolean;
+  isVerified: boolean;
+}
+
+export interface AnalyticsInsight {
+  severity: 'info' | 'warning' | 'critical' | 'success';
+  title: string;
+  body: string;
+  cta?: string;
+}
+
+export interface PipelineHealth {
+  stuckApplications: number;
+  waitingForResponse: number;
+  interviewsScheduled: number;
+  pendingDecisions: number;
+  overdueFollowUps: number;
+}
+
+export interface UsageInsights {
+  interviews: {
+    currentUsage: number;
+    limit: number | 'unlimited';
+    pct: number | null;
+  };
+  featuredSlotsRemaining: number;
+  jobPostsRemaining: number;
 }
 
 // ── Public response shape returned by AnalyticsService ───────────────────────
@@ -53,4 +83,9 @@ export interface EmployerAnalyticsResponse {
   sources: SourceRow[];
   trend: TrendRow[];
   tier: string;
+  lockedInsights: boolean;
+  funnelConversion: Record<string, number>;
+  pipelineHealth: PipelineHealth;
+  usage: UsageInsights;
+  recommendations: AnalyticsInsight[];
 }

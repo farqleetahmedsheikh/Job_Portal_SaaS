@@ -47,9 +47,6 @@ interface Props {
   prefillApplicationId?: string;
   prefillApplicantName?: string;
   prefillJobTitle?: string;
-  prefillCandidateId?: string; // ← new: applicant's userId (not applicationId)
-  prefillCompanyId?: string;
-  prefillScheduledById?: string;
   onClose: () => void;
   onScheduled: () => void;
 }
@@ -104,9 +101,6 @@ export function ScheduleInterviewModal({
   prefillApplicationId,
   prefillApplicantName,
   prefillJobTitle,
-  prefillCandidateId, // ← new
-  prefillCompanyId,
-  prefillScheduledById,
   onClose,
   onScheduled,
 }: Props) {
@@ -136,7 +130,7 @@ export function ScheduleInterviewModal({
   useEffect(() => {
     if (isPrefilled) return;
     setLoadingJobs(true);
-    api<any[]>(`${API_BASE}/jobs?scope=mine&status=active&limit=50`, "GET")
+    api<any[]>(`${API_BASE}/jobs/mine?status=active`, "GET")
       .then((d) =>
         setJobs(
           d.map((j) => ({
@@ -158,7 +152,6 @@ export function ScheduleInterviewModal({
     setLoadingApps(true);
     api<any[]>(`${API_BASE}/applications?jobId=${selectedJob.id}`, "GET")
       .then((d) => {
-        console.log("Apps for job", selectedJob.id, d);
         setApps(
           d
             .filter((a) => a.status === "shortlisted")
@@ -181,12 +174,8 @@ export function ScheduleInterviewModal({
     setPInput("");
   };
 
-  // handleSubmit — send candidateId and companyId
   const handleSubmit = async () => {
     const appId = isPrefilled ? prefillApplicationId : selectedApp?.id;
-    const candidateId = isPrefilled ? prefillCandidateId : selectedApp?.id; // ← applicant userId
-    const companyId = isPrefilled ? prefillCompanyId : selectedJob?.companyId;
-    const scheduledById = prefillScheduledById; // ← from props (current user)
 
     if (!appId) {
       setError("Please select an applicant.");
@@ -204,24 +193,8 @@ export function ScheduleInterviewModal({
     setError(null);
     setSubmitting(true);
     try {
-      console.log("Scheduling interview with data:", {
-        applicationId: appId,
-        candidateId,
-        companyId,
-        scheduledById,
-        type,
-        roundType,
-        scheduledAt: scheduledAt.toISOString(),
-        duration,
-        meetLink,
-        notes,
-        panelists,
-      });
       await api(`${API_BASE}/interviews`, "POST", {
         applicationId: appId,
-        candidateId, // ← was missing
-        companyId, // ← was missing
-        scheduledById,
         type,
         roundType,
         scheduledAt: scheduledAt.toISOString(),

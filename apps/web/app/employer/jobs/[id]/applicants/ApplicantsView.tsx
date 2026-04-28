@@ -5,6 +5,7 @@
  */
 
 /** @format */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import Link from "next/link";
@@ -60,8 +61,6 @@ export function ApplicantsView({ id }: Props) {
     toggleStar,
     changeStatus,
   } = useApplicants({ id });
-  console.log("Job------->", job);
-  console.log("Applicants-------->", applicants);
 
   // ── Loading ───────────────────────────────────────────────────────────────
   if (loading)

@@ -1,4 +1,5 @@
 /** @format */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 "use client";
 
@@ -20,13 +21,9 @@ export const DashboardLayout = ({ user, children }: Props) => {
     <div
       className={styles.dashboard + " " + (collapsed ? styles.collapsed : "")}
     >
-      <Sidebar
-        role={user.role}
-        collapsed={collapsed}
-        onToggle={() => setCollapsed(!collapsed)}
-      />
+      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
       <div className={styles["dashboard-main"]}>
-        <Navbar user={user} />
+        <Navbar />
         <main className={styles["dashboard-content"]}>{children}</main>
       </div>
     </div>

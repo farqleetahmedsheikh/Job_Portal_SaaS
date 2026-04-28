@@ -1,4 +1,5 @@
 import {
+  BillingInterval,
   SubscriptionPlan,
   AiMatcherTier,
   AnalyticsTier,
@@ -8,7 +9,7 @@ import {
 
 export const PLAN_LIMITS = {
   [SubscriptionPlan.FREE]: {
-    jobPostsPerMonth: 2,
+    jobPostsPerMonth: 1,
     applicantsPerJob: 25,
     maxApplicantsViewable: 10,
     teamSeats: 1,
@@ -17,6 +18,15 @@ export const PLAN_LIMITS = {
     aiInsights: false,
     hasTalentDb: false,
     hasInterviewScheduling: true,
+    maxInterviewsPerMonth: 5,
+    hasInterviewAutomation: false,
+    hasInterviewReminders: false,
+    hasCalendarSync: false,
+    hasCustomEmailTemplates: false,
+    hasContractTemplates: false,
+    hasAdvancedContractTemplates: false,
+    hasOfferLetters: false,
+    hasPanelInterviews: false,
     hasAutomation: false,
     analytics: AnalyticsTier.NONE,
     hasExport: false,
@@ -27,7 +37,7 @@ export const PLAN_LIMITS = {
     support: SupportTier.EMAIL,
   },
   [SubscriptionPlan.STARTER]: {
-    jobPostsPerMonth: 5,
+    jobPostsPerMonth: 3,
     applicantsPerJob: 50,
     maxApplicantsViewable: 50,
     teamSeats: 2,
@@ -36,6 +46,15 @@ export const PLAN_LIMITS = {
     aiInsights: false,
     hasTalentDb: false,
     hasInterviewScheduling: true,
+    maxInterviewsPerMonth: 20,
+    hasInterviewAutomation: false,
+    hasInterviewReminders: true,
+    hasCalendarSync: false,
+    hasCustomEmailTemplates: false,
+    hasContractTemplates: true,
+    hasAdvancedContractTemplates: false,
+    hasOfferLetters: true,
+    hasPanelInterviews: false,
     hasAutomation: false,
     analytics: AnalyticsTier.BASIC,
     hasExport: true,
@@ -46,8 +65,8 @@ export const PLAN_LIMITS = {
     support: SupportTier.PRIORITY,
   },
   [SubscriptionPlan.GROWTH]: {
-    jobPostsPerMonth: 15,
-    applicantsPerJob: 100,
+    jobPostsPerMonth: 10,
+    applicantsPerJob: 150,
     maxApplicantsViewable: Infinity,
     teamSeats: 5,
     featuredSlotsPerMonth: 1,
@@ -55,6 +74,15 @@ export const PLAN_LIMITS = {
     aiInsights: true,
     hasTalentDb: true,
     hasInterviewScheduling: true,
+    maxInterviewsPerMonth: Infinity,
+    hasInterviewAutomation: true,
+    hasInterviewReminders: true,
+    hasCalendarSync: true,
+    hasCustomEmailTemplates: true,
+    hasContractTemplates: true,
+    hasAdvancedContractTemplates: false,
+    hasOfferLetters: true,
+    hasPanelInterviews: false,
     hasAutomation: true,
     analytics: AnalyticsTier.ADVANCED,
     hasExport: true,
@@ -74,6 +102,15 @@ export const PLAN_LIMITS = {
     aiInsights: true,
     hasTalentDb: true,
     hasInterviewScheduling: true,
+    maxInterviewsPerMonth: Infinity,
+    hasInterviewAutomation: true,
+    hasInterviewReminders: true,
+    hasCalendarSync: true,
+    hasCustomEmailTemplates: true,
+    hasContractTemplates: true,
+    hasAdvancedContractTemplates: true,
+    hasOfferLetters: true,
+    hasPanelInterviews: true,
     hasAutomation: true,
     analytics: AnalyticsTier.ENTERPRISE,
     hasExport: true,
@@ -93,6 +130,17 @@ export const PLAN_PRICES: Record<SubscriptionPlan, number> = {
   [SubscriptionPlan.GROWTH]: 19999,
   [SubscriptionPlan.SCALE]: 29999,
 };
+
+export const TRIAL_DAYS = 7;
+
+export function getPlanPrice(
+  plan: SubscriptionPlan,
+  interval: BillingInterval = BillingInterval.MONTHLY,
+): number {
+  const monthly = PLAN_PRICES[plan];
+  if (interval === BillingInterval.YEARLY) return monthly * 10;
+  return monthly;
+}
 
 export const ADDON_PRICES: Record<AddonType, number> = {
   [AddonType.EXTRA_POST]: 999,

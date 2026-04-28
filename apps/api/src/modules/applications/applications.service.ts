@@ -12,10 +12,15 @@ import { Application } from './entities/application.entity';
 import { Job } from '../jobs/entities/job.entity';
 import { ApplicationStatusHistory } from './entities/application-status-history.entity';
 import { CreateApplicationDto } from './dto/create-application.dto';
-import { AppStatus, JobStatus } from 'src/common/enums/enums';
+import { AppStatus, JobStatus, NotifType } from 'src/common/enums/enums';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { BulkStatusUpdateDto } from './dto/bulk-status-update.dto';
 import { UpdateEmployerNotesDto } from './dto/update-employer-notes.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import {
+  assertApplicationStatusTransition,
+  TERMINAL_APPLICATION_STATUSES,
+} from './application-status.transitions';
 import { LimitsService } from '../billing/limits.service'; // ← new
 
 @Injectable()
@@ -29,6 +34,7 @@ export class ApplicationsService {
     private readonly jobRepo: Repository<Job>,
     private readonly ds: DataSource,
     private readonly limitsService: LimitsService, // ← new
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ── Applicant: Apply ────────────────────────────────────────────────────────
@@ -109,9 +115,23 @@ export class ApplicationsService {
   async withdraw(appId: string, applicantId: string) {
     const app = await this.appOrFail(appId);
     if (app.applicantId !== applicantId) throw new ForbiddenException();
-    return this.changeStatus(appId, applicantId, {
-      status: AppStatus.WITHDRAWN,
-      note: 'Withdrawn by applicant',
+    assertApplicationStatusTransition(app.status!, AppStatus.WITHDRAWN);
+
+    return this.ds.transaction(async (m) => {
+      const fromStatus = app.status;
+      app.status = AppStatus.WITHDRAWN;
+      await m.save(Application, app);
+      await m.save(
+        ApplicationStatusHistory,
+        m.create(ApplicationStatusHistory, {
+          applicationId: appId,
+          changedById: applicantId,
+          fromStatus,
+          toStatus: AppStatus.WITHDRAWN,
+          note: 'Withdrawn by applicant',
+        }),
+      );
+      return app;
     });
   }
 
@@ -122,7 +142,9 @@ export class ApplicationsService {
     dto: UpdateApplicationStatusDto,
   ) {
     const app = await this.verifyEmployerOwnsApp(appId, userId); // ✅ was appOrFail
-    return this.ds.transaction(async (m) => {
+    assertApplicationStatusTransition(app.status!, dto.status);
+
+    const changedApps = await this.ds.transaction(async (m) => {
       const fromStatus = app.status;
       app.status = dto.status;
       await m.save(Application, app);
@@ -136,8 +158,53 @@ export class ApplicationsService {
           note: dto.note,
         }),
       );
-      return app;
+      const changed = [{ app, toStatus: dto.status }];
+
+      if (dto.status === AppStatus.HIRED) {
+        const otherApps = await m.find(Application, {
+          where: { jobId: app.jobId },
+          relations: ['applicant', 'job', 'job.company'],
+        });
+
+        for (const other of otherApps) {
+          if (
+            other.id === app.id ||
+            TERMINAL_APPLICATION_STATUSES.has(other.status!)
+          ) {
+            continue;
+          }
+
+          const otherFromStatus = other.status;
+          other.status = AppStatus.REJECTED;
+          await m.save(Application, other);
+          await m.save(
+            ApplicationStatusHistory,
+            m.create(ApplicationStatusHistory, {
+              applicationId: other.id,
+              changedById: userId,
+              fromStatus: otherFromStatus,
+              toStatus: AppStatus.REJECTED,
+              note:
+                dto.note ??
+                'Automatically rejected because another candidate was hired',
+            }),
+          );
+          changed.push({ app: other, toStatus: AppStatus.REJECTED });
+        }
+      }
+
+      return changed;
     });
+
+    for (const changed of changedApps) {
+      await this.notifyApplicationStatus(
+        changed.app,
+        changed.toStatus,
+        dto.note,
+      );
+    }
+
+    return changedApps[0].app;
   }
 
   // ── Employer: Applications for one job ─────────────────────────────────────
@@ -198,6 +265,8 @@ export class ApplicationsService {
 
     return this.ds.transaction(async (m) => {
       for (const app of apps) {
+        const owned = await this.verifyEmployerOwnsApp(app.id, userId);
+        assertApplicationStatusTransition(owned.status!, dto.status);
         const fromStatus = app.status;
         app.status = dto.status;
         await m.save(Application, app);
@@ -286,5 +355,43 @@ export class ApplicationsService {
       );
     }
     return app;
+  }
+
+  private async notifyApplicationStatus(
+    app: Application,
+    status: AppStatus,
+    note?: string,
+  ) {
+    const loaded =
+      app.applicant && app.job?.company
+        ? app
+        : await this.appRepo.findOne({
+            where: { id: app.id },
+            relations: ['applicant', 'job', 'job.company'],
+          });
+
+    if (!loaded?.applicant?.email) return;
+
+    const isRejected = status === AppStatus.REJECTED;
+    await this.notifications.notify({
+      recipientId: loaded.applicantId,
+      recipientEmail: loaded.applicant.email,
+      type:
+        status === AppStatus.OFFERED ? NotifType.OFFER : NotifType.APP_STATUS,
+      category: 'application',
+      title: isRejected ? 'Application update' : 'Application status updated',
+      body: isRejected
+        ? `The hiring team has moved forward with another candidate for ${loaded.job?.title ?? 'this role'}.`
+        : `Your application for ${loaded.job?.title ?? 'this role'} is now ${status}.`,
+      refId: loaded.id,
+      refType: 'application',
+      meta: {
+        candidateName: loaded.applicant.fullName,
+        jobTitle: loaded.job?.title,
+        company: loaded.job?.company?.companyName,
+        status,
+        reason: note,
+      },
+    });
   }
 }

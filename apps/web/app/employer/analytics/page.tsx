@@ -673,6 +673,61 @@ export default function AnalyticsPage() {
         </p>
       )}
 
+      {(data.usage || data.pipelineHealth || data.recommendations?.length) && (
+        <div className={styles.intelGrid}>
+          {data.usage && (
+            <div className={styles.intelCard}>
+              <span className={styles.intelLabel}>Plan usage</span>
+              <h3>
+                {data.usage.interviews.limit === "unlimited"
+                  ? "Unlimited interviews"
+                  : `${data.usage.interviews.currentUsage} / ${data.usage.interviews.limit} interviews`}
+              </h3>
+              <p>
+                {data.usage.interviews.pct === null
+                  ? "Your current plan has no interview volume cap."
+                  : `${data.usage.interviews.pct}% of this period's interview capacity used.`}
+              </p>
+            </div>
+          )}
+          {data.pipelineHealth && (
+            <div className={styles.intelCard}>
+              <span className={styles.intelLabel}>Pipeline health</span>
+              <h3>{data.pipelineHealth.waitingForResponse} waiting</h3>
+              <p>
+                {data.pipelineHealth.stuckApplications} candidates are stuck and{" "}
+                {data.pipelineHealth.pendingDecisions} need a decision.
+              </p>
+            </div>
+          )}
+          {data.recommendations?.slice(0, 2).map((item) => (
+            <div key={item.title} className={styles.intelCard}>
+              <span className={`${styles.intelLabel} ${styles[item.severity]}`}>
+                {item.severity}
+              </span>
+              <h3>{item.title}</h3>
+              <p>{item.body}</p>
+              {item.cta && <Link href="/employer/billing">{item.cta}</Link>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {data.lockedInsights && (
+        <div className={styles.lockedBanner}>
+          <div>
+            <strong>Advanced analytics are locked</strong>
+            <p>
+              Upgrade to Growth for pipeline health, hiring recommendations,
+              automation insights, and stronger conversion tracking.
+            </p>
+          </div>
+          <Link href="/employer/billing" className={styles.btn}>
+            Upgrade analytics
+          </Link>
+        </div>
+      )}
+
       {/* ── Stat cards ──────────────────────────────────────────────────────── */}
       <div className={styles.statsGrid}>
         {STAT_CARDS.map((s) => {

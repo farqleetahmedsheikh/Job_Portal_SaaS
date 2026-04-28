@@ -3,7 +3,7 @@ import { AppStatus } from '../../../common/enums/enums';
 
 export class UpdateApplicationStatusDto {
   @IsEnum(AppStatus)
-  status?: AppStatus;
+  status!: AppStatus;
 
   @IsOptional()
   @IsString()

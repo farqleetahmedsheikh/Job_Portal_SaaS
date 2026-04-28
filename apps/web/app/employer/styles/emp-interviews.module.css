@@ -35,6 +35,50 @@
     flex-wrap: wrap;
 }
 
+.usageCard {
+  display: grid;
+  gap: 10px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, var(--surface-raised, var(--bg-card)), var(--bg-card));
+  box-shadow: var(--shadow-sm);
+}
+
+.usageCard strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.usageCard p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.usageTrack {
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+}
+
+.usageTrack span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--status-info), var(--status-success));
+}
+
+.usageLink {
+  color: var(--status-info);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .statPill {
     display: flex;
     flex-direction: column;

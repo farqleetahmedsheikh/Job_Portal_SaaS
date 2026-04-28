@@ -24,6 +24,9 @@ export class Notification {
   @Column({ type: 'enum', enum: NotifType })
   type!: NotifType;
 
+  @Column({ length: 40, nullable: true })
+  category?: string | null;
+
   @Column({ length: 200 })
   title!: string;
 

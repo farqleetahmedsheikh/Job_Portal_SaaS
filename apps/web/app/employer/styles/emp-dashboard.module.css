@@ -10,6 +10,59 @@
   gap: 22px;
 }
 
+/* Premium polish pass */
+.page {
+  max-width: 1180px;
+}
+
+.header {
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(135deg, rgba(var(--glow-rgb), 0.1), transparent 44%),
+    linear-gradient(180deg, var(--surface-raised, var(--bg-card)), var(--bg-card));
+  box-shadow: var(--shadow-sm);
+}
+
+.title,
+.statValue {
+  letter-spacing: 0;
+}
+
+.statCard,
+.card,
+.errorMsg {
+  border-radius: var(--radius-sm);
+}
+
+.statCard,
+.card {
+  background: linear-gradient(180deg, var(--surface-raised, var(--bg-card)), var(--bg-card));
+  box-shadow: var(--shadow-sm);
+}
+
+.statCard:hover,
+.card:hover {
+  border-color: rgba(var(--glow-rgb), 0.24);
+  box-shadow: var(--shadow-md);
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding: 24px 18px 48px;
+  }
+
+  .statsGrid,
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header {
+    align-items: stretch;
+  }
+}
+
 /* ── Header ──────────────────────────────────────────────────────────────────*/
 .header {
   display: flex;

@@ -7,14 +7,16 @@ import { useSession } from "../../hooks/useSession";
 import styles from "../../applicant/styles/applicant.module.css";
 
 interface Application {
-  title: string;
-  company: string;
-  logoUrl: string;
-  time: string;
-  status: "applied" | "interview" | "rejected" | "offered";
+  title?: string;
+  company?: string;
+  logoUrl?: string;
+  time?: string;
+  job?: { title?: string; company?: { companyName?: string; logoUrl?: string } };
+  appliedAt?: string;
+  status: string;
 }
 
-const STATUS_CLASS: Record<Application["status"], string | undefined> = {
+const STATUS_CLASS: Record<string, string | undefined> = {
   applied: styles["badge-applied"],
   interview: styles["badge-interview"],
   rejected: styles["badge-rejected"],

@@ -1,4 +1,5 @@
 /** @format */
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
@@ -10,7 +11,12 @@ import { useUser } from "../store/session.store";
 export interface BrowseJob {
   id: string;
   title: string;
-  company: { id: string; companyName: string; logoUrl: string | null };
+  company: {
+    id: string;
+    companyName: string;
+    logoUrl: string | null;
+    isVerified?: boolean;
+  };
   location: string;
   locationType: string;
   type: string;

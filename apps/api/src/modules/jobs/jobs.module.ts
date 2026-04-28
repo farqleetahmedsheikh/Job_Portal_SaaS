@@ -10,6 +10,7 @@ import { SavedJob } from './entities/saved-job.entity';
 import { ScheduleModule } from '@nestjs/schedule';
 import { JobsExpiryTask } from './jobs-expiry.task';
 import { ApplicantProfile } from '../applicants/entities/applicant-profile.entity';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ApplicantProfile } from '../applicants/entities/applicant-profile.entit
       ApplicantProfile,
     ]),
     ScheduleModule.forRoot(),
+    NotificationsModule,
   ],
   controllers: [JobsController],
   providers: [JobsService, JobsExpiryTask],

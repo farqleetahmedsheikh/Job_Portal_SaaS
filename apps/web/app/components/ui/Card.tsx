@@ -21,7 +21,8 @@ export const Card = ({
   trendLabel,
   children,
 }: CardProps) => {
-  const trendIcon = trend === "up" ? "↑" : trend === "down" ? "↓" : "→";
+  const trendIcon =
+    trend === "up" ? "Up" : trend === "down" ? "Down" : "Flat";
   const trendClass =
     trend === "up"
       ? styles["trend-up"]

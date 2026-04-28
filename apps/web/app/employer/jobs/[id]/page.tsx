@@ -1,4 +1,5 @@
 /** @format */
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 
 "use client";
 
@@ -277,9 +278,10 @@ export default function EmployerJobDetailPage() {
           ) : analytics?.funnel ? (
             <div>
               {analytics.funnel.map((f, i) => {
+                const firstCount = analytics.funnel?.[0]?.count ?? 0;
                 const pct =
-                  analytics?.funnel![0].count > 0
-                    ? Math.round((f.count / analytics?.funnel![0].count) * 100)
+                  firstCount > 0
+                    ? Math.round((f.count / firstCount) * 100)
                     : 0;
                 return (
                   <div

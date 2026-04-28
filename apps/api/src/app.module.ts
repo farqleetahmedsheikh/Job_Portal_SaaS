@@ -23,6 +23,7 @@ import redisConfig from './config/redis.config';
 import { InterviewsModule } from './modules/interviews/interviews.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { TemplatesModule } from './modules/templates/templates.module';
 
 @Module({
   imports: [
@@ -96,6 +97,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
     CloudinaryModule,
     BillingModule,
     AnalyticsModule,
+    TemplatesModule,
   ],
 
   providers: [

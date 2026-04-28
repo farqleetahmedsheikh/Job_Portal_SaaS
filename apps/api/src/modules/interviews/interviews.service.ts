@@ -10,12 +10,18 @@ import { Repository, DataSource } from 'typeorm';
 import { Interview } from './entities/interview.entity';
 import { Application } from '../applications/entities/application.entity';
 import { Company } from '../companies/entities/company.entity';
-import { InterviewStatus } from '../../common/enums/enums';
+import {
+  AppStatus,
+  InterviewStatus,
+  NotifType,
+} from '../../common/enums/enums';
 import { InterviewPanelist } from './entities/interview-panelist.entity';
 import { ScheduleInterviewDto } from './dto/schedule-interview.dto';
 import { RescheduleInterviewDto } from './dto/reschedule-interview.dto';
 import { CompleteInterviewDto } from './dto/complete-interview.dto';
 import { CancelInterviewDto } from './dto/cancel-interview.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { LimitsService } from '../billing/limits.service';
 
 @Injectable()
 export class InterviewsService {
@@ -29,19 +35,31 @@ export class InterviewsService {
     @InjectRepository(Company)
     private readonly companyRepo: Repository<Company>,
     private readonly ds: DataSource,
+    private readonly notifications: NotificationsService,
+    private readonly limits: LimitsService,
   ) {}
 
   // ── Employer: Schedule ──────────────────────────────────────────────────────
   async schedule(userId: string, dto: ScheduleInterviewDto) {
     const app = await this.appRepo.findOne({
       where: { id: dto.applicationId },
-      relations: ['job', 'job.company'],
+      relations: ['job', 'job.company', 'applicant'],
     });
     if (!app) throw new NotFoundException('Application not found');
     if (app.job?.company?.ownerId !== userId)
       throw new ForbiddenException('Access denied');
+    await this.limits.assertCanScheduleInterview(userId);
+    if (
+      [AppStatus.REJECTED, AppStatus.HIRED, AppStatus.WITHDRAWN].includes(
+        app.status!,
+      )
+    ) {
+      throw new BadRequestException(
+        `Cannot schedule interviews for ${app.status} applications`,
+      );
+    }
 
-    return this.ds.transaction(async (m) => {
+    const interview = await this.ds.transaction(async (m) => {
       const iv = m.create(Interview, {
         applicationId: dto.applicationId,
         scheduledById: userId,
@@ -82,6 +100,31 @@ export class InterviewsService {
         ],
       });
     });
+
+    if (interview && app.applicant?.email) {
+      await this.notifications.notify({
+        recipientId: app.applicantId,
+        recipientEmail: app.applicant.email,
+        type: NotifType.IV_SCHEDULED,
+        category: 'interview',
+        title: 'Interview scheduled',
+        body: `Your interview for ${app.job?.title ?? 'the role'} has been scheduled.`,
+        refId: interview.id,
+        refType: 'interview',
+        meta: {
+          candidateName: app.applicant.fullName,
+          jobTitle: app.job?.title,
+          company: app.job?.company?.companyName,
+          scheduledAt: dto.scheduledAt,
+          durationMins: dto.durationMins,
+          format: dto.type,
+          meetLink: dto.meetLink,
+          notes: dto.notes,
+        },
+      });
+    }
+
+    return interview;
   }
 
   // ── Employer: Reschedule ────────────────────────────────────────────────────
@@ -96,7 +139,31 @@ export class InterviewsService {
     if (dto.durationMins) iv.durationMins = dto.durationMins;
     if (dto.meetLink) iv.meetLink = dto.meetLink;
 
-    return this.ivRepo.save(iv);
+    const saved = await this.ivRepo.save(iv);
+    const loaded = await this.ivRepo.findOne({
+      where: { id: ivId },
+      relations: ['candidate', 'job', 'job.company'],
+    });
+    if (loaded?.candidate?.email) {
+      await this.notifications.notify({
+        recipientId: loaded.candidateId,
+        recipientEmail: loaded.candidate.email,
+        type: NotifType.IV_RESCHEDULED,
+        category: 'interview',
+        title: 'Interview rescheduled',
+        body: `Your interview for ${loaded.job?.title ?? 'the role'} has moved to ${loaded.scheduledAt.toISOString()}.`,
+        refId: loaded.id,
+        refType: 'interview',
+        meta: {
+          candidateName: loaded.candidate.fullName,
+          jobTitle: loaded.job?.title,
+          company: loaded.job?.company?.companyName,
+          scheduledAt: loaded.scheduledAt,
+          meetLink: loaded.meetLink,
+        },
+      });
+    }
+    return saved;
   }
 
   // ── Employer: Complete + feedback ───────────────────────────────────────────
@@ -117,7 +184,30 @@ export class InterviewsService {
     iv.status = InterviewStatus.CANCELLED;
     iv.cancelledAt = new Date();
     iv.cancelledReason = dto.reason ?? null;
-    return this.ivRepo.save(iv);
+    const saved = await this.ivRepo.save(iv);
+    const loaded = await this.ivRepo.findOne({
+      where: { id: ivId },
+      relations: ['candidate', 'job', 'job.company'],
+    });
+    if (loaded?.candidate?.email) {
+      await this.notifications.notify({
+        recipientId: loaded.candidateId,
+        recipientEmail: loaded.candidate.email,
+        type: NotifType.IV_CANCELLED,
+        category: 'interview',
+        title: 'Interview cancelled',
+        body: `Your interview for ${loaded.job?.title ?? 'the role'} was cancelled.`,
+        refId: loaded.id,
+        refType: 'interview',
+        meta: {
+          candidateName: loaded.candidate.fullName,
+          jobTitle: loaded.job?.title,
+          company: loaded.job?.company?.companyName,
+          reason: dto.reason,
+        },
+      });
+    }
+    return saved;
   }
 
   // ── Employer: All interviews for company ────────────────────────────────────

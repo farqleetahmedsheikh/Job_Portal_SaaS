@@ -1,4 +1,5 @@
 /** @format */
+/* eslint-disable react/no-unescaped-entities */
 
 "use client";
 
@@ -14,12 +15,14 @@ import {
   Shield,
   Plus,
   Package,
+  CalendarCheck,
 } from "lucide-react";
 import { useBilling } from "../../hooks/useBilling";
 import {
   PLANS,
   getPlanMeta,
   isUpgrade,
+  type BillingInterval,
   type SubscriptionPlan,
 } from "../../types/billing.types";
 import type { BillingEvent } from "../../types/billing.types";
@@ -41,12 +44,16 @@ function PlanCard({
   plan,
   currentPlan,
   onSelect,
+  onTrial,
   loading,
+  trialAvailable,
 }: {
   plan: (typeof PLANS)[0];
   currentPlan: SubscriptionPlan;
-  onSelect: (p: SubscriptionPlan) => void;
+  onSelect: (p: SubscriptionPlan, interval?: BillingInterval) => void;
+  onTrial: (p: SubscriptionPlan) => void;
   loading: boolean;
+  trialAvailable: boolean;
 }) {
   const isCurrent = plan.key === currentPlan;
   const upgrade = isUpgrade(currentPlan, plan.key);
@@ -75,6 +82,11 @@ function PlanCard({
             </>
           )}
         </div>
+        {plan.price > 0 && (
+          <span className={styles["plan-price-period"]}>
+            Yearly PKR {fmt(plan.price * 10)} · 2 months free
+          </span>
+        )}
       </div>
 
       <div className={styles["plan-divider"]} />
@@ -94,6 +106,25 @@ function PlanCard({
           <CheckCircle2 size={12} /> {plan.teamSeats} team seat
           {plan.teamSeats > 1 ? "s" : ""}
         </li>
+        <li>
+          <CheckCircle2 size={12} /> Basic interview scheduling:{" "}
+          {plan.maxInterviewsPerMonth} / month
+        </li>
+        {plan.hasInterviewReminders && (
+          <li>
+            <CheckCircle2 size={12} /> Automated interview reminders
+          </li>
+        )}
+        {plan.hasCustomEmailTemplates && (
+          <li>
+            <CheckCircle2 size={12} /> Custom candidate email templates
+          </li>
+        )}
+        {plan.hasContractTemplates && (
+          <li>
+            <CheckCircle2 size={12} /> Contract and offer templates
+          </li>
+        )}
         <li>
           <CheckCircle2 size={12} /> AI matcher: {plan.aiMatcher}
         </li>
@@ -141,6 +172,24 @@ function PlanCard({
                 ? `Downgrade to ${plan.label}`
                 : "Select"}
         </button>
+        {!isCurrent && plan.key !== "free" && trialAvailable && (
+          <button
+            className={`${styles["plan-btn"]} ${styles["plan-btn-current"]}`}
+            onClick={() => onTrial(plan.key)}
+            disabled={loading}
+          >
+            Start 7-day trial
+          </button>
+        )}
+        {!isCurrent && plan.key !== "free" && (
+          <button
+            className={`${styles["plan-btn"]} ${styles["plan-btn-downgrade"]}`}
+            onClick={() => onSelect(plan.key, "yearly")}
+            disabled={loading}
+          >
+            Pay yearly
+          </button>
+        )}
       </div>
     </div>
   );
@@ -239,9 +288,11 @@ export default function BillingPage() {
     loading,
     error,
     checkout,
+    startTrial,
     purchaseAddon,
     checkoutLoading,
     checkoutError,
+    capabilities,
   } = useBilling();
 
   const [tab, setTab] = useState<
@@ -279,6 +330,10 @@ export default function BillingPage() {
     planMeta.jobPostsPerMonth - (subscription?.jobPostsRemaining ?? 0);
   const isVerified = subscription?.verificationStatus === "verified";
   const verPending = subscription?.verificationStatus === "pending";
+  const trialAvailable = !subscription?.trialUsedAt;
+  const interviewUsage = capabilities?.usage.interviews;
+  const interviewLimit =
+    interviewUsage?.limit === "unlimited" ? null : interviewUsage?.limit;
 
   return (
     <div className={styles.page}>
@@ -341,6 +396,14 @@ export default function BillingPage() {
                 icon={<Star size={11} />}
               />
             )}
+          {interviewUsage && interviewLimit !== null && interviewLimit !== undefined && (
+            <QuotaBar
+              label="Interviews"
+              used={interviewUsage.currentUsage}
+              total={interviewLimit}
+              icon={<CalendarCheck size={11} />}
+            />
+          )}
         </div>
       </div>
 
@@ -382,7 +445,9 @@ export default function BillingPage() {
               plan={plan}
               currentPlan={currentPlan}
               onSelect={checkout}
+              onTrial={startTrial}
               loading={checkoutLoading}
+              trialAvailable={trialAvailable}
             />
           ))}
         </div>

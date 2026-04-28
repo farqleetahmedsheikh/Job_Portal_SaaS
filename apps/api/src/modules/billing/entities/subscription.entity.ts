@@ -9,6 +9,7 @@ import {
   Index,
 } from 'typeorm';
 import {
+  BillingInterval,
   SubscriptionPlan,
   SubscriptionStatus,
   VerificationStatus,
@@ -37,6 +38,23 @@ export class Subscription {
     default: SubscriptionStatus.ACTIVE,
   })
   status!: SubscriptionStatus;
+
+  @Column({
+    name: 'billing_interval',
+    type: 'enum',
+    enum: BillingInterval,
+    default: BillingInterval.MONTHLY,
+  })
+  billingInterval!: BillingInterval;
+
+  @Column({ name: 'trial_start_at', type: 'timestamptz', nullable: true })
+  trialStartAt?: Date | null;
+
+  @Column({ name: 'trial_end_at', type: 'timestamptz', nullable: true })
+  trialEndAt?: Date | null;
+
+  @Column({ name: 'trial_used_at', type: 'timestamptz', nullable: true })
+  trialUsedAt?: Date | null;
 
   // ── Monthly quotas — reset each billing period ─────────────────────────────
   @Column({ name: 'job_posts_remaining', default: 2 })

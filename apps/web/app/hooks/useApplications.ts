@@ -88,7 +88,6 @@ export function useApplications() {
 
     api<RawApplication[]>(`${API_BASE}/applications/mine`, "GET")
       .then((data) => {
-        console.log("Data ------->", data);
         if (cancelled) return;
         setApplications(
           data.map(

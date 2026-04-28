@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Injectable,
   NotFoundException,
@@ -156,7 +154,6 @@ export class CompaniesService {
       where: { id: companyId, ownerId: userId },
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const result = await this.cloudinary.uploadCompanyCover(
       file.buffer,
       company.coverPublicId ?? undefined,

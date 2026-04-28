@@ -16,6 +16,7 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { useInterviews } from "../../hooks/useInterviews";
+import { useBilling } from "../../hooks/useBilling";
 import { CandidateAvatar } from "../../components/ui/CandidateAvatar";
 import { formatDateTime } from "../../lib";
 import {
@@ -26,6 +27,7 @@ import {
 } from "../../types/interviews.types";
 import { ScheduleInterviewModal } from "../../components/ui/ScheduleInterviewModal";
 import { RescheduleModal } from "../../components/ui/RescheduleModal";
+import { InterviewCalendar } from "../../components/interviews/InterviewCalendar";
 import styles from "../styles/emp-interviews.module.css";
 import Link from "next/link";
 
@@ -246,11 +248,23 @@ export default function EmployerInterviewsPage() {
     upcomingList,
     pastList,
     filtered,
+    interviews,
     counts,
     handleCancel,
     onScheduled,
     refetch,
   } = useInterviews({ mode: "employer" });
+
+  const [view, setView] = useState<"list" | "calendar">("list");
+  const { capabilities } = useBilling();
+  const interviewUsage = capabilities?.usage.interviews;
+  const interviewLimit = interviewUsage?.limit;
+  const interviewPct =
+    interviewUsage &&
+    interviewLimit !== undefined &&
+    interviewLimit !== "unlimited"
+      ? Math.min((interviewUsage.currentUsage / interviewLimit) * 100, 100)
+      : null;
 
   if (error)
     return (
@@ -316,6 +330,41 @@ export default function EmployerInterviewsPage() {
         ))}
       </div>
 
+      {interviewUsage && (
+        <div className={styles.usageCard}>
+          <div>
+            <strong>Interview scheduling</strong>
+            <p>
+              {interviewLimit === "unlimited"
+                ? "Unlimited interviews included on your plan."
+                : `${interviewUsage.currentUsage} / ${interviewLimit} interviews used this billing period.`}
+            </p>
+          </div>
+          {interviewPct !== null && (
+            <div className={styles.usageTrack} aria-hidden="true">
+              <span style={{ width: `${interviewPct}%` }} />
+            </div>
+          )}
+          {interviewPct !== null && interviewPct >= 80 && (
+            <Link href="/employer/billing" className={styles.usageLink}>
+              Upgrade for more interviews and reminders
+            </Link>
+          )}
+        </div>
+      )}
+
+      <div className={styles.tabs}>
+        {(["list", "calendar"] as const).map((nextView) => (
+          <button
+            key={nextView}
+            className={`${styles.tab} ${view === nextView ? styles.tabActive : ""}`}
+            onClick={() => setView(nextView)}
+          >
+            {nextView.charAt(0).toUpperCase() + nextView.slice(1)}
+          </button>
+        ))}
+      </div>
+
       {/* Loading skeletons */}
       {loading && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -325,7 +374,11 @@ export default function EmployerInterviewsPage() {
         </div>
       )}
 
-      {!loading && (
+      {!loading && view === "calendar" && (
+        <InterviewCalendar interviews={interviews} />
+      )}
+
+      {!loading && view === "list" && (
         <>
           {todayList.length > 0 && (
             <div className={styles.group}>

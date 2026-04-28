@@ -17,6 +17,7 @@ import {
   UserRole,
   SubscriptionPlan,
   AddonType,
+  BillingInterval,
 } from '../../common/enums/enums';
 import { BillingService } from './billing.service';
 import { SubscriptionsService } from './subscriptions.service';
@@ -39,6 +40,14 @@ export class BillingController {
     return this.subscriptions.getOrCreate(user.sub);
   }
 
+  @Get('capabilities')
+  @UseGuards(JwtAuthGuard)
+  getCapabilities(
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+  ) {
+    return this.billing.getCapabilities(user.sub);
+  }
+
   // POST /api/billing/checkout/:plan
   @Post('checkout/:plan')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -46,8 +55,19 @@ export class BillingController {
   createCheckout(
     @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
     @Param('plan') plan: SubscriptionPlan,
+    @Body() body?: { billingInterval?: BillingInterval },
   ) {
-    return this.billing.createCheckout(user.sub, plan);
+    return this.billing.createCheckout(user.sub, plan, body?.billingInterval);
+  }
+
+  @Post('trial/:plan')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.EMPLOYER)
+  startTrial(
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+    @Param('plan') plan: SubscriptionPlan,
+  ) {
+    return this.subscriptions.startTrial(user.sub, plan);
   }
 
   // POST /api/billing/addon

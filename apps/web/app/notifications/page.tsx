@@ -1,4 +1,5 @@
 /** @format */
+/* eslint-disable react/no-unescaped-entities */
 "use client";
 
 import Link from "next/link";

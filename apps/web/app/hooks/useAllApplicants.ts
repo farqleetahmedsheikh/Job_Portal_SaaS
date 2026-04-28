@@ -89,7 +89,6 @@ export function useAllApplicants() {
       "GET",
     )
       .then((data) => {
-        console.log("Data ------->", data);
         if (cancelled) return;
         setApplicants(
           data.map(

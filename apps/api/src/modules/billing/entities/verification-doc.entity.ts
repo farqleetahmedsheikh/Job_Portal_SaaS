@@ -40,8 +40,17 @@ export class VerificationDoc {
   @Column({ name: 'reviewer_notes', type: 'text', nullable: true })
   reviewerNotes?: string;
 
+  @Column({ name: 'rejection_reason', type: 'text', nullable: true })
+  rejectionReason?: string | null;
+
   @Column({ name: 'reviewed_at', type: 'timestamptz', nullable: true })
   reviewedAt?: Date;
+
+  @Column({ name: 'reviewed_by_id', type: 'uuid', nullable: true })
+  reviewedById?: string | null;
+
+  @Column({ name: 'expires_at', type: 'timestamptz', nullable: true })
+  expiresAt?: Date | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;

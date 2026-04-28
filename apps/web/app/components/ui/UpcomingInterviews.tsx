@@ -21,7 +21,8 @@ interface RawInterview {
 }
 
 interface Props {
-  mode: "employer" | "applicant";
+  mode?: "employer" | "applicant";
+  interviews?: unknown[];
 }
 
 const DOT_COLORS = [
@@ -45,7 +46,7 @@ function formatTime(iso: string): string {
   return `${date} · ${time}`;
 }
 
-export function UpcomingInterviews({ mode }: Props) {
+export function UpcomingInterviews({ mode = "applicant" }: Props) {
   const [items, setItems] = useState<RawInterview[]>([]);
   const [loading, setLoading] = useState(true);
   // FIX: was .catch(console.error) — error was swallowed, component stayed in

@@ -24,7 +24,7 @@ export function Navbar() {
   const subtitle =
     role === "applicant"
       ? (user?.applicantProfile?.jobTitle ?? "Applicant")
-      : (user?.company?.companyName ?? "Employer");
+      : (user?.companies?.companyName ?? "Employer");
 
   const profileHref = `/${role}/profile`;
   const messagesHref = `/${role}/messages`;

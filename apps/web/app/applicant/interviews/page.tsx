@@ -20,6 +20,7 @@ import {
 import { useInterviews } from "../../hooks/useInterviews";
 import type { Interview, FilterTab } from "../../types/interviews.types";
 import { TYPE_META, STATUS_META } from "../../types/interviews.types";
+import { InterviewCalendar } from "../../components/interviews/InterviewCalendar";
 import styles from "../styles/interview.module.css";
 import Image from "next/image";
 
@@ -302,9 +303,10 @@ function PageSkeleton() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function InterviewsPage() {
-  const { filtered, counts, loading, error, filter, setFilter } = useInterviews(
+  const { filtered, interviews, counts, loading, error, filter, setFilter } = useInterviews(
     { mode: "applicant" },
   );
+  const [view, setView] = useState<"list" | "calendar">("list");
 
   if (loading) return <PageSkeleton />;
 
@@ -401,7 +403,22 @@ export default function InterviewsPage() {
         ))}
       </div>
 
+      <div className={styles.tabs}>
+        {(["list", "calendar"] as const).map((nextView) => (
+          <button
+            key={nextView}
+            className={`${styles.tab} ${view === nextView ? styles["tab-active"] : ""}`}
+            onClick={() => setView(nextView)}
+          >
+            {nextView.charAt(0).toUpperCase() + nextView.slice(1)}
+          </button>
+        ))}
+      </div>
+
       {/* List */}
+      {view === "calendar" ? (
+        <InterviewCalendar interviews={interviews} />
+      ) : (
       <div className={styles.list}>
         {filtered.length === 0 ? (
           <div className={styles.empty}>
@@ -416,6 +433,7 @@ export default function InterviewsPage() {
           filtered.map((iv) => <InterviewCard key={iv.id} interview={iv} />)
         )}
       </div>
+      )}
     </div>
   );
 }

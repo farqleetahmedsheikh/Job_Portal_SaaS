@@ -6,7 +6,7 @@ export class BulkStatusUpdateDto {
   applicationIds?: string[];
 
   @IsEnum(AppStatus)
-  status?: AppStatus;
+  status!: AppStatus;
 
   @IsOptional()
   @IsString()

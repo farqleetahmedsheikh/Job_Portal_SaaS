@@ -1,14 +1,26 @@
 /** @format */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 import {
-  Controller, Get, Post, Patch, Delete,
-  Param, UseGuards, Req, UseInterceptors,
-  UploadedFile, ParseFilePipe, MaxFileSizeValidator,
-  FileTypeValidator, HttpCode, HttpStatus,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  UseGuards,
+  Req,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
-import { FileInterceptor }  from '@nestjs/platform-express';
-import { memoryStorage }    from 'multer';
-import { JwtAuthGuard }     from '../auth/guards/jwt-auth.guard';
-import { ResumesService }   from './resumes.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ResumesService } from './resumes.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('resumes')
@@ -29,7 +41,7 @@ export class ResumesController {
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),       // 5 MB
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5 MB
           new FileTypeValidator({ fileType: 'application/pdf' }),
         ],
       }),

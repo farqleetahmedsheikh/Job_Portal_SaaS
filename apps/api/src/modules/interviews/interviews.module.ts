@@ -9,6 +9,7 @@ import { InterviewsController } from './interviews.controller';
 import { InterviewGateway } from './interview.gateway';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ConfigService } from '@nestjs/config';
       Application,
       Company,
     ]),
+    NotificationsModule,
   ],
   controllers: [InterviewsController],
   providers: [InterviewsService, InterviewGateway, JwtService, ConfigService],

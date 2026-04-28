@@ -101,6 +101,27 @@ pnpm turbo build	Build all apps and packages
 pnpm turbo build --filter=web	Build a single app
 pnpm turbo lint	Run ESLint across all packages
 pnpm turbo typecheck	Run TypeScript type checking
+
+Production Notes
+
+Database schema changes are captured in `apps/api/src/migrations`. Run TypeORM
+migrations before deploying backend changes; do not rely on `synchronize` in
+production.
+
+Employer subscriptions support monthly and yearly billing intervals. Yearly
+pricing is centralized in `apps/api/src/config/plan-limits.config.ts` and charges
+10 months for 12 months of access. Employers can start one 7-day trial per
+account; trial timestamps are stored on `subscriptions` to prevent repeat abuse.
+
+Company verification extends the existing billing verification flow. Approved
+companies receive a verified badge for one free month via
+`verificationStartedAt` and `verificationExpiresAt`. The billing cron expires
+badges automatically when the free verification period ends.
+
+Application and interview lifecycle events create normalized notifications with
+`id`, `type`, `category`, `title`, `body`, `refId`, `refType`, `isRead`, `read`,
+and `createdAt`. Notification creation deduplicates exact duplicate events and
+routes supported application/interview events through `MailService`.
 License
 
 This repository is MIT licensed.

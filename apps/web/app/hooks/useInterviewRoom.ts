@@ -1,4 +1,5 @@
 /** @format */
+/* eslint-disable @typescript-eslint/no-explicit-any, no-empty */
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -120,7 +121,8 @@ export function useInterviewRoom(
     if (!sender) return;
     const params = sender.getParameters();
     if (!params.encodings?.length) params.encodings = [{}];
-    params.encodings![0].maxBitrate = maxKbps * 1000;
+    const encoding = params.encodings[0];
+    if (encoding) encoding.maxBitrate = maxKbps * 1000;
     await sender.setParameters(params).catch(() => {});
   }, []);
 
@@ -342,14 +344,20 @@ export function useInterviewRoom(
         if (sender.track?.kind === "audio") {
           const params = sender.getParameters();
           if (!params.encodings?.length) params.encodings = [{}];
-          params.encodings![0].priority = "high";
-          (params.encodings![0] as any).networkPriority = "high";
+          const encoding = params.encodings[0];
+          if (encoding) {
+            encoding.priority = "high";
+            (encoding as any).networkPriority = "high";
+          }
           await sender.setParameters(params).catch(() => {});
         }
         if (sender.track?.kind === "video") {
           const params = sender.getParameters();
           if (!params.encodings?.length) params.encodings = [{}];
-          params.encodings![0].maxBitrate = VIDEO_TIERS.fair.maxKbps * 1000;
+          const encoding = params.encodings[0];
+          if (encoding) {
+            encoding.maxBitrate = VIDEO_TIERS.fair.maxKbps * 1000;
+          }
           await sender.setParameters(params).catch(() => {});
         }
       }

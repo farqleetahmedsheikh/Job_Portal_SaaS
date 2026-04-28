@@ -8,6 +8,67 @@
     gap: 18px;
 }
 
+/* Premium polish pass */
+.page {
+    max-width: 1180px;
+}
+
+.header,
+.statPill,
+.row,
+.empty {
+    border-radius: var(--radius-sm);
+}
+
+.header {
+    padding: 22px;
+    border: 1px solid var(--border);
+    background:
+        linear-gradient(135deg, rgba(var(--accent-rgb), 0.09), transparent 42%),
+        linear-gradient(180deg, var(--surface-raised, var(--bg-card)), var(--bg-card));
+    box-shadow: var(--shadow-sm);
+}
+
+.title {
+    letter-spacing: 0;
+}
+
+.statPill,
+.row {
+    background: linear-gradient(180deg, var(--surface-raised, var(--bg-card)), var(--bg-card));
+    box-shadow: var(--shadow-sm);
+}
+
+.row:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.searchInput {
+    background: var(--surface-raised, var(--bg-card));
+}
+
+.empty {
+    border-color: var(--border-strong);
+    background: var(--bg-soft);
+}
+
+@media (max-width: 900px) {
+    .page {
+        padding: 24px 18px;
+    }
+
+    .header,
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .searchWrap {
+        max-width: none;
+    }
+}
+
 .header {
     display: flex;
     align-items: flex-start;

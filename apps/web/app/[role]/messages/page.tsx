@@ -35,7 +35,6 @@ function ConversationItem({
   onClick: () => void;
 }) {
   const isOwn = conv.last_message_sender_id === currentUserId;
-  console.log("Convo-------->", conv);
   return (
     <div
       className={`${styles.convItem} ${active ? styles.convItemActive : ""}`}

@@ -62,6 +62,14 @@ export class VerificationService {
       },
     );
 
+    await this.companyRepo.update(
+      { ownerId: userId },
+      {
+        verificationStatus: VerificationStatus.PENDING,
+        verificationRejectionReason: null,
+      },
+    );
+
     return this.docRepo.save(doc);
   }
 
@@ -71,10 +79,12 @@ export class VerificationService {
     if (!doc) throw new NotFoundException('Verification doc not found');
 
     const now = new Date();
+    const expiresAt = this.addMonths(now, 1);
 
     await this.docRepo.update(docId, {
       status: VerificationStatus.VERIFIED,
       reviewedAt: now,
+      expiresAt,
     });
 
     await this.subRepo.update(
@@ -90,6 +100,9 @@ export class VerificationService {
       {
         isVerified: true,
         verificationStatus: VerificationStatus.VERIFIED,
+        verificationStartedAt: now,
+        verificationExpiresAt: expiresAt,
+        verificationRejectionReason: null,
       },
     );
   }
@@ -102,12 +115,22 @@ export class VerificationService {
     await this.docRepo.update(docId, {
       status: VerificationStatus.REJECTED,
       reviewerNotes,
+      rejectionReason: reviewerNotes,
       reviewedAt: new Date(),
     });
 
     await this.subRepo.update(
       { userId: doc.userId },
       { verificationStatus: VerificationStatus.REJECTED },
+    );
+
+    await this.companyRepo.update(
+      { ownerId: doc.userId },
+      {
+        isVerified: false,
+        verificationStatus: VerificationStatus.REJECTED,
+        verificationRejectionReason: reviewerNotes,
+      },
     );
   }
 
@@ -120,8 +143,24 @@ export class VerificationService {
 
     await this.companyRepo.update(
       { ownerId: userId },
-      { isVerified: false, verificationStatus: VerificationStatus.LAPSED },
+      { isVerified: false, verificationStatus: VerificationStatus.EXPIRED },
     );
+  }
+
+  async expireVerificationTrials(now = new Date()): Promise<number> {
+    const result = await this.companyRepo
+      .createQueryBuilder()
+      .update(Company)
+      .set({
+        isVerified: false,
+        verificationStatus: VerificationStatus.EXPIRED,
+      })
+      .where('is_verified = true')
+      .andWhere('verification_expires_at IS NOT NULL')
+      .andWhere('verification_expires_at <= :now', { now })
+      .execute();
+
+    return result.affected ?? 0;
   }
 
   async getStatus(userId: string) {
@@ -131,9 +170,17 @@ export class VerificationService {
       order: { createdAt: 'DESC' },
     });
     return {
-      status: sub?.verificationStatus ?? VerificationStatus.UNVERIFIED,
+      status:
+        doc?.status ?? sub?.verificationStatus ?? VerificationStatus.UNVERIFIED,
       verifiedAt: sub?.verifiedAt,
       latestDoc: doc,
+      documents: doc ? [doc] : [],
     };
+  }
+
+  private addMonths(date: Date, months: number): Date {
+    const d = new Date(date);
+    d.setMonth(d.getMonth() + months);
+    return d;
   }
 }

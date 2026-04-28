@@ -121,7 +121,6 @@ export function useApplicantDashboard() {
     ])
       .then(([rawStats, rawApps, rawIvs]) => {
         if (cancelled) return;
-        console.log("RawStats------->", rawStats);
 
         setStats({
           totalApplications: rawStats.totalApplications,

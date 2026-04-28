@@ -339,7 +339,6 @@ export default function ApplicationsPage() {
     withdrawApplication,
     removeApplication,
   } = useApplications();
-  console.log("Applications------>", filtered);
   const [showSort, setShowSort] = useState(false);
 
   if (loading) return <PageSkeleton />;

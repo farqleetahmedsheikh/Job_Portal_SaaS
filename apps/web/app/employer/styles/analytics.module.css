@@ -54,6 +54,98 @@
     margin: -10px 0 0;
 }
 
+.intelGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.intelCard,
+.lockedBanner {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, var(--surface-raised, var(--bg-card)), var(--bg-card));
+  box-shadow: var(--shadow-sm);
+}
+
+.intelCard {
+  padding: 16px;
+}
+
+.intelLabel {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 10px;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(var(--glow-rgb), 0.1);
+  color: var(--status-info);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.intelCard h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.intelCard p,
+.lockedBanner p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.intelCard a {
+  display: inline-flex;
+  margin-top: 10px;
+  color: var(--status-info);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.warning {
+  background: rgba(var(--warning-rgb), 0.12);
+  color: var(--status-warning);
+}
+
+.critical {
+  background: rgba(var(--danger-rgb), 0.12);
+  color: var(--status-danger);
+}
+
+.success {
+  background: rgba(var(--success-rgb), 0.12);
+  color: var(--status-success);
+}
+
+.lockedBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+  border-color: rgba(var(--warning-rgb), 0.28);
+}
+
+@media (max-width: 1000px) {
+  .intelGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .intelGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .lockedBanner {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
 /* ── Range picker ────────────────────────────────────────────────────────────*/
 .rangePicker {
     display: flex;

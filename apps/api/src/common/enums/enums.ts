@@ -139,7 +139,13 @@ export enum VerificationStatus {
   PENDING = 'pending',
   VERIFIED = 'verified',
   REJECTED = 'rejected',
+  EXPIRED = 'expired',
   LAPSED = 'lapsed',
+}
+
+export enum BillingInterval {
+  MONTHLY = 'monthly',
+  YEARLY = 'yearly',
 }
 
 export enum AddonType {
@@ -172,4 +178,18 @@ export enum SupportTier {
   EMAIL = 'email',
   PRIORITY = 'priority',
   DEDICATED = 'dedicated',
+}
+
+export enum TemplateKind {
+  CONTRACT = 'contract',
+  OFFER_LETTER = 'offer_letter',
+}
+
+export enum EmailTemplateType {
+  INTERVIEW_SCHEDULED = 'interview_scheduled',
+  INTERVIEW_RESCHEDULED = 'interview_rescheduled',
+  INTERVIEW_CANCELLED = 'interview_cancelled',
+  REJECTION = 'rejection',
+  OFFER = 'offer',
+  APPLICATION_STATUS = 'application_status',
 }

@@ -194,6 +194,32 @@ export class MailService {
 
   // ── Offer ──────────────────────────────────────────────────────────────────
 
+  async sendApplicationRejected(opts: {
+    to: string;
+    candidateName: string;
+    jobTitle: string;
+    company: string;
+    reason?: string;
+  }): Promise<void> {
+    await this.send({
+      to: opts.to,
+      subject: `Application update - ${opts.jobTitle} at ${opts.company}`,
+      html: this.base(`
+        <h2>Application update</h2>
+        <p>Hi ${opts.candidateName}, thank you for your interest in
+           <strong>${opts.jobTitle}</strong> at <strong>${opts.company}</strong>.</p>
+        <p>The hiring team has decided to move forward with another candidate for this role.</p>
+        ${
+          opts.reason
+            ? this.metaCard([['Note from the hiring team', opts.reason]])
+            : ''
+        }
+        <p>We appreciate the time you invested and encourage you to apply again when another fit opens up.</p>
+        ${this.btn('Browse Jobs', 'https://hiringfly.com/applicant/browse-jobs')}
+      `),
+    });
+  }
+
   async sendOffer(opts: {
     to: string;
     candidateName: string;

@@ -4,7 +4,7 @@
 
 .sidebar {
     width: 256px;
-    background: var(--bg-card);
+    background: rgba(var(--bg-card-rgb), 0.9);
     border-right: 1px solid var(--border);
     padding: 20px 12px;
     display: flex;
@@ -14,6 +14,7 @@
     position: relative;
     overflow: hidden;
     flex-shrink: 0;
+    backdrop-filter: blur(18px);
 }
 
 .sidebar.collapsed {
@@ -88,7 +89,7 @@
     align-items: center;
     gap: 11px;
     padding: 10px 10px;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     text-decoration: none;
     font-size: 13.5px;
     font-weight: 500;
@@ -105,7 +106,7 @@
 .nav-icon {
     width: 34px;
     height: 34px;
-    border-radius: 9px;
+    border-radius: var(--radius-sm);
     display: grid;
     place-items: center;
     flex-shrink: 0;
@@ -143,7 +144,7 @@
 /* Hover */
 .nav-item:hover {
     color: var(--text-primary);
-    background: var(--bg-app);
+    background: var(--surface-hover);
 }
 
 .nav-item:hover .nav-icon {
@@ -152,14 +153,14 @@
 
 /* ── Active ── */
 .nav-item.active {
-    color: var(--color-secondary);
+    color: var(--text-primary);
     font-weight: 600;
-    background: rgba(var(--glow-rgb, 79, 70, 229), 0.08);
+    background: var(--surface-selected);
 }
 
 .nav-item.active .nav-icon {
-    background: rgba(var(--glow-rgb, 79, 70, 229), 0.14);
-    color: var(--color-secondary);
+    background: rgba(var(--glow-rgb), 0.16);
+    color: var(--status-info);
 }
 
 /* Active left bar */
@@ -205,7 +206,7 @@
 }
 
 .user-strip:hover {
-    background: var(--bg-app);
+    background: var(--surface-hover);
     border-color: rgba(var(--glow-rgb, 79, 70, 229), 0.2);
 }
 

@@ -21,6 +21,10 @@ export async function api<T = unknown>(
   });
 
   if (res.status === 401) {
+    if (typeof window === "undefined") {
+      throw new Error("Session expired");
+    }
+
     const authRoutes = [
       "/login",
       "/register",

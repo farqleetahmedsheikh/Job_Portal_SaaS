@@ -1,7 +1,7 @@
 /** @format */
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,21 +52,22 @@ export default function CompleteProfilePage() {
   const employerForm = useForm<EmployerForm, unknown, EmployerForm>({
     resolver: zodResolver(employerSchema) as Resolver<EmployerForm>,
   });
-  console.log("User from session store:", user); // Debug log to verify user data
+  useEffect(() => {
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
 
-  // Redirect if not logged in
-  if (!user) {
-    router.replace("/login");
-    return null;
-  }
+    if (user.isProfileComplete) {
+      router.replace(
+        user.role === "applicant"
+          ? "/applicant/dashboard"
+          : "/employer/dashboard",
+      );
+    }
+  }, [router, user]);
 
-  // Already completed
-  if (user.isProfileComplete) {
-    router.replace(
-      user.role === "applicant"
-        ? "/applicant/dashboard"
-        : "/employer/dashboard",
-    );
+  if (!user || user.isProfileComplete) {
     return null;
   }
 

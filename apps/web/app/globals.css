@@ -23,7 +23,9 @@ html {
 }
 
 body {
-  background: var(--bg-app);
+  background:
+    linear-gradient(180deg, rgba(var(--glow-rgb), 0.05), transparent 280px),
+    var(--bg-app);
   color: var(--text-primary);
   font-family: "DM Sans", system-ui, sans-serif;
   font-size: 14px;
@@ -45,22 +47,22 @@ h6 {
   font-family: "Syne", system-ui, sans-serif;
   color: var(--text-primary);
   line-height: 1.2;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   text-wrap: balance;
 }
 
 h1 {
-  font-size: clamp(24px, 4vw, 36px);
+  font-size: 32px;
   font-weight: 800;
 }
 
 h2 {
-  font-size: clamp(20px, 3vw, 28px);
+  font-size: 24px;
   font-weight: 700;
 }
 
 h3 {
-  font-size: clamp(16px, 2vw, 22px);
+  font-size: 18px;
   font-weight: 700;
 }
 
@@ -145,10 +147,18 @@ button:disabled {
 input,
 textarea,
 select {
-  background: var(--bg-app);
+  background: var(--surface-raised, var(--bg-app));
   color: var(--text-primary);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: rgba(var(--glow-rgb), 0.45);
+  box-shadow: var(--ring);
 }
 
 input::placeholder,
@@ -197,8 +207,8 @@ input:-webkit-autofill:focus {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-secondary);
-  outline-offset: 2px;
+  outline: 2px solid rgba(var(--glow-rgb), 0.72);
+  outline-offset: 3px;
   border-radius: var(--radius-sm);
 }
 
@@ -237,5 +247,27 @@ input:-webkit-autofill:focus {
   visibility: hidden;
 }
 
-h1 { font-size: clamp(24px, 4vw, 36px); }
-h2 { font-size: clamp(20px, 3vw, 28px); }
+@media (max-width: 640px) {
+  h1 {
+    font-size: 26px;
+  }
+
+  h2 {
+    font-size: 21px;
+  }
+
+  h3 {
+    font-size: 17px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

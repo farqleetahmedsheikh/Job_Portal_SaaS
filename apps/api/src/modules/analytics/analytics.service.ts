@@ -1,20 +1,20 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Job } from '../jobs/entities/job.entity';
 import { Application } from '../applications/entities/application.entity';
 import { Company } from '../companies/entities/company.entity';
+import { Interview } from '../interviews/entities/interview.entity';
 import { LimitsService } from '../billing/limits.service';
-import { AnalyticsTier } from '../../common/enums/enums';
+import { AnalyticsTier, AppStatus } from '../../common/enums/enums';
 import type {
   PeriodAggregates,
   SourceRow,
   TrendRow,
   EmployerAnalyticsResponse,
+  AnalyticsInsight,
 } from './analytics-response.types';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -35,6 +35,8 @@ export class AnalyticsService {
     private readonly appRepo: Repository<Application>,
     @InjectRepository(Company)
     private readonly companyRepo: Repository<Company>,
+    @InjectRepository(Interview)
+    private readonly interviewRepo: Repository<Interview>,
     private readonly dataSource: DataSource,
     private readonly limits: LimitsService,
   ) {}
@@ -70,7 +72,9 @@ export class AnalyticsService {
         'viewsCount',
         'applicantCount',
         'publishedAt',
+        'isFeatured',
       ],
+      relations: ['company'],
     });
 
     const jobIds = jobs
@@ -114,29 +118,76 @@ export class AnalyticsService {
       status: r.status as string,
       count: Number(r.count),
     }));
+    const pipelineMap = new Map(
+      pipeline.map((p) => [String(p.status).toLowerCase(), p.count]),
+    );
+    const totalApps = current.totalApplications;
+    const shortlisted = pipelineMap.get(AppStatus.SHORTLISTED) ?? 0;
+    const interviewsInPipeline = pipelineMap.get(AppStatus.INTERVIEW) ?? 0;
+    const offers = pipelineMap.get(AppStatus.OFFERED) ?? 0;
+    const hires = pipelineMap.get(AppStatus.HIRED) ?? 0;
+    const rejected = pipelineMap.get(AppStatus.REJECTED) ?? 0;
+    const funnelConversion = {
+      applicantToShortlist:
+        totalApps > 0 ? Math.round((shortlisted / totalApps) * 100) : 0,
+      shortlistToInterview:
+        shortlisted > 0
+          ? Math.round((interviewsInPipeline / shortlisted) * 100)
+          : 0,
+      interviewToOffer:
+        interviewsInPipeline > 0
+          ? Math.round((offers / interviewsInPipeline) * 100)
+          : 0,
+      offerToHire: offers > 0 ? Math.round((hires / offers) * 100) : 0,
+      rejectionRate:
+        totalApps > 0 ? Math.round((rejected / totalApps) * 100) : 0,
+    };
 
     // ── Top jobs — FIX: include actual status from entity ─────────────────
+    const jobPerformance = await this.fetchJobPerformance(jobIds);
+    const perfMap = new Map(jobPerformance.map((j) => [j.job_id, j]));
     const topJobs = jobs
-      .map((j) => ({
-        id: j.id!,
-        title: j.title!,
-        // FIX: use the job's actual status value — was hardcoded to "active"
-        status: j.status as 'active' | 'paused' | 'closed',
-        views: j.viewsCount ?? 0,
-        applications: j.applicantCount ?? 0,
-        applyRate:
-          (j.viewsCount ?? 0) > 0
-            ? Math.round(((j.applicantCount ?? 0) / j.viewsCount!) * 100 * 10) /
-              10
-            : 0,
-      }))
+      .map((j) => {
+        const perf = perfMap.get(j.id!);
+        const applications = Number(
+          perf?.applications ?? j.applicantCount ?? 0,
+        );
+        const interviews = Number(perf?.interviews ?? 0);
+        const jobHires = Number(perf?.hires ?? 0);
+        return {
+          id: j.id!,
+          title: j.title!,
+          status: String(j.status),
+          views: j.viewsCount ?? 0,
+          applications,
+          interviews,
+          hires: jobHires,
+          applyRate:
+            (j.viewsCount ?? 0) > 0
+              ? Math.round((applications / j.viewsCount!) * 100 * 10) / 10
+              : 0,
+          conversionRate:
+            applications > 0 ? Math.round((jobHires / applications) * 100) : 0,
+          isFeatured: j.isFeatured ?? false,
+          isVerified: j.company?.isVerified ?? false,
+        };
+      })
       .sort((a, b) => b.applications - a.applications)
-      .slice(0, 5);
+      .slice(0, 8);
 
     // ── Sources breakdown ─────────────────────────────────────────────────
     // FIX: was always returning [] — now queries source column on applications.
     // Falls back gracefully if the column doesn't exist yet.
     const sources = await this.fetchSources(jobIds, days);
+    const pipelineHealth = await this.fetchPipelineHealth(jobIds);
+    const usage = await this.buildUsage(userId);
+    const recommendations = this.buildRecommendations({
+      tier,
+      usage,
+      pipelineHealth,
+      topJobs,
+      companyVerified: company.isVerified ?? false,
+    });
 
     const base = {
       totalJobs: jobs.length,
@@ -155,6 +206,14 @@ export class AnalyticsService {
       sources,
       trend: [] as TrendRow[],
       tier,
+      lockedInsights: tier === AnalyticsTier.BASIC,
+      funnelConversion,
+      pipelineHealth,
+      usage,
+      recommendations:
+        tier === AnalyticsTier.BASIC
+          ? recommendations.slice(0, 2)
+          : recommendations,
     };
 
     if (tier === AnalyticsTier.BASIC) return base;
@@ -334,9 +393,158 @@ export class AnalyticsService {
     }));
   }
 
+  private async fetchJobPerformance(jobIds: string[]) {
+    return this.dataSource.query<
+      {
+        job_id: string;
+        applications: string;
+        interviews: string;
+        hires: string;
+      }[]
+    >(
+      `SELECT
+         a.job_id,
+         COUNT(a.id)::int AS applications,
+         COUNT(a.id) FILTER (WHERE a.status = 'interview')::int AS interviews,
+         COUNT(a.id) FILTER (WHERE a.status = 'hired')::int AS hires
+       FROM applications a
+       WHERE a.job_id = ANY($1)
+       GROUP BY a.job_id`,
+      [jobIds],
+    );
+  }
+
+  private async fetchPipelineHealth(jobIds: string[]) {
+    const rows = await this.dataSource.query<
+      {
+        stuck_applications: string;
+        waiting_for_response: string;
+        pending_decisions: string;
+      }[]
+    >(
+      `SELECT
+         COUNT(*) FILTER (
+           WHERE status IN ('new', 'reviewing', 'shortlisted')
+           AND updated_at < NOW() - INTERVAL '5 days'
+         )::int AS stuck_applications,
+         COUNT(*) FILTER (
+           WHERE status IN ('new', 'reviewing')
+           AND created_at < NOW() - INTERVAL '3 days'
+         )::int AS waiting_for_response,
+         COUNT(*) FILTER (
+           WHERE status = 'interview'
+           AND updated_at < NOW() - INTERVAL '2 days'
+         )::int AS pending_decisions
+       FROM applications
+       WHERE job_id = ANY($1)`,
+      [jobIds],
+    );
+    const row = rows[0];
+    const pendingDecisions = Number(row?.pending_decisions ?? 0);
+    const interviewsScheduled = await this.interviewRepo
+      .createQueryBuilder('iv')
+      .where('iv.job_id IN (:...jobIds)', { jobIds })
+      .andWhere('iv.status = :status', { status: 'upcoming' })
+      .getCount();
+
+    return {
+      stuckApplications: Number(row?.stuck_applications ?? 0),
+      waitingForResponse: Number(row?.waiting_for_response ?? 0),
+      interviewsScheduled,
+      pendingDecisions,
+      overdueFollowUps: pendingDecisions,
+    };
+  }
+
+  private async buildUsage(userId: string) {
+    const interviewUsage = await this.limits.getInterviewUsage(userId);
+    const rows = await this.dataSource.query<
+      { job_posts_remaining: string; featured_slots_remaining: string }[]
+    >(
+      `SELECT job_posts_remaining, featured_slots_remaining
+       FROM subscriptions
+       WHERE user_id = $1
+       LIMIT 1`,
+      [userId],
+    );
+    const sub = rows[0];
+
+    return {
+      interviews: {
+        currentUsage: interviewUsage.currentUsage,
+        limit: interviewUsage.limit,
+        pct:
+          interviewUsage.limit === 'unlimited'
+            ? null
+            : Math.round(
+                (interviewUsage.currentUsage / interviewUsage.limit) * 100,
+              ),
+      },
+      featuredSlotsRemaining: Number(sub?.featured_slots_remaining ?? 0),
+      jobPostsRemaining: Number(sub?.job_posts_remaining ?? 0),
+    };
+  }
+
+  private buildRecommendations(input: {
+    tier: AnalyticsTier;
+    usage: EmployerAnalyticsResponse['usage'];
+    pipelineHealth: EmployerAnalyticsResponse['pipelineHealth'];
+    topJobs: EmployerAnalyticsResponse['topJobs'];
+    companyVerified: boolean;
+  }): AnalyticsInsight[] {
+    const insights: AnalyticsInsight[] = [];
+    if (
+      input.usage.interviews.pct !== null &&
+      input.usage.interviews.pct >= 90
+    ) {
+      insights.push({
+        severity: 'critical',
+        title: 'Interview limit almost used',
+        body: `You used ${input.usage.interviews.currentUsage} of ${input.usage.interviews.limit} interviews this period. Upgrade before scheduling stops.`,
+        cta: 'Upgrade plan',
+      });
+    }
+    if (input.pipelineHealth.waitingForResponse > 0) {
+      insights.push({
+        severity: 'warning',
+        title: `${input.pipelineHealth.waitingForResponse} candidates are waiting`,
+        body: 'Respond within 3 days to reduce drop-off and protect candidate experience.',
+        cta: 'Review pipeline',
+      });
+    }
+    const featured = input.topJobs.find((j) => j.isFeatured);
+    if (featured) {
+      insights.push({
+        severity: 'success',
+        title: 'Featured listing is working',
+        body: `${featured.title} is one of your strongest performers. Keep priority roles featured to protect applicant flow.`,
+      });
+    }
+    if (!input.companyVerified) {
+      insights.push({
+        severity: 'info',
+        title: 'Verified badge can increase trust',
+        body: 'Growth and Scale include the verified company badge so candidates can apply with more confidence.',
+        cta: 'Verify company',
+      });
+    }
+    if (
+      input.tier === AnalyticsTier.BASIC ||
+      input.tier === AnalyticsTier.NONE
+    ) {
+      insights.push({
+        severity: 'info',
+        title: 'Unlock advanced hiring intelligence',
+        body: 'Growth adds pipeline health, automation insights, and stronger conversion recommendations.',
+        cta: 'Upgrade to Growth',
+      });
+    }
+    return insights;
+  }
+
   // ── Empty response ────────────────────────────────────────────────────────
   // FIX: shape was stale — missing sources, all delta fields, avgTimeToHire
-  private emptyResponse(tier: string): EmployerAnalyticsResponse {
+  private emptyResponse(tier: AnalyticsTier): EmployerAnalyticsResponse {
     return {
       totalJobs: 0,
       activeJobs: 0,
@@ -353,6 +561,28 @@ export class AnalyticsService {
       sources: [],
       trend: [],
       tier,
+      lockedInsights:
+        tier === AnalyticsTier.NONE || tier === AnalyticsTier.BASIC,
+      funnelConversion: {
+        applicantToShortlist: 0,
+        shortlistToInterview: 0,
+        interviewToOffer: 0,
+        offerToHire: 0,
+        rejectionRate: 0,
+      },
+      pipelineHealth: {
+        stuckApplications: 0,
+        waitingForResponse: 0,
+        interviewsScheduled: 0,
+        pendingDecisions: 0,
+        overdueFollowUps: 0,
+      },
+      usage: {
+        interviews: { currentUsage: 0, limit: 'unlimited', pct: null },
+        featuredSlotsRemaining: 0,
+        jobPostsRemaining: 0,
+      },
+      recommendations: [],
     };
   }
 }

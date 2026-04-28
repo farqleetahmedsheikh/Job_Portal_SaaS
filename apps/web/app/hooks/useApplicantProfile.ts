@@ -119,7 +119,6 @@ function calcDuration(start?: string, end?: string) {
 }
 
 function normalise(raw: RawProfile): ApplicantProfile {
-  console.log("Raw Profile------->", raw);
   const p = raw.applicant?.applicantProfile;
   const name = raw.applicant?.fullName ?? "Unknown";
   return {

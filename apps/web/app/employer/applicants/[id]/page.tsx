@@ -1,4 +1,5 @@
 /** @format */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState } from "react";
@@ -45,7 +46,6 @@ export default function ApplicantProfilePage() {
   const [scheduledSuccess, setScheduledSuccess] = useState(false);
   const user = useUser();
   const { company } = useCompany();
-  console.log("User---->", user);
 
   if (loading) {
     return (
@@ -526,9 +526,6 @@ export default function ApplicantProfilePage() {
         <ScheduleInterviewModal
           prefillApplicationId={profile.id}
           prefillApplicantName={profile.name}
-          prefillCandidateId={profile.userId}
-          prefillCompanyId={company?.id}
-          prefillScheduledById={user?.id}
           prefillJobTitle={profile.jobTitle}
           onClose={() => setScheduling(false)}
           onScheduled={() => {

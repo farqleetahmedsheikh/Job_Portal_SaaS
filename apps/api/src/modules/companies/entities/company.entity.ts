@@ -90,6 +90,27 @@ export class Company {
   })
   verificationStatus!: VerificationStatus;
 
+  @Column({
+    name: 'verification_started_at',
+    type: 'timestamptz',
+    nullable: true,
+  })
+  verificationStartedAt?: Date | null;
+
+  @Column({
+    name: 'verification_expires_at',
+    type: 'timestamptz',
+    nullable: true,
+  })
+  verificationExpiresAt?: Date | null;
+
+  @Column({
+    name: 'verification_rejection_reason',
+    type: 'text',
+    nullable: true,
+  })
+  verificationRejectionReason?: string | null;
+
   // Cached counters — updated by DB triggers, never write manually
   @Column({ name: 'active_jobs_count', default: 0 })
   activeJobsCount?: number;

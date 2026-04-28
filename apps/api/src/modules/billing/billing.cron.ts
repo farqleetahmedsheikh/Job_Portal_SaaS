@@ -5,6 +5,7 @@ import { Repository, LessThan } from 'typeorm';
 import { Job } from '../jobs/entities/job.entity';
 import { Interview } from '../interviews/entities/interview.entity';
 import { InterviewStatus } from '../../common/enums/enums';
+import { VerificationService } from './verification.service';
 
 @Injectable()
 export class BillingCron {
@@ -15,6 +16,7 @@ export class BillingCron {
     private readonly jobRepo: Repository<Job>,
     @InjectRepository(Interview) // ✅ new
     private readonly interviewRepo: Repository<Interview>,
+    private readonly verificationService: VerificationService,
   ) {}
 
   // ── Expire featured jobs daily at midnight ─────────────────────────────────
@@ -25,6 +27,12 @@ export class BillingCron {
       { isFeatured: false, featuredUntil: undefined },
     );
     this.logger.log(`Expired ${result.affected} featured jobs`);
+
+    const expiredCompanies =
+      await this.verificationService.expireVerificationTrials();
+    if (expiredCompanies > 0) {
+      this.logger.log(`Expired ${expiredCompanies} company verifications`);
+    }
   }
 
   // ── Auto-expire interviews every 15 minutes ────────────────────────────────

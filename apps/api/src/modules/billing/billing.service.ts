@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/require-await, @typescript-eslint/no-unused-vars */
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -12,10 +13,15 @@ import { Job } from '../jobs/entities/job.entity';
 import {
   BillingEventType,
   AddonType,
+  BillingInterval,
   SubscriptionPlan,
   JobStatus,
 } from '../../common/enums/enums';
-import { ADDON_PRICES, PLAN_PRICES } from '../../config/plan-limits.config';
+import {
+  ADDON_PRICES,
+  PLAN_LIMITS,
+  getPlanPrice,
+} from '../../config/plan-limits.config';
 import { SubscriptionsService } from './subscriptions.service';
 import { VerificationService } from './verification.service';
 import { LimitsService } from './limits.service';
@@ -43,18 +49,21 @@ export class BillingService {
   async createCheckout(
     userId: string,
     plan: SubscriptionPlan,
+    billingInterval: BillingInterval = BillingInterval.MONTHLY,
   ): Promise<{ checkoutUrl: string }> {
     // TODO: Replace with real Safepay SDK call when integrated
     // This is the shape Safepay expects
     const payload = {
-      amount: PLAN_PRICES[plan] * 100, // in paisa
+      amount: getPlanPrice(plan, billingInterval) * 100, // in paisa
       currency: 'PKR',
-      metadata: { userId, plan },
+      metadata: { userId, plan, billingInterval },
       successUrl: `${this.config.get('APP_URL')}/billing/success`,
       cancelUrl: `${this.config.get('APP_URL')}/billing/cancel`,
     };
 
-    this.logger.log(`Creating checkout for user ${userId} plan ${plan}`);
+    this.logger.log(
+      `Creating checkout for user ${userId} plan ${plan} interval ${billingInterval}`,
+    );
 
     // Stub — replace with: const session = await safepay.checkout.create(payload)
     return { checkoutUrl: `https://sandbox.safepay.pk/checkout?stub=true` };
@@ -167,9 +176,40 @@ export class BillingService {
     });
   }
 
+  async getCapabilities(userId: string) {
+    const sub = await this.subscriptions.getOrCreate(userId);
+    const limits = PLAN_LIMITS[sub.plan];
+    const interviewUsage = await this.limits.getInterviewUsage(userId);
+
+    return {
+      plan: sub.plan,
+      status: sub.status,
+      billingInterval: sub.billingInterval,
+      trialEndAt: sub.trialEndAt,
+      currentPeriodStart: sub.currentPeriodStart,
+      currentPeriodEnd: sub.currentPeriodEnd,
+      limits: this.serializeLimits(limits),
+      usage: {
+        interviews: interviewUsage,
+        jobPostsRemaining: sub.jobPostsRemaining,
+        featuredSlotsRemaining: sub.featuredSlotsRemaining,
+      },
+    };
+  }
+
+  private serializeLimits(limits: (typeof PLAN_LIMITS)[SubscriptionPlan]) {
+    return Object.fromEntries(
+      Object.entries(limits).map(([key, value]) => [
+        key,
+        value === Infinity ? 'unlimited' : value,
+      ]),
+    );
+  }
+
   // ── Private: webhook handlers ─────────────────────────────────────────────
   private async onPaymentSuccess(data: any): Promise<void> {
-    const { userId, plan, addonType, jobId } = data.metadata ?? {};
+    const { userId, plan, addonType, jobId, billingInterval } =
+      data.metadata ?? {};
 
     if (addonType) {
       await this.applyAddon(userId, addonType, jobId, data.payment_id);
@@ -182,6 +222,7 @@ export class BillingService {
         plan,
         data.subscription_id,
         data.customer_id,
+        billingInterval,
       );
     }
   }

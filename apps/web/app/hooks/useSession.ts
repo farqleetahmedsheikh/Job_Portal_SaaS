@@ -39,7 +39,6 @@ export function useSession() {
           "POST",
           data,
         );
-        console.log("Logged in user:", user); // Debug log to verify response structure
         // user IS the safe user — no user.user nesting
         setUser(user as SessionUser);
         if (!user.isProfileComplete) {

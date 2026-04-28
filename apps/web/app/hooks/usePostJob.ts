@@ -96,7 +96,6 @@ export function usePostJob() {
       }
       setSubmitting(true);
       try {
-        console.log("Job Data--------> ", form);
         const job = await api<{ id: string; title: string }>(`${API_BASE}/jobs`, "POST", {
           ...form,
           salaryMin: form.salaryMin ? Number(form.salaryMin) : undefined,

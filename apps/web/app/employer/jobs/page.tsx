@@ -1,4 +1,5 @@
 /** @format */
+/* eslint-disable react/no-unescaped-entities */
 
 "use client";
 
@@ -550,7 +551,12 @@ export default function ManageJobsPage() {
                     <button
                       className={styles.actionBtn}
                       title={job.status === "active" ? "Pause" : "Activate"}
-                      onClick={() => toggleStatus(job.id)}
+                      onClick={() =>
+                        toggleStatus(
+                          job.id,
+                          job.status === "active" ? "paused" : "active",
+                        )
+                      }
                     >
                       {job.status === "active" ? (
                         <PauseCircle size={14} />

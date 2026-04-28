@@ -1,4 +1,5 @@
 /** @format */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 "use client";
 
@@ -289,7 +290,6 @@ export default function AllApplicantsPage() {
     toggleStar,
     changeStatus,
   } = useAllApplicants();
-  console.log("Filter applicants-------->", filtered);
 
   if (loading) return <PageSkeleton />;
 

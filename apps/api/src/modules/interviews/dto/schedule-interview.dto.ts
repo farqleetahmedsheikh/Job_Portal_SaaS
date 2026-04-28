@@ -16,16 +16,7 @@ import { PanelistDto } from './panel-list.dto';
 
 export class ScheduleInterviewDto {
   @IsUUID()
-  applicationId?: string;
-
-  @IsUUID()
-  candidateId?: string;
-
-  @IsUUID()
-  companyId?: string;
-
-  @IsUUID()
-  scheduledById?: string;
+  applicationId!: string;
 
   @IsDateString()
   scheduledAt!: string;

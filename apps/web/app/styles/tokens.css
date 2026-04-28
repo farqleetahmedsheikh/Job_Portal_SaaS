@@ -1,25 +1,32 @@
 :root {
   --color-primary: #2563eb;
   --color-secondary: #4f46e5;
-  --color-accent: #34d9b3;
-  --glow-rgb: 79, 70, 229;
+  --color-accent: #14b8a6;
+  --glow-rgb: 37, 99, 235;
+  --accent-rgb: 20, 184, 166;
+  --success-rgb: 16, 185, 129;
+  --warning-rgb: 245, 158, 11;
+  --danger-rgb: 244, 63, 94;
 
-  --bg-app: #0d0f14;
-  --bg-card: #13161e;
-  --bg-card-rgb: 19, 22, 30;
-  --bg-app-rgb: 13, 15, 20;
+  --bg-app: #0b0d12;
+  --bg-card: #121620;
+  --bg-elevated: #171c29;
+  --bg-soft: rgba(255, 255, 255, 0.035);
+  --bg-card-rgb: 18, 22, 32;
+  --bg-app-rgb: 11, 13, 18;
 
   --text-primary: #f0f2f8;
   --text-secondary: #a0a8c0;
   --text-muted: #8891a8;
   --text-link: #818cf8;
 
-  --border: rgba(255, 255, 255, 0.07);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
 
-  --status-success: #34d9b3;
-  --status-warning: #f97316;
+  --status-success: #10b981;
+  --status-warning: #f59e0b;
   --status-danger: #f43f5e;
-  --status-info: #4f8ef7;
+  --status-info: #3b82f6;
 
   --radius: 12px;
   --radius-sm: 8px;
@@ -27,11 +34,14 @@
   --radius-full: 999px;
   --radius-md: 10px;
   --surface: var(--bg-card);
-  --surface-hover: rgba(var(--glow-rgb), 0.04);
+  --surface-raised: var(--bg-elevated);
+  --surface-hover: rgba(255, 255, 255, 0.045);
+  --surface-selected: rgba(var(--glow-rgb), 0.12);
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.14), 0 24px 48px rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.16), 0 6px 14px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.18), 0 1px 0 rgba(255, 255, 255, 0.025) inset;
+  --shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.26), 0 1px 0 rgba(255, 255, 255, 0.035) inset;
+  --ring: 0 0 0 3px rgba(var(--glow-rgb), 0.18);
 
   --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out: cubic-bezier(0.0, 0, 0.2, 1);
@@ -39,31 +49,41 @@
 }
 
 [data-theme="light"] {
-  --bg-app: #f4f6fb;
+  --bg-app: #f5f7fb;
   --bg-card: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-soft: rgba(15, 23, 42, 0.035);
   --bg-card-rgb: 255, 255, 255;
-  --bg-app-rgb: 244, 246, 251;
+  --bg-app-rgb: 245, 247, 251;
   --text-primary: #0f1117;
   --text-secondary: #4a5568;
   --text-muted: #8896a8;
-  --border: rgba(0, 0, 0, 0.08);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08), 0 24px 48px rgba(0, 0, 0, 0.05);
+  --border: rgba(15, 23, 42, 0.08);
+  --border-strong: rgba(15, 23, 42, 0.14);
+  --surface-hover: rgba(15, 23, 42, 0.04);
+  --surface-selected: rgba(var(--glow-rgb), 0.09);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 20px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 12px 30px rgba(15, 23, 42, 0.08), 0 1px 0 rgba(255, 255, 255, 0.7) inset;
+  --shadow-lg: 0 22px 60px rgba(15, 23, 42, 0.12), 0 1px 0 rgba(255, 255, 255, 0.75) inset;
 }
 
 /* Dark — mirrors :root so toggling back works */
 [data-theme="dark"] {
-  --bg-app: #0d0f14;
-  --bg-card: #13161e;
-  --bg-card-rgb: 19, 22, 30;
-  --bg-app-rgb: 13, 15, 20;
+  --bg-app: #0b0d12;
+  --bg-card: #121620;
+  --bg-elevated: #171c29;
+  --bg-soft: rgba(255, 255, 255, 0.035);
+  --bg-card-rgb: 18, 22, 32;
+  --bg-app-rgb: 11, 13, 18;
   --text-primary: #f0f2f8;
   --text-secondary: #a0a8c0;
   --text-muted: #8891a8;
   --text-link: #818cf8;
-  --border: rgba(255, 255, 255, 0.07);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.14), 0 24px 48px rgba(0, 0, 0, 0.1);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --surface-hover: rgba(255, 255, 255, 0.045);
+  --surface-selected: rgba(var(--glow-rgb), 0.12);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.16), 0 6px 14px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.18), 0 1px 0 rgba(255, 255, 255, 0.025) inset;
+  --shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.26), 0 1px 0 rgba(255, 255, 255, 0.035) inset;
 }

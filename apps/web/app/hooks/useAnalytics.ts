@@ -1,4 +1,5 @@
 /** @format */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -46,11 +47,14 @@ function transform(raw: any): AnalyticsData {
     title: String(j.title ?? "Untitled"),
     views: j.views ?? 0,
     applications: j.applications ?? 0,
+    interviews: j.interviews ?? 0,
+    hires: j.hires ?? 0,
     hireRate: j.applyRate ?? j.hireRate ?? 0,
+    conversionRate: j.conversionRate ?? 0,
     // Use backend status if valid; fall back to "active"
-    status: (["active", "paused", "closed"].includes(j.status)
-      ? j.status
-      : "active") as "active" | "paused" | "closed",
+    status: String(j.status ?? "active"),
+    isFeatured: Boolean(j.isFeatured),
+    isVerified: Boolean(j.isVerified),
   }));
 
   // Sources — map from backend if provided
@@ -85,6 +89,11 @@ function transform(raw: any): AnalyticsData {
     avgApplyRate: raw.avgApplyRate ?? 0,
     trend: raw.trend ?? [],
     pipeline: raw.pipeline ?? [],
+    lockedInsights: raw.lockedInsights ?? false,
+    funnelConversion: raw.funnelConversion ?? {},
+    pipelineHealth: raw.pipelineHealth,
+    usage: raw.usage,
+    recommendations: raw.recommendations ?? [],
   };
 }
 

@@ -6,7 +6,6 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
@@ -14,7 +13,7 @@ import { Repository, DataSource } from 'typeorm';
 import { Job } from './entities/job.entity';
 import { Company } from '../companies/entities/company.entity';
 import { Application } from '../applications/entities/application.entity';
-import { JobStatus } from '../../common/enums/enums';
+import { AppStatus, JobStatus, NotifType } from '../../common/enums/enums';
 import { JobSkill } from './entities/job-skill.entity';
 import { SavedJob } from './entities/saved-job.entity';
 import { CreateJobDto } from './dto/create-job.dto';
@@ -24,6 +23,9 @@ import { ChangeJobStatusDto } from './dto/change-job-status.dto';
 import { LimitsService } from '../billing/limits.service'; // ← new
 import { ApplicantProfile } from '../applicants/entities/applicant-profile.entity';
 import { AnalyticsTier } from '../../common/enums/enums';
+import { NotificationsService } from '../notifications/notifications.service';
+import { assertJobStatusTransition } from './job-status.transitions';
+import { TERMINAL_APPLICATION_STATUSES } from '../applications/application-status.transitions';
 
 @Injectable()
 export class JobsService {
@@ -39,6 +41,7 @@ export class JobsService {
     private readonly limitsService: LimitsService, // ← new
     @InjectRepository(ApplicantProfile)
     private readonly profileRepo: Repository<ApplicantProfile>,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ── Employer: Create ────────────────────────────────────────────────────────
@@ -104,16 +107,56 @@ export class JobsService {
     dto: ChangeJobStatusDto,
   ): Promise<Job> {
     const job = await this.findOwnedOrFail(jobId, userId);
+    assertJobStatusTransition(job.status!, dto.status);
 
-    if (job.status === JobStatus.EXPIRED)
-      throw new BadRequestException('Expired jobs cannot be reactivated');
+    const rejectedApps: Application[] = [];
 
-    job.status = dto.status;
-    if (dto.status === JobStatus.ACTIVE && !job.publishedAt) {
-      job.publishedAt = new Date();
+    const saved = await this.dataSource.transaction(async (manager) => {
+      job.status = dto.status;
+      if (dto.status === JobStatus.ACTIVE && !job.publishedAt) {
+        job.publishedAt = new Date();
+      }
+
+      const updatedJob = await manager.save(Job, job);
+
+      if (dto.status === JobStatus.CLOSED) {
+        const apps = await manager.find(Application, {
+          where: { jobId },
+          relations: ['applicant', 'job', 'job.company'],
+        });
+
+        for (const app of apps) {
+          if (TERMINAL_APPLICATION_STATUSES.has(app.status!)) continue;
+          app.status = AppStatus.REJECTED;
+          await manager.save(Application, app);
+          rejectedApps.push(app);
+        }
+      }
+
+      return updatedJob;
+    });
+
+    for (const app of rejectedApps) {
+      await this.notifications.notify({
+        recipientId: app.applicantId,
+        recipientEmail: app.applicant?.email,
+        type: NotifType.APP_STATUS,
+        category: 'application',
+        title: 'Application update',
+        body: `The job ${job.title ?? 'you applied for'} has closed, so your application is no longer active.`,
+        refId: app.id,
+        refType: 'application',
+        meta: {
+          candidateName: app.applicant?.fullName,
+          jobTitle: job.title,
+          company: app.job?.company?.companyName ?? job.company?.companyName,
+          status: AppStatus.REJECTED,
+          reason: 'Job closed',
+        },
+      });
     }
 
-    return this.jobRepo.save(job);
+    return saved;
   }
 
   // ── Employer: Duplicate as draft ────────────────────────────────────────────
@@ -226,6 +269,8 @@ export class JobsService {
         'DESC',
       );
     }
+
+    qb.addOrderBy('c.isVerified', 'DESC');
 
     // Featured always floats to top within same match tier
     qb.addOrderBy('j.isFeatured', 'DESC');

@@ -23,8 +23,13 @@ export interface TopJob {
   title: string;
   views: number;
   applications: number;
+  interviews?: number;
+  hires?: number;
   hireRate: number;
-  status: "active" | "paused" | "closed";
+  conversionRate?: number;
+  status: string;
+  isFeatured?: boolean;
+  isVerified?: boolean;
 }
 
 export interface SourceBreakdown {
@@ -59,4 +64,28 @@ export interface AnalyticsData {
   avgApplyRate: number;
   trend: unknown[];
   pipeline: { status: string; count: number }[];
+  lockedInsights?: boolean;
+  funnelConversion?: Record<string, number>;
+  pipelineHealth?: {
+    stuckApplications: number;
+    waitingForResponse: number;
+    interviewsScheduled: number;
+    pendingDecisions: number;
+    overdueFollowUps: number;
+  };
+  usage?: {
+    interviews: {
+      currentUsage: number;
+      limit: number | "unlimited";
+      pct: number | null;
+    };
+    featuredSlotsRemaining: number;
+    jobPostsRemaining: number;
+  };
+  recommendations?: {
+    severity: "info" | "warning" | "critical" | "success";
+    title: string;
+    body: string;
+    cta?: string;
+  }[];
 }

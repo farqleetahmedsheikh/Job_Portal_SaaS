@@ -1,9 +1,13 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 /** @format */
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useUser, useSessionStore } from "../../store/session.store";
+import {
+  type SessionUser,
+  useUser,
+  useSessionStore,
+} from "../../store/session.store";
 import { FIELDS } from "../../config/profile.config";
 import { useProfileForm } from "../../hooks/useProfileForm";
 import { ProfileHeader } from "../../components/ui/ProfileHeader";
@@ -21,12 +25,22 @@ export default function ProfilePage() {
   const user = useUser();
   const { setUser } = useSessionStore();
 
-  if (!user) {
-    console.log("User-------> ", user);
-    router.push("/login");
-    return null;
-  }
+  useEffect(() => {
+    if (!user) router.push("/login");
+  }, [router, user]);
 
+  if (!user) return null;
+
+  return <ProfileContent user={user} setUser={setUser} />;
+}
+
+function ProfileContent({
+  user,
+  setUser,
+}: {
+  user: SessionUser;
+  setUser: (user: SessionUser) => void;
+}) {
   const {
     form,
     draft,

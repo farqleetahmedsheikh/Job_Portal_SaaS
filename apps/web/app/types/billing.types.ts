@@ -1,6 +1,7 @@
 /** @format */
 
 export type SubscriptionPlan = "free" | "starter" | "growth" | "scale";
+export type BillingInterval = "monthly" | "yearly";
 export type SubscriptionStatus =
   | "active"
   | "cancelled"
@@ -11,6 +12,7 @@ export type VerificationStatus =
   | "pending"
   | "verified"
   | "rejected"
+  | "expired"
   | "lapsed";
 export type AddonType = "extra_post" | "boost_cap" | "feature_job";
 export type BillingEventType =
@@ -24,6 +26,10 @@ export interface Subscription {
   userId: string;
   plan: SubscriptionPlan;
   status: SubscriptionStatus;
+  billingInterval?: BillingInterval;
+  trialStartAt?: string;
+  trialEndAt?: string;
+  trialUsedAt?: string;
   jobPostsRemaining: number;
   featuredSlotsRemaining: number;
   currentPeriodStart?: string;
@@ -33,6 +39,27 @@ export interface Subscription {
   cancelledAt?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PlanCapabilities {
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus;
+  billingInterval?: BillingInterval;
+  trialEndAt?: string;
+  currentPeriodStart?: string;
+  currentPeriodEnd?: string;
+  limits: Record<string, boolean | number | string>;
+  usage: {
+    interviews: {
+      plan: SubscriptionPlan;
+      currentUsage: number;
+      limit: number | "unlimited";
+      periodStart: string;
+      periodEnd: string;
+    };
+    jobPostsRemaining: number;
+    featuredSlotsRemaining: number;
+  };
 }
 
 export interface BillingEvent {
@@ -49,11 +76,18 @@ export interface PlanMeta {
   key: SubscriptionPlan;
   label: string;
   price: number; // PKR/month
+  yearlyPrice?: number;
   jobPostsPerMonth: number;
   applicantsPerJob: number | "Unlimited";
   maxApplicantsViewable: number | "Unlimited";
   teamSeats: number;
   featuredSlotsPerMonth: number;
+  maxInterviewsPerMonth: number | "Unlimited";
+  hasInterviewReminders: boolean;
+  hasCalendarSync: boolean;
+  hasCustomEmailTemplates: boolean;
+  hasContractTemplates: boolean;
+  hasOfferLetters: boolean;
   aiMatcher: "None" | "Basic" | "Advanced";
   hasTalentDb: boolean;
   hasAutomation: boolean;
@@ -70,11 +104,17 @@ export const PLANS: PlanMeta[] = [
     key: "free",
     label: "Free",
     price: 0,
-    jobPostsPerMonth: 2,
+    jobPostsPerMonth: 1,
     applicantsPerJob: 25,
     maxApplicantsViewable: 10,
     teamSeats: 1,
     featuredSlotsPerMonth: 0,
+    maxInterviewsPerMonth: 5,
+    hasInterviewReminders: false,
+    hasCalendarSync: false,
+    hasCustomEmailTemplates: false,
+    hasContractTemplates: false,
+    hasOfferLetters: false,
     aiMatcher: "None",
     hasTalentDb: false,
     hasAutomation: false,
@@ -88,11 +128,17 @@ export const PLANS: PlanMeta[] = [
     key: "starter",
     label: "Starter",
     price: 9999,
-    jobPostsPerMonth: 5,
+    jobPostsPerMonth: 3,
     applicantsPerJob: 50,
     maxApplicantsViewable: 50,
     teamSeats: 2,
     featuredSlotsPerMonth: 0,
+    maxInterviewsPerMonth: 20,
+    hasInterviewReminders: true,
+    hasCalendarSync: false,
+    hasCustomEmailTemplates: false,
+    hasContractTemplates: true,
+    hasOfferLetters: true,
     aiMatcher: "Basic",
     hasTalentDb: false,
     hasAutomation: false,
@@ -106,11 +152,17 @@ export const PLANS: PlanMeta[] = [
     key: "growth",
     label: "Growth",
     price: 19999,
-    jobPostsPerMonth: 15,
-    applicantsPerJob: 100,
+    jobPostsPerMonth: 10,
+    applicantsPerJob: 150,
     maxApplicantsViewable: "Unlimited",
     teamSeats: 5,
     featuredSlotsPerMonth: 1,
+    maxInterviewsPerMonth: "Unlimited",
+    hasInterviewReminders: true,
+    hasCalendarSync: true,
+    hasCustomEmailTemplates: true,
+    hasContractTemplates: true,
+    hasOfferLetters: true,
     aiMatcher: "Basic",
     hasTalentDb: true,
     hasAutomation: true,
@@ -130,6 +182,12 @@ export const PLANS: PlanMeta[] = [
     maxApplicantsViewable: "Unlimited",
     teamSeats: 10,
     featuredSlotsPerMonth: 3,
+    maxInterviewsPerMonth: "Unlimited",
+    hasInterviewReminders: true,
+    hasCalendarSync: true,
+    hasCustomEmailTemplates: true,
+    hasContractTemplates: true,
+    hasOfferLetters: true,
     aiMatcher: "Advanced",
     hasTalentDb: true,
     hasAutomation: true,

@@ -1,4 +1,5 @@
 /** @format */
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useRef, useMemo } from "react";
@@ -173,7 +174,6 @@ export default function CompanyPage() {
     savePerks,
   } = useCompany();
 
-  console.log("CompanyPage render", { company, form, draft, perks });
 
   // ── Profile completeness ──────────────────────────────────────────────────
   const completeness = useMemo(

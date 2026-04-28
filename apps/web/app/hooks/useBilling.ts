@@ -7,13 +7,16 @@ import { api } from "../lib";
 import { API_BASE } from "../constants";
 import type {
   Subscription,
+  PlanCapabilities,
   BillingEvent,
+  BillingInterval,
   SubscriptionPlan,
   AddonType,
 } from "../types/billing.types";
 
 interface BillingState {
   subscription: Subscription | null;
+  capabilities: PlanCapabilities | null;
   history: BillingEvent[];
   loading: boolean;
   error: string | null;
@@ -22,6 +25,7 @@ interface BillingState {
 export function useBilling() {
   const [state, setState] = useState<BillingState>({
     subscription: null,
+    capabilities: null,
     history: [],
     loading: true,
     error: null,
@@ -34,11 +38,18 @@ export function useBilling() {
   const refresh = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: null }));
     try {
-      const [subscription, history] = await Promise.all([
+      const [subscription, history, capabilities] = await Promise.all([
         api<Subscription>(`${API_BASE}/billing/subscription`, "GET"),
         api<BillingEvent[]>(`${API_BASE}/billing/history`, "GET"),
+        api<PlanCapabilities>(`${API_BASE}/billing/capabilities`, "GET"),
       ]);
-      setState({ subscription, history, loading: false, error: null });
+      setState({
+        subscription,
+        history,
+        capabilities,
+        loading: false,
+        error: null,
+      });
     } catch (err) {
       setState((s) => ({
         ...s,
@@ -53,13 +64,17 @@ export function useBilling() {
   }, [refresh]);
 
   // ── Upgrade / downgrade ───────────────────────────────────────────────────
-  const checkout = useCallback(async (plan: SubscriptionPlan) => {
+  const checkout = useCallback(async (
+    plan: SubscriptionPlan,
+    billingInterval: BillingInterval = "monthly",
+  ) => {
     setCheckoutLoading(true);
     setCheckoutError(null);
     try {
       const { checkoutUrl } = await api<{ checkoutUrl: string }>(
         `${API_BASE}/billing/checkout/${plan}`,
         "POST",
+        { billingInterval },
       );
       window.location.href = checkoutUrl;
     } catch (err) {
@@ -69,6 +84,21 @@ export function useBilling() {
       setCheckoutLoading(false);
     }
   }, []);
+
+  const startTrial = useCallback(async (plan: SubscriptionPlan) => {
+    setCheckoutLoading(true);
+    setCheckoutError(null);
+    try {
+      await api<Subscription>(`${API_BASE}/billing/trial/${plan}`, "POST");
+      await refresh();
+    } catch (err) {
+      setCheckoutError(
+        err instanceof Error ? err.message : "Failed to start trial",
+      );
+    } finally {
+      setCheckoutLoading(false);
+    }
+  }, [refresh]);
 
   // ── Buy addon ─────────────────────────────────────────────────────────────
   const purchaseAddon = useCallback(async (type: AddonType, jobId?: string) => {
@@ -93,6 +123,7 @@ export function useBilling() {
     ...state,
     refresh,
     checkout,
+    startTrial,
     purchaseAddon,
     checkoutLoading,
     checkoutError,

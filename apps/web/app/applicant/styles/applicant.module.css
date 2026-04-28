@@ -739,3 +739,61 @@
         display: none;
     }
 }
+
+/* Premium polish pass */
+.page {
+    max-width: 1180px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.welcome {
+    border-radius: var(--radius-sm);
+    background:
+        linear-gradient(135deg, rgba(var(--glow-rgb), 0.12), transparent 42%),
+        linear-gradient(180deg, var(--surface-raised, var(--bg-card)), var(--bg-card));
+    box-shadow: var(--shadow-sm);
+}
+
+.welcome-action {
+    border-radius: var(--radius-sm);
+    background: linear-gradient(180deg, var(--color-primary), #1d4ed8);
+    box-shadow: 0 12px 28px rgba(var(--glow-rgb), 0.26);
+}
+
+.card,
+.emptyState,
+.errorBanner {
+    border-radius: var(--radius-sm);
+}
+
+.card {
+    background: linear-gradient(180deg, var(--surface-raised, var(--bg-card)), var(--bg-card));
+    box-shadow: var(--shadow-sm);
+}
+
+.emptyState {
+    border: 1px dashed var(--border-strong);
+    background: var(--bg-soft);
+    padding: 28px;
+}
+
+@media (max-width: 900px) {
+    .page {
+        padding: 24px 18px;
+    }
+
+    .welcome {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .welcome-action {
+        justify-content: center;
+    }
+
+    .stats,
+    .two-col {
+        grid-template-columns: 1fr;
+    }
+}

@@ -14,6 +14,7 @@ import { DailyApplyLimit } from './entities/daily-apply-limit.entity';
 import { Subscription } from './entities/subscription.entity';
 import { Job } from '../jobs/entities/job.entity';
 import { Company } from '../companies/entities/company.entity';
+import { Interview } from '../interviews/entities/interview.entity';
 
 import {
   SubscriptionPlan,
@@ -23,6 +24,7 @@ import {
 } from '../../common/enums/enums';
 import { PLAN_LIMITS, PlanLimits } from '../../config/plan-limits.config';
 import { SubscriptionsService } from './subscriptions.service';
+import { PlanLimitException } from './plan-limit.exception';
 
 @Injectable()
 export class LimitsService {
@@ -37,6 +39,8 @@ export class LimitsService {
     private readonly jobRepo: Repository<Job>,
     @InjectRepository(Company)
     private readonly companyRepo: Repository<Company>,
+    @InjectRepository(Interview)
+    private readonly interviewRepo: Repository<Interview>,
     private readonly subscriptions: SubscriptionsService,
     private readonly ds: DataSource,
   ) {}
@@ -47,6 +51,64 @@ export class LimitsService {
       where: { userId, status: SubscriptionStatus.ACTIVE },
     });
     return PLAN_LIMITS[sub?.plan ?? SubscriptionPlan.FREE];
+  }
+
+  async getActivePlan(userId: string): Promise<SubscriptionPlan> {
+    const sub = await this.subscriptions.getOrCreate(userId);
+    return sub.plan;
+  }
+
+  async getInterviewUsage(userId: string): Promise<{
+    plan: SubscriptionPlan;
+    currentUsage: number;
+    limit: number | 'unlimited';
+    periodStart: Date;
+    periodEnd: Date;
+  }> {
+    const sub = await this.subscriptions.getOrCreate(userId);
+    const limits = PLAN_LIMITS[sub.plan];
+    const periodStart = sub.currentPeriodStart ?? this.startOfCurrentMonth();
+    const periodEnd = sub.currentPeriodEnd ?? this.endOfCurrentMonth();
+
+    const company = await this.companyRepo.findOne({
+      where: { ownerId: userId },
+      select: ['id'],
+    });
+    const currentUsage = company
+      ? await this.interviewRepo
+          .createQueryBuilder('iv')
+          .where('iv.company_id = :companyId', { companyId: company.id })
+          .andWhere('iv.created_at >= :periodStart', { periodStart })
+          .andWhere('iv.created_at < :periodEnd', { periodEnd })
+          .getCount()
+      : 0;
+
+    return {
+      plan: sub.plan,
+      currentUsage,
+      limit:
+        limits.maxInterviewsPerMonth === Infinity
+          ? 'unlimited'
+          : limits.maxInterviewsPerMonth,
+      periodStart,
+      periodEnd,
+    };
+  }
+
+  async assertCanScheduleInterview(userId: string): Promise<void> {
+    const usage = await this.getInterviewUsage(userId);
+    if (usage.limit !== 'unlimited' && usage.currentUsage >= usage.limit) {
+      throw new PlanLimitException({
+        message: 'Interview limit reached for your current plan',
+        feature: 'interviews',
+        currentUsage: usage.currentUsage,
+        limit: usage.limit,
+        requiredPlan:
+          usage.plan === SubscriptionPlan.FREE
+            ? SubscriptionPlan.STARTER
+            : SubscriptionPlan.GROWTH,
+      });
+    }
   }
 
   // ── Applicant: 20 applications/day ───────────────────────────────────────
@@ -177,13 +239,23 @@ export class LimitsService {
       | 'hasSavedSearches'
       | 'hasMarketIntel'
       | 'aiInsights'
+      | 'hasInterviewAutomation'
+      | 'hasInterviewReminders'
+      | 'hasCalendarSync'
+      | 'hasCustomEmailTemplates'
+      | 'hasContractTemplates'
+      | 'hasAdvancedContractTemplates'
+      | 'hasOfferLetters'
     >,
+    requiredPlan: SubscriptionPlan = SubscriptionPlan.GROWTH,
   ): Promise<void> {
     const limits = await this.getLimits(userId);
     if (!limits[feature]) {
-      throw new ForbiddenException(
-        `Your current plan does not include this feature. Please upgrade.`,
-      );
+      throw new PlanLimitException({
+        message: 'Upgrade required',
+        feature,
+        requiredPlan,
+      });
     }
   }
 
@@ -202,5 +274,15 @@ export class LimitsService {
         `AI matcher (${tier}) is not available on your current plan.`,
       );
     }
+  }
+
+  private startOfCurrentMonth(): Date {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  }
+
+  private endOfCurrentMonth(): Date {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth() + 1, 1);
   }
 }

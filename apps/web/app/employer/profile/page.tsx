@@ -1,8 +1,13 @@
 /** @format */
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useUser, useSessionStore } from "../../store/session.store";
+import {
+  type SessionUser,
+  useUser,
+  useSessionStore,
+} from "../../store/session.store";
 import { useEmployerProfile } from "../../hooks/useEmployerProfile";
 import { FIELDS } from "../../config/profile.config";
 import { ProfileHeader } from "../../components/ui/ProfileHeader";
@@ -22,11 +27,22 @@ export default function EmployerProfilePage() {
   const user = useUser();
   const { setUser } = useSessionStore();
 
-  if (!user) {
-    router.replace("/login");
-    return null;
-  }
+  useEffect(() => {
+    if (!user) router.replace("/login");
+  }, [router, user]);
 
+  if (!user) return null;
+
+  return <EmployerProfileContent user={user} setUser={setUser} />;
+}
+
+function EmployerProfileContent({
+  user,
+  setUser,
+}: {
+  user: SessionUser;
+  setUser: (user: SessionUser) => void;
+}) {
   const {
     form,
     draft,

@@ -5,6 +5,7 @@ import Link               from "next/link";
 import {
   MapPin, Briefcase, Clock, DollarSign,
   Bookmark, BookmarkCheck, Search, Sparkles,
+  ShieldCheck,
 } from "lucide-react";
 import { useBrowseJobs }  from "../../hooks/useBrowseJobs";
 import { formatDate }     from "../../lib";
@@ -76,6 +77,11 @@ function JobCard({
         </div>
         <div className={styles["job-card-badges"]}>
           {job.isFeatured && <span className={`${styles.badge} ${styles["badge-featured"]}`}>Featured</span>}
+          {job.company.isVerified && (
+            <span className={`${styles.badge} ${styles["badge-verified"]}`}>
+              <ShieldCheck size={11} /> Verified
+            </span>
+          )}
           {job.isUrgent  && <span className={`${styles.badge} ${styles["badge-urgent"]}`}>Urgent</span>}
           {job.locationType === "remote" && (
             <span className={`${styles.badge} ${styles["badge-remote"]}`}>Remote</span>
@@ -90,6 +96,11 @@ function JobCard({
         <h3 className={styles["job-title"]}>{job.title}</h3>
         <p className={styles["job-company"]}>
           {job.company.companyName}
+          {job.company.isVerified && (
+            <span className={styles["verified-inline"]}>
+              <ShieldCheck size={11} /> Verified
+            </span>
+          )}
           {job.location && <> · <MapPin size={11} style={{ display: "inline", verticalAlign: "middle" }} /> {job.location}</>}
         </p>
       </div>
