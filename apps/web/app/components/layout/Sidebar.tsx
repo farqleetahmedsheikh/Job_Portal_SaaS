@@ -19,6 +19,8 @@ import {
   FileIcon,
   type LucideIcon,
   CreditCard,
+  Database,
+  FileText,
 } from "lucide-react";
 import styles from "../../styles/sidebar.module.css";
 import Image from "next/image";
@@ -52,6 +54,8 @@ const NAVIGATION: Record<"applicant" | "employer", NavSection[]> = {
         },
         { label: "Saved Jobs", icon: Bookmark, href: "/applicant/saved-jobs" },
         { label: "Resumes", icon: FileIcon, href: "/applicant/resumes" },
+        { label: "Interviews", icon: Calendar, href: "/applicant/interviews" },
+        { label: "Messages", icon: MessageSquare, href: "/applicant/messages" },
       ],
     },
     {
@@ -73,7 +77,9 @@ const NAVIGATION: Record<"applicant" | "employer", NavSection[]> = {
         },
         { label: "Jobs", icon: Briefcase, href: "/employer/jobs" },
         { label: "Applicants", icon: Users, href: "/employer/applicants" },
+        { label: "Talent Database", icon: Database, href: "/employer/talent" },
         { label: "Interviews", icon: Calendar, href: "/employer/interviews" },
+        { label: "Contracts", icon: FileText, href: "/employer/contracts" },
         { label: "Messages", icon: MessageSquare, href: "/employer/messages" },
         { label: "Company", icon: Building2, href: "/employer/company" },
       ],
@@ -115,10 +121,17 @@ const ChevronLeft = () => (
 
 interface Props {
   collapsed: boolean;
+  mobileOpen?: boolean;
+  onNavigate?: () => void;
   onToggle: () => void;
 }
 
-export function Sidebar({ collapsed, onToggle }: Props) {
+export function Sidebar({
+  collapsed,
+  mobileOpen = false,
+  onNavigate,
+  onToggle,
+}: Props) {
   const pathname = usePathname();
   const user = useUser();
 
@@ -132,16 +145,34 @@ export function Sidebar({ collapsed, onToggle }: Props) {
 
   const sections = NAVIGATION[role];
   const profileHref = `/${role}/profile`;
+  const homeHref = `/${role}/dashboard`;
 
   return (
-    <aside className={`${styles.sidebar} ${collapsed ? styles.collapsed : ""}`}>
-      <button
-        className={styles.toggle}
-        onClick={onToggle}
-        aria-label="Toggle sidebar"
-      >
-        <ChevronLeft />
-      </button>
+    <aside
+      className={`${styles.sidebar} ${collapsed ? styles.collapsed : ""} ${
+        mobileOpen ? styles["mobile-open"] : ""
+      }`}
+    >
+      <div className={styles["sidebar-head"]}>
+        <Link
+          href={homeHref}
+          className={styles.brand}
+          title={collapsed ? "HiringFly" : undefined}
+          onClick={onNavigate}
+        >
+          <span className={styles["brand-mark"]}>HF</span>
+          <span className={styles["brand-text"]}>
+            Hiring<span>Fly</span>
+          </span>
+        </Link>
+        <button
+          className={styles.toggle}
+          onClick={onToggle}
+          aria-label="Toggle sidebar"
+        >
+          <ChevronLeft />
+        </button>
+      </div>
 
       <nav className={styles.nav}>
         {sections.map((section, si) => (
@@ -161,6 +192,7 @@ export function Sidebar({ collapsed, onToggle }: Props) {
                   href={item.href}
                   className={`${styles["nav-item"]} ${isActive ? styles.active : ""}`}
                   title={collapsed ? item.label : undefined}
+                  onClick={onNavigate}
                 >
                   <span className={styles["nav-icon"]}>
                     <IconComponent size={17} />
@@ -178,6 +210,7 @@ export function Sidebar({ collapsed, onToggle }: Props) {
         href={profileHref}
         className={styles["user-strip"]}
         title={collapsed ? userName : undefined}
+        onClick={onNavigate}
       >
         {avatar ? (
           <Image

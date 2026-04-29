@@ -14,7 +14,7 @@ import {
 import { CompanySize, VerificationStatus } from '../../../common/enums/enums';
 import { User } from '../../users/entities/user.entity';
 import { CompanyPerk } from './company-perk.entity';
-import { Job } from 'src/modules/jobs/entities/job.entity';
+import { Job } from '../../jobs/entities/job.entity';
 
 @Entity('companies')
 export class Company {

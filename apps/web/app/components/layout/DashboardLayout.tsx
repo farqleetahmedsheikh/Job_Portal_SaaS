@@ -1,10 +1,9 @@
 /** @format */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
 "use client";
 
-import { ReactNode, useState } from "react";
-import { User } from "../../types/user.types";
+import { type ReactNode, useState } from "react";
+import type { User } from "../../types/user.types";
 import { Navbar } from "./Navbar";
 import { Sidebar } from "./Sidebar";
 import styles from "../../styles/dashboard.module.css";
@@ -16,14 +15,29 @@ interface Props {
 
 export const DashboardLayout = ({ user, children }: Props) => {
   const [collapsed, setCollapsed] = useState<boolean>(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
+
+  void user;
 
   return (
     <div
       className={styles.dashboard + " " + (collapsed ? styles.collapsed : "")}
     >
-      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+      <Sidebar
+        collapsed={collapsed}
+        mobileOpen={mobileSidebarOpen}
+        onNavigate={() => setMobileSidebarOpen(false)}
+        onToggle={() => setCollapsed(!collapsed)}
+      />
+      {mobileSidebarOpen && (
+        <button
+          className={styles["sidebar-overlay"]}
+          aria-label="Close navigation"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
       <div className={styles["dashboard-main"]}>
-        <Navbar />
+        <Navbar onMenuClick={() => setMobileSidebarOpen(true)} />
         <main className={styles["dashboard-content"]}>{children}</main>
       </div>
     </div>

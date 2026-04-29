@@ -766,3 +766,444 @@
     font-size: 24px;
   }
 }
+
+/* Hiring Command Center */
+.commandHero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(135deg, rgba(var(--glow-rgb), 0.1), transparent 42%),
+    linear-gradient(180deg, var(--surface-raised, var(--bg-card)), var(--bg-card));
+  box-shadow: var(--shadow-sm);
+}
+
+.heroCopy {
+  min-width: 0;
+}
+
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 8px;
+  color: var(--status-info);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.commandGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.9fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.mainColumn,
+.sideColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.stat-blue {
+  --card-accent: var(--status-info);
+}
+
+.stat-amber {
+  --card-accent: var(--status-warning);
+}
+
+.stat-green {
+  --card-accent: var(--status-success);
+}
+
+.stat-violet {
+  --card-accent: #8b5cf6;
+}
+
+.statPulse {
+  padding: 3px 7px;
+  border-radius: var(--radius-full);
+  color: var(--text-muted);
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.applicationList,
+.jobCommandList,
+.interviewList,
+.actionStack,
+.insightStack,
+.quickActionGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.applicationRow,
+.jobCommandRow,
+.interviewRow,
+.actionCard,
+.quickActionCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform var(--transition),
+    border-color var(--transition),
+    background var(--transition),
+    box-shadow var(--transition);
+}
+
+.applicationRow:hover,
+.jobCommandRow:hover,
+.interviewRow:hover,
+.actionCard:hover,
+.quickActionCard:hover {
+  transform: translateY(-1px);
+  border-color: rgba(var(--glow-rgb), 0.26);
+  background: var(--surface-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.avatar,
+.jobIcon,
+.actionIcon,
+.emptyIcon,
+.insightIcon,
+.errorIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--status-info);
+  background: rgba(var(--glow-rgb), 0.09);
+  border: 1px solid rgba(var(--glow-rgb), 0.18);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.rowMain {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.rowMain strong {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowMain span {
+  color: var(--text-muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.rowMeta small {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(var(--glow-rgb), 0.1);
+  color: var(--status-info);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 22px;
+  border: 1px dashed rgba(var(--glow-rgb), 0.25);
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(135deg, rgba(var(--glow-rgb), 0.06), transparent 55%),
+    var(--surface);
+}
+
+.emptyState h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.emptyState p {
+  margin: 0;
+  max-width: 460px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.sideCard {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, var(--surface-raised, var(--bg-card)), var(--bg-card));
+  box-shadow: var(--shadow-sm);
+}
+
+.sideTitle {
+  margin: 0 0 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.sideCopy {
+  margin: -4px 0 14px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.actionCard {
+  align-items: flex-start;
+}
+
+.actionBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.actionBody strong,
+.quickActionCard strong {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.actionBody span,
+.quickActionCard small {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.actionCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--status-info);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.planHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.planBadge {
+  display: inline-flex;
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(var(--glow-rgb), 0.1);
+  color: var(--status-info);
+  border: 1px solid rgba(var(--glow-rgb), 0.2);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.planStatus {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.usageBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.usageRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.usageRow strong {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.usageTrack {
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+}
+
+.usageFill {
+  display: block;
+  height: 100%;
+  min-width: 4px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--status-info), var(--status-success));
+}
+
+.insightItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.insightIcon {
+  width: 28px;
+  height: 28px;
+}
+
+.insightItem p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.quickActionCard {
+  padding: 10px;
+}
+
+.quickActionCard > span:nth-child(2) {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.errorCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid rgba(244, 63, 94, 0.18);
+  border-radius: var(--radius-sm);
+  background: rgba(244, 63, 94, 0.05);
+}
+
+.errorTitle {
+  margin: 0 0 4px;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+@media (max-width: 1040px) {
+  .commandGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .sideColumn {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .commandHero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .headerActions {
+    flex-wrap: wrap;
+  }
+
+  .sideColumn {
+    display: flex;
+  }
+
+  .applicationRow,
+  .jobCommandRow,
+  .interviewRow {
+    align-items: flex-start;
+  }
+
+  .rowMeta {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 520px) {
+  .applicationRow,
+  .jobCommandRow,
+  .interviewRow,
+  .actionCard,
+  .quickActionCard {
+    flex-direction: column;
+  }
+
+  .rowMeta,
+  .actionCta {
+    align-items: flex-start;
+  }
+
+  .btn {
+    justify-content: center;
+  }
+}

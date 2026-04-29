@@ -1,1069 +1,708 @@
 .page {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 32px 24px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 32px 24px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.header {
-    margin-bottom: 28px;
+.hero,
+.usageCard,
+.sectionCard,
+.unlockSection {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, var(--surface-raised, var(--bg-card)), var(--bg-card));
+  box-shadow: var(--shadow-sm);
 }
 
-.title {
-    font-size: 22px;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin: 0 0 4px;
+.hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px;
+  background:
+    linear-gradient(135deg, rgba(var(--glow-rgb), 0.1), transparent 44%),
+    linear-gradient(180deg, var(--surface-raised, var(--bg-card)), var(--bg-card));
 }
 
-.subtitle {
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin: 0;
+.kicker,
+.planBadge,
+.popularBadge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-/* ── Error ── */
-.error-box {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--color-background-danger);
-    color: var(--status-danger);
-    border: 1px solid var(--color-border-danger);
-    border-radius: var(--border-radius-md);
-    padding: 12px 16px;
-    font-size: 13px;
-    margin-bottom: 16px;
+.kicker {
+  margin-bottom: 8px;
+  color: var(--status-info);
 }
 
-/* ── Skeleton ── */
-.skeleton {
-    background: var(--bg-card);
-    animation: shimmer 1.4s infinite;
+.hero h1 {
+  margin: 0 0 6px;
+  color: var(--text-primary);
+  font-size: 24px;
+  font-weight: 850;
 }
 
-@keyframes shimmer {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.5;
-    }
+.hero p,
+.usageIntro p,
+.valueCard p,
+.sectionTitle p,
+.planCard p,
+.featureList,
+.unlockCard p,
+.addonCard p,
+.verifyPanel p,
+.emptyState p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
 }
 
-/* ── Current plan card ── */
-.current-card {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 24px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--border-radius-lg);
-    padding: 20px 24px;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
+.intervalToggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
 }
 
-.current-left {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+.intervalToggle button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 7px 12px;
+  border-radius: calc(var(--radius-sm) - 2px);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 800;
 }
 
-.current-plan-name {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--text-primary);
+.intervalToggle span {
+  color: var(--status-success);
+  font-size: 10px;
 }
 
-.current-renews {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin: 0;
+.activeInterval {
+  color: var(--text-primary) !important;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
 }
 
-.verified-badge {
-    background: var(--color-background-success);
-    color: var(--status-success);
-    border: 1px solid var(--color-border-success);
-    border-radius: 20px;
-    font-size: 11px;
-    padding: 2px 8px;
+.errorBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid rgba(244, 63, 94, 0.18);
+  border-radius: var(--radius-sm);
+  color: var(--status-danger);
+  background: rgba(244, 63, 94, 0.06);
+  font-size: 13px;
 }
 
-.quota-group {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    min-width: 260px;
+.usageCard {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 18px;
+  padding: 20px;
 }
 
-/* ── Quota bars ── */
-.quota-item {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+.usageIntro {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.quota-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: var(--text-secondary);
+.planBadge {
+  padding: 5px 9px;
+  color: var(--status-info);
+  background: rgba(var(--glow-rgb), 0.1);
+  border: 1px solid rgba(var(--glow-rgb), 0.18);
 }
 
-.quota-count {
-    margin-left: auto;
-    font-weight: 500;
-    color: var(--text-primary);
+.usageIntro h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 850;
 }
 
-.quota-danger {
-    color: var(--status-danger) !important;
+.renewal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
-.quota-warn {
-    color: var(--status-warning) !important;
+.usageMetrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
 
-.quota-track {
-    height: 5px;
-    background: var(--border);
-    border-radius: 99px;
-    overflow: hidden;
+.usageMeter {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
 }
 
-.quota-fill {
-    height: 100%;
-    background: var(--status-info);
-    border-radius: 99px;
-    transition: width 0.3s ease;
+.usageMeter > div:first-child {
+  display: grid;
+  gap: 3px;
 }
 
-.quota-fill-danger {
-    background: var(--status-danger);
+.usageMeter span:first-child {
+  color: var(--status-info);
 }
 
-.quota-fill-warn {
-    background: var(--status-warning);
+.usageMeter strong {
+  color: var(--text-primary);
+  font-size: 12px;
 }
 
-/* ── Tabs ── */
+.usageMeter em {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.meterTrack {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+}
+
+.meterTrack span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--status-info), var(--status-success));
+}
+
+.warningFill {
+  background: linear-gradient(90deg, var(--status-warning), var(--status-danger)) !important;
+}
+
+.valueGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.valueCard,
+.planCard,
+.unlockCard,
+.addonCard,
+.verifyPanel,
+.verifyBenefits,
+.emptyState {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, var(--surface-raised, var(--bg-card)), var(--bg-card));
+  box-shadow: var(--shadow-sm);
+}
+
+.valueCard {
+  padding: 16px;
+  transition:
+    transform var(--transition),
+    border-color var(--transition);
+}
+
+.valueCard:hover,
+.planCard:hover,
+.unlockCard:hover,
+.addonCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(var(--glow-rgb), 0.24);
+}
+
+.valueCard > span,
+.addonIcon {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  border-radius: var(--radius-sm);
+  color: var(--status-info);
+  background: rgba(var(--glow-rgb), 0.09);
+  border: 1px solid rgba(var(--glow-rgb), 0.18);
+}
+
+.valueCard h2 {
+  margin: 0 0 5px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 850;
+}
+
 .tabs {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised, var(--bg-card));
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .tab {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border-radius: var(--border-radius-md);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: calc(var(--radius-sm) - 2px);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
-.tab:hover {
-    background: var(--bg-card);
-    color: var(--text-primary);
+.activeTab {
+  color: var(--text-primary);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
 }
 
-.tab-active {
-    background: var(--bg-card) !important;
-    color: var(--text-primary) !important;
+.plansGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
 }
 
-/* ══════════════════════════════════════════════
-   PLAN CARDS — redesigned as premium price cards
-   ══════════════════════════════════════════════ */
-.plans-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-    gap: 16px;
-    align-items: start;
+.planCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 620px;
+  padding: 20px;
+  transition:
+    transform var(--transition),
+    border-color var(--transition),
+    box-shadow var(--transition);
 }
 
-.plan-card {
-    position: relative;
-    background: var(--bg-card);
-    border: 1.5px solid var(--border);
-    border-radius: 16px;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    transition:
-        border-color 0.2s,
-        box-shadow 0.2s,
-        transform 0.2s;
-    cursor: default;
+.growthPlan {
+  border-color: rgba(var(--glow-rgb), 0.42);
+  box-shadow:
+    var(--shadow-md),
+    0 0 0 1px rgba(var(--glow-rgb), 0.14);
+  background:
+    linear-gradient(135deg, rgba(var(--glow-rgb), 0.1), transparent 50%),
+    linear-gradient(180deg, var(--surface-raised, var(--bg-card)), var(--bg-card));
 }
 
-.plan-card:hover {
-    border-color: var(--border);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+.currentPlan {
+  border-color: rgba(52, 217, 179, 0.45);
 }
 
-/* ── Popular badge ── */
-.plan-popular {
-    position: absolute;
-    top: 14px;
-    right: 14px;
-    background: var(--status-info);
-    color: var(--text-primary);
-    border: 1px solid var(--status-info);
-    border-radius: 20px;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    padding: 3px 9px;
-    white-space: nowrap;
-    z-index: 1;
+.planTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
-/* ── Highlighted (most popular) card ── */
-.plan-card-highlight {
-    border-color: var(--status-info) !important;
-    box-shadow: 0 0 0 1px var(--status-info);
+.planName {
+  display: block;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 900;
 }
 
-.plan-card-highlight:hover {
-    box-shadow:
-        0 8px 28px rgba(0, 0, 0, 0.12),
-        0 0 0 1px var(--status-info);
+.popularBadge {
+  padding: 5px 8px;
+  color: #fff;
+  background: var(--status-info);
+  font-size: 9px;
 }
 
-/* ── Current plan card ── */
-.plan-card-current {
-    border-color: var(--status-success) !important;
-    box-shadow: 0 0 0 1px var(--status-success);
+.priceBlock {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 8px;
 }
 
-/* ── Card top band (colored accent) ── */
-.plan-card::before {
-    content: "";
-    display: block;
-    height: 4px;
-    background: var(--color-accent);
-    transition: background 0.2s;
+.priceBlock small,
+.priceBlock span {
+  color: var(--text-muted);
+  font-size: 13px;
 }
 
-.plan-card-highlight::before {
-    background: var(--status-info);
+.priceBlock strong {
+  color: var(--text-primary);
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 0;
 }
 
-.plan-card-current::before {
-    background: var(--color-border-success);
+.savingsLine,
+.recommendedLine,
+.ctaMicrocopy {
+  color: var(--status-success) !important;
+  font-size: 12px !important;
+  font-weight: 750;
 }
 
-/* ── Header section ── */
-.plan-header {
-    padding: 20px 20px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+.recommendedLine {
+  margin-top: 4px !important;
 }
 
-.plan-name {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-secondary);
+.featureList {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 18px 0;
+  padding: 0;
+  flex: 1;
 }
 
-/* ── Price block ── */
-.plan-price {
-    display: flex;
-    align-items: baseline;
-    gap: 2px;
-    line-height: 1;
+.featureList li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  line-height: 1.45;
 }
 
-.plan-price-currency {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    align-self: flex-start;
-    padding-top: 4px;
+.featureList svg {
+  margin-top: 2px;
+  color: var(--status-success);
+  flex-shrink: 0;
 }
 
-.plan-price-amount {
-    font-size: 36px;
-    font-weight: 600;
-    color: var(--text-primary);
-    letter-spacing: -0.02em;
+.planActions {
+  display: grid;
+  gap: 8px;
 }
 
-.plan-price-period {
-    font-size: 13px;
-    color: var(--text-secondary);
-    margin-left: 2px;
+.planButton,
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 850;
+  cursor: pointer;
+  transition:
+    transform var(--transition),
+    opacity var(--transition),
+    background var(--transition);
 }
 
-/* ── Divider ── */
-.plan-divider {
-    height: 1px;
-    background: var(--color-accent);
-    margin: 16px 20px 0;
+.planButton,
+.primaryButton {
+  color: #fff;
+  background: var(--text-primary);
 }
 
-/* ── Feature list ── */
-.plan-features {
-    list-style: none;
-    margin: 0;
-    padding: 16px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 9px;
-    flex: 1;
+.growthButton {
+  background: var(--status-info);
+  box-shadow: 0 12px 28px rgba(var(--glow-rgb), 0.26);
 }
 
-.plan-features li {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    font-size: 12.5px;
-    color: var(--text-secondary);
-    line-height: 1.4;
+.secondaryButton {
+  padding: 0 14px;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
 
-.plan-features li svg {
-    color: var(--status-success);
-    flex-shrink: 0;
-    margin-top: 1px;
+.planButton:hover:not(:disabled),
+.primaryButton:hover:not(:disabled),
+.secondaryButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  opacity: 0.92;
 }
 
-/* ── CTA button ── */
-.plan-btn-wrap {
-    padding: 0 20px 20px;
+.planButton:disabled,
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 
-.plan-btn {
-    width: 100%;
-    padding: 11px;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    border: none;
-    transition:
-        opacity 0.15s,
-        transform 0.1s;
-    letter-spacing: 0.01em;
+.unlockSection,
+.sectionCard {
+  padding: 20px;
 }
 
-.plan-btn:hover:not(:disabled) {
-    opacity: 0.88;
-    transform: translateY(-1px);
+.sectionTitle {
+  margin-bottom: 16px;
 }
 
-.plan-btn:active:not(:disabled) {
-    transform: translateY(0);
+.sectionTitle h2 {
+  margin: 0 0 5px;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 900;
 }
 
-.plan-btn:disabled {
-    opacity: 0.55;
-    cursor: default;
+.unlockGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
 
-.plan-btn-current {
-    background: var(--color-background-success);
-    color: var(--status-success);
+.unlockCard {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
 }
 
-.plan-btn-upgrade {
-    background: var(--text-primary);
-    color: var(--bg-card);
+.unlockCard svg {
+  color: var(--status-info);
 }
 
-.plan-btn-downgrade {
-    background: transparent;
-    color: var(--text-secondary);
-    border: 1.5px solid var(--color-accent);
+.unlockCard h3,
+.addonCard h3,
+.verifyPanel h3,
+.emptyState h3 {
+  margin: 0 0 4px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 850;
 }
 
-/* ── Billing history ── */
-.history-table {
-    background: var(--bg-card);
-    border-radius: var(--border-radius-lg);
-    overflow: hidden;
-    border: 1px solid var(--color-accent);
+.unlockCard > span {
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: var(--status-info);
+  background: rgba(var(--glow-rgb), 0.1);
+  border: 1px solid rgba(var(--glow-rgb), 0.16);
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.addonList {
+  display: grid;
+  gap: 12px;
+}
+
+.addonCard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+}
+
+.addonIcon {
+  margin-bottom: 0;
+}
+
+.addonAction {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.addonAction strong {
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.verifyGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 14px;
+}
+
+.verifyPanel,
+.verifyBenefits {
+  padding: 18px;
+}
+
+.verifyPanel svg {
+  color: var(--status-info);
+  margin-bottom: 12px;
+}
+
+.verifyPanel .primaryButton {
+  margin-top: 16px;
+  padding: 0 16px;
+}
+
+.verifyBenefits {
+  display: grid;
+  gap: 10px;
+}
+
+.verifyBenefits span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.verifyBenefits svg {
+  color: var(--status-success);
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
 }
 
 .table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+}
+
+.table th,
+.table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  font-size: 13px;
 }
 
 .table th {
-    padding: 12px 16px;
-    text-align: left;
-    font-weight: 500;
-    color: var(--text-secondary);
-    border-bottom: 1px solid var(--color-accent);
-    background: var(--color-accent);
+  color: var(--text-muted);
+  background: var(--surface-hover);
+  font-weight: 850;
 }
 
 .table td {
-    padding: 12px 16px;
-    color: var(--text-primary);
-    border-bottom: 1px solid var(--color-accent);
+  color: var(--text-secondary);
 }
 
 .table tr:last-child td {
-    border-bottom: none;
+  border-bottom: 0;
 }
 
-.table tbody tr:hover {
-    background: var(--color-accent);
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 44px 20px;
+  text-align: center;
 }
 
-.event-badge {
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 500;
-    text-transform: capitalize;
+.emptyState > span {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--status-info);
+  background: rgba(var(--glow-rgb), 0.1);
 }
 
-.event-subscription_charge {
-    background: var(--status-info);
-    color: var(--status-info);
+.skeletonHero,
+.skeletonGrid {
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--border) 25%, rgba(255, 255, 255, 0.05) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
 }
 
-.event-addon_charge {
-    background: var(--status-warning);
-    color: var(--status-warning);
+.skeletonHero {
+  height: 210px;
 }
 
-.event-refund {
-    background: var(--status-success);
-    color: var(--status-success);
-    color: var(--status-success);
+.skeletonGrid {
+  height: 520px;
 }
 
-.event-dispute {
-    background: var(--status-danger);
-    color: var(--status-danger);
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
 }
 
-.amount-refund {
-    color: var(--status-success);
+@media (max-width: 1120px) {
+  .plansGrid,
+  .valueGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .usageCard,
+  .verifyGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.amount-charge {
-    color: var(--text-primary);
-}
+@media (max-width: 760px) {
+  .page {
+    padding: 24px 16px 48px;
+  }
 
-.ref-id {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--text-secondary);
-}
-
-.empty {
-    display: flex;
+  .hero {
     flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 48px;
-    color: var(--text-secondary);
-    font-size: 13px;
-}
+    align-items: stretch;
+  }
 
-/* ── Upgrade modal ── */
-.overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 50;
-    background: rgba(0, 0, 0, 0.45);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    backdrop-filter: blur(2px);
-}
-
-.upgrade-modal {
-    position: relative;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 32px 28px;
-    max-width: 420px;
+  .intervalToggle,
+  .tabs {
     width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.15);
-}
+  }
 
-.modal-close {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    background: var(--bg-card);
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    color: var(--text-secondary);
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s;
-}
-
-.modal-close:hover {
-    background: var(--border);
-}
-
-.upgrade-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: var(--status-warning);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-primary);
-}
-
-.upgrade-title {
-    font-size: 18px;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin: 0;
-}
-
-.upgrade-body {
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin: 0;
-    line-height: 1.6;
-}
-
-.upgrade-plan-preview {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--border-radius-md);
-    padding: 14px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.upgrade-plan-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.upgrade-features {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.upgrade-features li {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
-.upgrade-features li svg {
-    color: var(--status-success);
-}
-
-.upgrade-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.upgrade-btn {
-    padding: 12px;
-    border-radius: var(--border-radius-md);
-    background: var(--text-primary);
-    color: var(--bg-card);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    border: none;
-    transition: opacity 0.15s;
-}
-
-.upgrade-btn:disabled {
-    opacity: 0.6;
-    cursor: default;
-}
-
-.upgrade-skip {
-    padding: 8px;
-    background: none;
-    border: none;
-    font-size: 13px;
-    color: var(--text-secondary);
-    cursor: pointer;
-    text-align: center;
-}
-
-.upgrade-skip:hover {
-    color: var(--text-primary);
-}
-
-/* ── Job post quota banner ── */
-.quota-banner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--border-radius-md);
-    padding: 10px 14px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-}
-
-.quota-banner-danger {
-    border-color: var(--color-border-danger) !important;
-    background: var(--color-background-danger) !important;
-}
-
-.quota-banner-warn {
-    border-color: var(--color-border-warning) !important;
-    background: var(--status-warning) !important;
-}
-
-.quota-banner-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.quota-banner-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.quota-banner-label {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-primary);
-    display: block;
-}
-
-.quota-banner-count {
-    font-size: 12px;
-    color: var(--text-secondary);
-    display: block;
-}
-
-.icon-danger {
-    color: var(--status-danger);
-}
-
-.quota-upgrade-btn {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: var(--text-primary);
-    color: var(--bg-card);
-    border: none;
-    border-radius: var(--border-radius-md);
-    padding: 6px 12px;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: opacity 0.15s;
-}
-
-.quota-upgrade-btn:hover {
-    opacity: 0.85;
-}
-
-/* ── Applicant gate ── */
-.gate-banner {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--border-radius-md);
-    padding: 16px 20px;
-    margin-top: 8px;
-}
-
-.gate-lock {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background: var(--color-accent);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-secondary);
-    flex-shrink: 0;
-}
-
-.gate-copy {
+  .intervalToggle button,
+  .tab {
     flex: 1;
-    display: flex;
+  }
+
+  .usageMetrics,
+  .plansGrid,
+  .valueGrid,
+  .unlockGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .addonCard {
+    grid-template-columns: 1fr;
+  }
+
+  .addonAction {
+    align-items: stretch;
     flex-direction: column;
-    gap: 2px;
-}
+  }
 
-.gate-title {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.gate-sub {
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
-.gate-btn {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: var(--text-primary);
-    color: var(--bg-card);
-    border: none;
-    border-radius: var(--border-radius-md);
-    padding: 8px 14px;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: opacity 0.15s;
-}
-
-.gate-btn:hover {
-    opacity: 0.85;
-}
-
-/* ── Pending badge ── */
-.pending-badge {
-    background: var(--status-warning);
-    color: var(--status-warning);
-    border: 1px solid var(--color-border-warning);
-    border-radius: 20px;
-    font-size: 11px;
-    padding: 2px 8px;
-}
-
-/* ── Tab verified dot ── */
-.tab-verified-dot {
-    width: 6px;
-    height: 6px;
-    background: var(--status-success);
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-/* ── Section desc ── */
-.section-desc {
-    font-size: 13px;
-    color: var(--text-secondary);
-    margin: 0 0 20px;
-}
-
-/* ── Add-ons ── */
-.addons-section {
-    display: flex;
-    flex-direction: column;
-}
-
-.addons-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.addon-card {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--border-radius-lg);
-    padding: 16px 20px;
-    transition: border-color 0.15s;
-}
-
-.addon-card:hover {
-    border-color: var(--border);
-}
-
-.addon-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.addon-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.addon-title {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.addon-desc {
-    font-size: 12px;
-    color: var(--text-secondary);
-    line-height: 1.5;
-}
-
-.addon-note {
-    font-size: 11px;
-    color: var(--text-secondary);
-    margin-top: 4px;
-    font-style: italic;
-}
-
-.addon-action {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 6px;
-    flex-shrink: 0;
-}
-
-.addon-price {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-    white-space: nowrap;
-}
-
-.addon-btn {
-    background: var(--text-primary);
-    color: var(--bg-card);
-    border: none;
-    border-radius: var(--border-radius-md);
-    padding: 7px 18px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: opacity 0.15s;
-}
-
-.addon-btn:hover:not(:disabled) {
-    opacity: 0.85;
-}
-
-.addon-btn:disabled {
-    opacity: 0.55;
-    cursor: default;
-}
-
-/* ── Verification ── */
-.verification-section {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.verify-status-banner {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 14px 18px;
-    border-radius: var(--border-radius-md);
-    font-size: 13px;
-}
-
-.verify-status-banner[data-status="verified"] {
-    background: var(--color-background-success);
-    border: 1px solid var(--color-border-success);
-    color: var(--status-success);
-}
-
-.verify-status-banner[data-status="pending"] {
-    background: var(--status-warning);
-    border: 1px solid var(--color-border-warning);
-    color: var(--status-warning);
-}
-
-.verify-status-banner>div {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.verify-status-banner strong {
-    font-weight: 500;
-}
-
-.verify-status-banner span {
-    font-size: 12px;
-    opacity: 0.85;
-}
-
-.verify-what {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--border-radius-lg);
-    padding: 20px;
-}
-
-.verify-what-title {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin: 0 0 14px;
-}
-
-.verify-benefits {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.verify-benefit-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 13px;
-    color: var(--text-secondary);
-}
-
-.verify-benefit-icon {
-    color: var(--status-success);
-    flex-shrink: 0;
-}
-
-.verify-pricing-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-    background: var(--bg-card);
-    border: 1.5px solid var(--status-info);
-    border-radius: var(--border-radius-lg);
-    padding: 20px 24px;
-}
-
-.verify-pricing-left {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-
-.verify-pricing-label {
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.verify-pricing-sub {
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
-.verify-pricing-right {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.verify-price {
-    font-size: 22px;
-    color: var(--text-primary);
-}
-
-.verify-price strong {
-    font-weight: 600;
-}
-
-.verify-price span {
-    font-size: 13px;
-    color: var(--text-secondary);
-}
-
-.verify-btn {
-    background: var(--text-primary);
-    color: var(--bg-card);
-    border: none;
-    border-radius: var(--border-radius-md);
-    padding: 10px 20px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: opacity 0.15s;
-    white-space: nowrap;
-}
-
-.verify-btn:hover:not(:disabled) {
-    opacity: 0.85;
-}
-
-.verify-btn:disabled {
-    opacity: 0.55;
-    cursor: default;
-}
-
-.verify-pending-label {
-    font-size: 13px;
-    color: var(--status-warning);
-    font-weight: 500;
-}
-
-.verify-active-label {
-    font-size: 13px;
-    color: var(--status-success);
-    font-weight: 500;
-}
-
-.verify-note {
-    font-size: 12px;
-    color: var(--text-secondary);
-    line-height: 1.6;
-    margin: 0;
-    padding: 12px 16px;
-    background: var(--color-accent);
-    border-radius: var(--border-radius-md);
+  .secondaryButton,
+  .primaryButton,
+  .planButton {
+    width: 100%;
+  }
 }

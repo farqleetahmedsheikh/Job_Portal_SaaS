@@ -240,6 +240,29 @@ export class MailService {
 
   // ── Core send ──────────────────────────────────────────────────────────────
 
+  async sendContract(opts: {
+    to: string;
+    candidateName: string;
+    jobTitle: string;
+    company: string;
+    title: string;
+    content: string;
+  }): Promise<void> {
+    await this.send({
+      to: opts.to,
+      subject: `${opts.title} - ${opts.jobTitle} at ${opts.company}`,
+      html: this.base(`
+        <h2>${opts.title}</h2>
+        <p>Hi ${opts.candidateName}, ${opts.company} has sent you a contract or offer document for <strong>${opts.jobTitle}</strong>.</p>
+        <div style="background:#f9f9f9;border-radius:8px;padding:16px;margin:20px 0">
+          ${opts.content}
+        </div>
+        <p style="color:#666;font-size:13px">Please review this document carefully. If you have legal questions, consult a qualified professional before signing.</p>
+        ${this.btn('View Application', 'https://hiringfly.com/applicant/applications')}
+      `),
+    });
+  }
+
   private async send(options: {
     to: string;
     subject: string;

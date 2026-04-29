@@ -14,11 +14,11 @@ export class ContractTemplate {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ name: 'company_id' })
-  companyId!: string;
+  @Column({ name: 'company_id', type: 'uuid', nullable: true })
+  companyId!: string | null;
 
-  @Column({ name: 'created_by' })
-  createdBy!: string;
+  @Column({ name: 'created_by', type: 'uuid', nullable: true })
+  createdBy!: string | null;
 
   @Column()
   title!: string;
@@ -34,6 +34,9 @@ export class ContractTemplate {
 
   @Column({ name: 'is_advanced', default: false })
   isAdvanced!: boolean;
+
+  @Column({ name: 'is_premium', default: false })
+  isPremium!: boolean;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;

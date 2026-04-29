@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bell, MessageSquare } from "lucide-react";
+import { Bell, Menu, MessageSquare } from "lucide-react";
 import { useUser } from "../../store/session.store";
 import { useNotifications } from "../../hooks/useNotifications";
 import { Avatar } from "../ui/Avatar";
@@ -11,7 +11,11 @@ import { ThemeToggle } from "../theme/ThemeToggler";
 import { NotificationsDropdown } from "./NotificationsDropdown";
 import styles from "../../styles/navbar.module.css";
 
-export function Navbar() {
+interface NavbarProps {
+  onMenuClick?: () => void;
+}
+
+export function Navbar({ onMenuClick }: NavbarProps) {
   const user = useUser();
   const { notifications, loading, unreadCount, markRead, markAllRead } =
     useNotifications();
@@ -31,6 +35,15 @@ export function Navbar() {
 
   return (
     <header className={styles.navbar}>
+      <button
+        className={styles["menu-btn"]}
+        type="button"
+        aria-label="Open navigation"
+        onClick={onMenuClick}
+      >
+        <Menu size={18} />
+      </button>
+
       {/* Logo */}
       <Link href="/" className={styles.logo}>
         <span className={styles["logo-text"]}>

@@ -24,6 +24,8 @@ import { InterviewsModule } from './modules/interviews/interviews.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { TemplatesModule } from './modules/templates/templates.module';
+import { TalentDbModule } from './modules/talent-db/talent-db.module';
+import { ContractsModule } from './modules/contracts/contracts.module';
 
 @Module({
   imports: [
@@ -98,6 +100,8 @@ import { TemplatesModule } from './modules/templates/templates.module';
     BillingModule,
     AnalyticsModule,
     TemplatesModule,
+    TalentDbModule,
+    ContractsModule,
   ],
 
   providers: [

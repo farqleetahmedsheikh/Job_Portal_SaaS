@@ -1,21 +1,23 @@
 /** @format */
-/* eslint-disable react/no-unescaped-entities */
-
 "use client";
 
+import type { ReactNode } from "react";
 import { useState } from "react";
 import {
-  CreditCard,
-  Zap,
-  Clock,
-  CheckCircle2,
   AlertCircle,
-  Star,
-  BarChart2,
-  Shield,
-  Plus,
-  Package,
+  BarChart3,
   CalendarCheck,
+  CheckCircle2,
+  Clock,
+  CreditCard,
+  Lock,
+  Mail,
+  Package,
+  Plus,
+  Shield,
+  Star,
+  Users,
+  Zap,
 } from "lucide-react";
 import { useBilling } from "../../hooks/useBilling";
 import {
@@ -23,15 +25,57 @@ import {
   getPlanMeta,
   isUpgrade,
   type BillingInterval,
+  type PlanMeta,
   type SubscriptionPlan,
 } from "../../types/billing.types";
 import type { BillingEvent } from "../../types/billing.types";
 import styles from "../styles/billing.module.css";
 
+const BEST_FOR: Record<SubscriptionPlan, string> = {
+  free: "Best for trying HiringFly",
+  starter: "Best for small teams hiring occasionally",
+  growth: "Best for growing teams hiring every month",
+  scale: "Best for high-volume hiring teams",
+};
+
+const VALUE_CARDS = [
+  {
+    icon: <CalendarCheck size={18} />,
+    title: "Hire faster with reminders",
+    copy: "Reduce manual follow-ups and keep interviews moving.",
+  },
+  {
+    icon: <Shield size={18} />,
+    title: "Build trust with verification",
+    copy: "A verified company badge helps candidates apply with confidence.",
+  },
+  {
+    icon: <Mail size={18} />,
+    title: "Save time with templates",
+    copy: "Standardize candidate emails, offers, and contracts as you scale.",
+  },
+  {
+    icon: <BarChart3 size={18} />,
+    title: "Unlock hiring analytics",
+    copy: "See pipeline health, job performance, and hiring bottlenecks.",
+  },
+];
+
+const PREMIUM_UNLOCKS = [
+  ["Talent Database", "Growth", "Discover candidates beyond inbound applicants."],
+  ["Custom email templates", "Growth", "Send polished candidate updates faster."],
+  ["Contract templates", "Starter", "Create offers and contracts with less repetition."],
+  ["Verified badge", "Growth", "Build candidate trust on jobs and company pages."],
+  ["Advanced analytics", "Growth", "Understand pipeline health and conversion."],
+  ["Automation", "Growth", "Automate repetitive hiring tasks."],
+] as const;
+
 function fmt(n: number) {
   return new Intl.NumberFormat("en-PK").format(n);
 }
-function fmtDate(iso: string) {
+
+function fmtDate(iso?: string) {
+  if (!iso) return "Not scheduled";
   return new Date(iso).toLocaleDateString("en-PK", {
     day: "numeric",
     month: "short",
@@ -39,248 +83,34 @@ function fmtDate(iso: string) {
   });
 }
 
-// ── Plan card ─────────────────────────────────────────────────────────────────
-function PlanCard({
-  plan,
-  currentPlan,
-  onSelect,
-  onTrial,
-  loading,
-  trialAvailable,
-}: {
-  plan: (typeof PLANS)[0];
+function priceFor(plan: PlanMeta, interval: BillingInterval) {
+  if (plan.price === 0) return 0;
+  return interval === "yearly" ? plan.price * 10 : plan.price;
+}
+
+function formatLimit(value: number | "Unlimited") {
+  return value === "Unlimited" ? "Unlimited" : fmt(value);
+}
+
+function percent(used: number, total?: number | "unlimited" | "Unlimited") {
+  if (!total || total === "unlimited" || total === "Unlimited" || total <= 0) return 0;
+  return Math.min(100, Math.round((used / total) * 100));
+}
+
+function usageMessage(args: {
   currentPlan: SubscriptionPlan;
-  onSelect: (p: SubscriptionPlan, interval?: BillingInterval) => void;
-  onTrial: (p: SubscriptionPlan) => void;
-  loading: boolean;
-  trialAvailable: boolean;
+  interviewPct: number;
+  jobsPct: number;
+  talentLocked: boolean;
 }) {
-  const isCurrent = plan.key === currentPlan;
-  const upgrade = isUpgrade(currentPlan, plan.key);
-  const downgrade = isUpgrade(plan.key, currentPlan);
-
-  return (
-    <div
-      className={`${styles["plan-card"]} ${plan.highlight ? styles["plan-card-highlight"] : ""} ${isCurrent ? styles["plan-card-current"] : ""}`}
-    >
-      {plan.highlight && (
-        <div className={styles["plan-popular"]}>Most Popular</div>
-      )}
-
-      <div className={styles["plan-header"]}>
-        <span className={styles["plan-name"]}>{plan.label}</span>
-        <div className={styles["plan-price"]}>
-          {plan.price === 0 ? (
-            <span className={styles["plan-price-amount"]}>Free</span>
-          ) : (
-            <>
-              <span className={styles["plan-price-currency"]}>PKR</span>
-              <span className={styles["plan-price-amount"]}>
-                {fmt(plan.price)}
-              </span>
-              <span className={styles["plan-price-period"]}>/mo</span>
-            </>
-          )}
-        </div>
-        {plan.price > 0 && (
-          <span className={styles["plan-price-period"]}>
-            Yearly PKR {fmt(plan.price * 10)} · 2 months free
-          </span>
-        )}
-      </div>
-
-      <div className={styles["plan-divider"]} />
-
-      <ul className={styles["plan-features"]}>
-        <li>
-          <CheckCircle2 size={12} /> {plan.jobPostsPerMonth} job posts/month
-        </li>
-        <li>
-          <CheckCircle2 size={12} /> {plan.applicantsPerJob} applicants/job
-        </li>
-        <li>
-          <CheckCircle2 size={12} /> View up to {plan.maxApplicantsViewable}{" "}
-          applicants
-        </li>
-        <li>
-          <CheckCircle2 size={12} /> {plan.teamSeats} team seat
-          {plan.teamSeats > 1 ? "s" : ""}
-        </li>
-        <li>
-          <CheckCircle2 size={12} /> Basic interview scheduling:{" "}
-          {plan.maxInterviewsPerMonth} / month
-        </li>
-        {plan.hasInterviewReminders && (
-          <li>
-            <CheckCircle2 size={12} /> Automated interview reminders
-          </li>
-        )}
-        {plan.hasCustomEmailTemplates && (
-          <li>
-            <CheckCircle2 size={12} /> Custom candidate email templates
-          </li>
-        )}
-        {plan.hasContractTemplates && (
-          <li>
-            <CheckCircle2 size={12} /> Contract and offer templates
-          </li>
-        )}
-        <li>
-          <CheckCircle2 size={12} /> AI matcher: {plan.aiMatcher}
-        </li>
-        {plan.hasTalentDb && (
-          <li>
-            <CheckCircle2 size={12} /> Talent database
-          </li>
-        )}
-        {plan.hasVerifiedBadge && (
-          <li>
-            <CheckCircle2 size={12} /> Verified badge
-          </li>
-        )}
-        {plan.hasAutomation && (
-          <li>
-            <CheckCircle2 size={12} /> Automation
-          </li>
-        )}
-        {plan.hasExport && (
-          <li>
-            <CheckCircle2 size={12} /> CSV export
-          </li>
-        )}
-        {plan.hasMarketIntel && (
-          <li>
-            <CheckCircle2 size={12} /> Market intelligence
-          </li>
-        )}
-        <li>
-          <CheckCircle2 size={12} /> {plan.support} support
-        </li>
-      </ul>
-
-      <div className={styles["plan-btn-wrap"]}>
-        <button
-          className={`${styles["plan-btn"]} ${isCurrent ? styles["plan-btn-current"] : upgrade ? styles["plan-btn-upgrade"] : styles["plan-btn-downgrade"]}`}
-          onClick={() => !isCurrent && onSelect(plan.key)}
-          disabled={isCurrent || loading}
-        >
-          {isCurrent
-            ? "Current plan"
-            : upgrade
-              ? `Upgrade to ${plan.label}`
-              : downgrade
-                ? `Downgrade to ${plan.label}`
-                : "Select"}
-        </button>
-        {!isCurrent && plan.key !== "free" && trialAvailable && (
-          <button
-            className={`${styles["plan-btn"]} ${styles["plan-btn-current"]}`}
-            onClick={() => onTrial(plan.key)}
-            disabled={loading}
-          >
-            Start 7-day trial
-          </button>
-        )}
-        {!isCurrent && plan.key !== "free" && (
-          <button
-            className={`${styles["plan-btn"]} ${styles["plan-btn-downgrade"]}`}
-            onClick={() => onSelect(plan.key, "yearly")}
-            disabled={loading}
-          >
-            Pay yearly
-          </button>
-        )}
-      </div>
-    </div>
-  );
+  if (args.interviewPct >= 80) {
+    return `You're close to your ${getPlanMeta(args.currentPlan).label} plan interview limit.`;
+  }
+  if (args.jobsPct >= 100) return "Upgrade to keep posting jobs this month.";
+  if (args.talentLocked) return "Unlock candidate discovery with Growth.";
+  return "Your current plan is active. Upgrade when your hiring volume grows.";
 }
 
-// ── Quota bar ─────────────────────────────────────────────────────────────────
-function QuotaBar({
-  label,
-  used,
-  total,
-  icon,
-}: {
-  label: string;
-  used: number;
-  total: number;
-  icon: React.ReactNode;
-}) {
-  const pct = total === 0 ? 100 : Math.min((used / total) * 100, 100);
-  const danger = pct >= 90;
-  const warning = pct >= 70 && !danger;
-  return (
-    <div className={styles["quota-item"]}>
-      <div className={styles["quota-label"]}>
-        {icon}
-        <span>{label}</span>
-        <span
-          className={`${styles["quota-count"]} ${danger ? styles["quota-danger"] : warning ? styles["quota-warn"] : ""}`}
-        >
-          {used} / {total}
-        </span>
-      </div>
-      <div className={styles["quota-track"]}>
-        <div
-          className={`${styles["quota-fill"]} ${danger ? styles["quota-fill-danger"] : warning ? styles["quota-fill-warn"] : ""}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-// ── Addon card ────────────────────────────────────────────────────────────────
-function AddonCard({
-  icon,
-  iconBg,
-  iconColor,
-  title,
-  desc,
-  price,
-  note,
-  onBuy,
-  loading,
-}: {
-  icon: React.ReactNode;
-  iconBg: string;
-  iconColor: string;
-  title: string;
-  desc: string;
-  price: number;
-  note?: string;
-  onBuy: () => void;
-  loading: boolean;
-}) {
-  return (
-    <div className={styles["addon-card"]}>
-      <div
-        className={styles["addon-icon"]}
-        style={{ background: iconBg, color: iconColor }}
-      >
-        {icon}
-      </div>
-      <div className={styles["addon-body"]}>
-        <span className={styles["addon-title"]}>{title}</span>
-        <span className={styles["addon-desc"]}>{desc}</span>
-        {note && <span className={styles["addon-note"]}>{note}</span>}
-      </div>
-      <div className={styles["addon-action"]}>
-        <span className={styles["addon-price"]}>PKR {fmt(price)}</span>
-        <button
-          className={styles["addon-btn"]}
-          onClick={onBuy}
-          disabled={loading}
-        >
-          {loading ? "…" : "Buy"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Page ──────────────────────────────────────────────────────────────────────
 export default function BillingPage() {
   const {
     subscription,
@@ -295,21 +125,37 @@ export default function BillingPage() {
     capabilities,
   } = useBilling();
 
-  const [tab, setTab] = useState<
-    "plans" | "addons" | "verification" | "history"
-  >("plans");
+  const [tab, setTab] = useState<"plans" | "addons" | "verification" | "history">("plans");
+  const [interval, setInterval] = useState<BillingInterval>("monthly");
+
+  const currentPlan = subscription?.plan ?? "free";
+  const planMeta = getPlanMeta(currentPlan);
+  const trialAvailable = !subscription?.trialUsedAt;
+  const isVerified = subscription?.verificationStatus === "verified";
+  const verPending = subscription?.verificationStatus === "pending";
+  const jobLimit = Number(capabilities?.limits.jobPostsPerMonth ?? planMeta.jobPostsPerMonth);
+  const jobsRemaining = capabilities?.usage.jobPostsRemaining ?? subscription?.jobPostsRemaining ?? 0;
+  const jobsUsed = Math.max(0, jobLimit - jobsRemaining);
+  const jobsPct = percent(jobsUsed, jobLimit);
+  const interviewUsage = capabilities?.usage.interviews;
+  const interviewLimit = interviewUsage?.limit ?? planMeta.maxInterviewsPerMonth;
+  const interviewPct = percent(interviewUsage?.currentUsage ?? 0, interviewLimit);
+  const talentLocked = capabilities?.limits.hasTalentDb !== true;
+
+  const pressure = usageMessage({
+    currentPlan,
+    interviewPct,
+    jobsPct,
+    talentLocked,
+  });
+
+  const applicantViews = planMeta.maxApplicantsViewable;
 
   if (loading) {
     return (
       <div className={styles.page}>
-        <div
-          className={styles.skeleton}
-          style={{ height: 200, borderRadius: 12 }}
-        />
-        <div
-          className={styles.skeleton}
-          style={{ height: 400, borderRadius: 12, marginTop: 16 }}
-        />
+        <div className={styles.skeletonHero} />
+        <div className={styles.skeletonGrid} />
       </div>
     );
   }
@@ -317,354 +163,505 @@ export default function BillingPage() {
   if (error) {
     return (
       <div className={styles.page}>
-        <div className={styles["error-box"]}>
-          <AlertCircle size={14} /> {error}
+        <div className={styles.errorBox}>
+          <AlertCircle size={16} /> {error}
         </div>
       </div>
     );
   }
 
-  const currentPlan = subscription?.plan ?? "free";
-  const planMeta = getPlanMeta(currentPlan);
-  const postsUsed =
-    planMeta.jobPostsPerMonth - (subscription?.jobPostsRemaining ?? 0);
-  const isVerified = subscription?.verificationStatus === "verified";
-  const verPending = subscription?.verificationStatus === "pending";
-  const trialAvailable = !subscription?.trialUsedAt;
-  const interviewUsage = capabilities?.usage.interviews;
-  const interviewLimit =
-    interviewUsage?.limit === "unlimited" ? null : interviewUsage?.limit;
-
   return (
     <div className={styles.page}>
-      {/* ── Header ── */}
-      <div className={styles.header}>
-        <h1 className={styles.title}>Billing & Plans</h1>
-        <p className={styles.subtitle}>
-          Manage your subscription, add-ons and verification
-        </p>
-      </div>
+      <section className={styles.hero}>
+        <div>
+          <span className={styles.kicker}>Employer billing</span>
+          <h1>Billing & Plans</h1>
+          <p>Choose the plan that matches your hiring volume.</p>
+        </div>
+        <div className={styles.intervalToggle} aria-label="Billing interval">
+          <button
+            className={interval === "monthly" ? styles.activeInterval : ""}
+            onClick={() => setInterval("monthly")}
+            type="button"
+          >
+            Monthly
+          </button>
+          <button
+            className={interval === "yearly" ? styles.activeInterval : ""}
+            onClick={() => setInterval("yearly")}
+            type="button"
+          >
+            Yearly <span>Save 17%</span>
+          </button>
+        </div>
+      </section>
 
-      {checkoutError && (
-        <div className={styles["error-box"]}>
-          <AlertCircle size={14} /> {checkoutError}
+      {(checkoutError || error) && (
+        <div className={styles.errorBox}>
+          <AlertCircle size={16} /> {checkoutError ?? error}
         </div>
       )}
 
-      {/* ── Current plan summary ── */}
-      <div className={styles["current-card"]}>
-        <div className={styles["current-left"]}>
-          <div className={styles["current-plan-name"]}>
-            <Shield size={14} />
-            {planMeta.label} plan
-            {isVerified && (
-              <span className={styles["verified-badge"]}>✓ Verified</span>
-            )}
-            {verPending && (
-              <span className={styles["pending-badge"]}>
-                ⏳ Verification pending
-              </span>
-            )}
-          </div>
-          {subscription?.currentPeriodEnd && (
-            <p className={styles["current-renews"]}>
-              <Clock size={11} />
-              {currentPlan === "free"
-                ? "Resets monthly"
-                : `Renews ${fmtDate(subscription.currentPeriodEnd)}`}
-            </p>
-          )}
-        </div>
-
-        <div className={styles["quota-group"]}>
-          <QuotaBar
-            label="Job posts"
-            used={postsUsed}
-            total={planMeta.jobPostsPerMonth}
-            icon={<BarChart2 size={11} />}
-          />
-          {subscription &&
-            subscription.featuredSlotsRemaining !== undefined &&
-            planMeta.featuredSlotsPerMonth > 0 && (
-              <QuotaBar
-                label="Featured slots"
-                used={
-                  planMeta.featuredSlotsPerMonth -
-                  subscription.featuredSlotsRemaining
-                }
-                total={planMeta.featuredSlotsPerMonth}
-                icon={<Star size={11} />}
-              />
-            )}
-          {interviewUsage && interviewLimit !== null && interviewLimit !== undefined && (
-            <QuotaBar
-              label="Interviews"
-              used={interviewUsage.currentUsage}
-              total={interviewLimit}
-              icon={<CalendarCheck size={11} />}
-            />
-          )}
-        </div>
-      </div>
-
-      {/* ── Tabs ── */}
-      <div className={styles.tabs}>
-        <button
-          className={`${styles.tab} ${tab === "plans" ? styles["tab-active"] : ""}`}
-          onClick={() => setTab("plans")}
-        >
-          <Zap size={13} /> Plans
-        </button>
-        <button
-          className={`${styles.tab} ${tab === "addons" ? styles["tab-active"] : ""}`}
-          onClick={() => setTab("addons")}
-        >
-          <Package size={13} /> Add-ons
-        </button>
-        <button
-          className={`${styles.tab} ${tab === "verification" ? styles["tab-active"] : ""}`}
-          onClick={() => setTab("verification")}
-        >
-          <Shield size={13} /> Verification
-          {isVerified && <span className={styles["tab-verified-dot"]} />}
-        </button>
-        <button
-          className={`${styles.tab} ${tab === "history" ? styles["tab-active"] : ""}`}
-          onClick={() => setTab("history")}
-        >
-          <CreditCard size={13} /> History
-        </button>
-      </div>
-
-      {/* ══ Plans ══ */}
-      {tab === "plans" && (
-        <div className={styles["plans-grid"]}>
-          {PLANS.map((plan) => (
-            <PlanCard
-              key={plan.key}
-              plan={plan}
-              currentPlan={currentPlan}
-              onSelect={checkout}
-              onTrial={startTrial}
-              loading={checkoutLoading}
-              trialAvailable={trialAvailable}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* ══ Add-ons ══ */}
-      {tab === "addons" && (
-        <div className={styles["addons-section"]}>
-          <p className={styles["section-desc"]}>
-            One-time purchases — no subscription required. Applied instantly
-            after payment.
+      <section className={styles.usageCard}>
+        <div className={styles.usageIntro}>
+          <span className={styles.planBadge}>{planMeta.label} plan</span>
+          <h2>{pressure}</h2>
+          <p>
+            Current usage helps you choose when to upgrade. Yearly plans include
+            2 months free.
           </p>
+          {subscription?.currentPeriodEnd && (
+            <span className={styles.renewal}>
+              <Clock size={13} />
+              {currentPlan === "free"
+                ? "Usage resets monthly"
+                : `Renews ${fmtDate(subscription.currentPeriodEnd)}`}
+            </span>
+          )}
+        </div>
+        <div className={styles.usageMetrics}>
+          <UsageMeter
+            icon={<Package size={15} />}
+            label="Job posts used"
+            value={`${jobsUsed} / ${jobLimit}`}
+            pct={jobsPct}
+            warn={jobsPct >= 80}
+          />
+          <UsageMeter
+            icon={<CalendarCheck size={15} />}
+            label="Interviews used"
+            value={
+              interviewLimit === "Unlimited" || interviewLimit === "unlimited"
+                ? `${interviewUsage?.currentUsage ?? 0} / Unlimited`
+                : `${interviewUsage?.currentUsage ?? 0} / ${interviewLimit}`
+            }
+            pct={interviewPct}
+            warn={interviewPct >= 80}
+          />
+          <UsageMeter
+            icon={<Users size={15} />}
+            label="Applicant views"
+            value={
+              applicantViews === "Unlimited"
+                ? "Unlimited"
+                : `Up to ${fmt(applicantViews)}`
+            }
+            pct={applicantViews === "Unlimited" ? 100 : 40}
+          />
+        </div>
+      </section>
 
-          <div className={styles["addons-list"]}>
+      <section className={styles.valueGrid}>
+        {VALUE_CARDS.map((card) => (
+          <article key={card.title} className={styles.valueCard}>
+            <span>{card.icon}</span>
+            <h2>{card.title}</h2>
+            <p>{card.copy}</p>
+          </article>
+        ))}
+      </section>
+
+      <div className={styles.tabs}>
+        <TabButton active={tab === "plans"} onClick={() => setTab("plans")} icon={<Zap size={14} />}>
+          Plans
+        </TabButton>
+        <TabButton active={tab === "addons"} onClick={() => setTab("addons")} icon={<Package size={14} />}>
+          Add-ons
+        </TabButton>
+        <TabButton active={tab === "verification"} onClick={() => setTab("verification")} icon={<Shield size={14} />}>
+          Verification
+        </TabButton>
+        <TabButton active={tab === "history"} onClick={() => setTab("history")} icon={<CreditCard size={14} />}>
+          History
+        </TabButton>
+      </div>
+
+      {tab === "plans" && (
+        <>
+          <section className={styles.plansGrid}>
+            {PLANS.map((plan) => (
+              <PlanCard
+                key={plan.key}
+                plan={plan}
+                currentPlan={currentPlan}
+                interval={interval}
+                onSelect={checkout}
+                onTrial={startTrial}
+                loading={checkoutLoading}
+                trialAvailable={trialAvailable}
+              />
+            ))}
+          </section>
+          <PremiumUnlocks />
+        </>
+      )}
+
+      {tab === "addons" && (
+        <section className={styles.sectionCard}>
+          <SectionTitle
+            title="Add-ons"
+            copy="One-time upgrades for hiring spikes without changing your base plan."
+          />
+          <div className={styles.addonList}>
             <AddonCard
               icon={<Plus size={17} />}
-              iconBg="var(--color-background-info)"
-              iconColor="var(--color-text-info)"
-              title="Extra job post"
-              desc="Post one additional job outside your monthly quota. Never miss a hiring opportunity because of a limit."
-              note="One-time · Valid immediately · No expiry"
+              title="Add another active job"
+              desc="Post one additional job outside your monthly quota."
               price={999}
               onBuy={() => purchaseAddon("extra_post")}
               loading={checkoutLoading}
             />
             <AddonCard
               icon={<Star size={17} />}
-              iconBg="var(--color-background-warning)"
-              iconColor="var(--color-text-warning)"
-              title="Feature a job listing (7 days)"
-              desc="Pin your job to the top of all search results. Featured jobs get up to 3× more applicants."
-              note="One-time · 7 days active · Select job after checkout"
+              title="Boost job visibility"
+              desc="Feature a priority job for 7 days to help it stand out."
               price={1999}
               onBuy={() => purchaseAddon("feature_job")}
               loading={checkoutLoading}
             />
             <AddonCard
               icon={<Zap size={17} />}
-              iconBg="var(--color-background-success)"
-              iconColor="var(--color-text-success)"
-              title="Boost applicant cap +25"
-              desc="Reopen a job that closed after hitting its applicant limit. Adds 25 more slots to that job."
-              note="One-time · Reopens closed job · Select job after checkout"
+              title="Expand applicant capacity"
+              desc="Add 25 more applicant slots to a role that needs more reach."
               price={1499}
               onBuy={() => purchaseAddon("boost_cap")}
               loading={checkoutLoading}
             />
           </div>
-        </div>
+        </section>
       )}
 
-      {/* ══ Verification ══ */}
       {tab === "verification" && (
-        <div className={styles["verification-section"]}>
-          {/* Status banner */}
-          {isVerified && (
-            <div
-              className={styles["verify-status-banner"]}
-              data-status="verified"
-            >
-              <CheckCircle2 size={16} />
-              <div>
-                <strong>Your company is verified</strong>
-                <span>
-                  Verified badge is active on all your job posts and company
-                  page.
-                </span>
-              </div>
+        <section className={styles.sectionCard}>
+          <SectionTitle
+            title="Company Verification"
+            copy="Verified companies build more trust with candidates and make job posts feel safer to apply to."
+          />
+          <div className={styles.verifyGrid}>
+            <div className={styles.verifyPanel}>
+              <Shield size={22} />
+              <h3>
+                {isVerified
+                  ? "Your company is verified"
+                  : verPending
+                    ? "Verification is under review"
+                    : "Get a verified company badge"}
+              </h3>
+              <p>
+                Show candidates that your company profile and hiring identity
+                have been reviewed.
+              </p>
+              <button
+                className={styles.primaryButton}
+                onClick={() => checkout("growth")}
+                disabled={checkoutLoading || isVerified || verPending}
+              >
+                {isVerified ? "Verified" : verPending ? "Under review" : "Get verified"}
+              </button>
             </div>
-          )}
-          {verPending && (
-            <div
-              className={styles["verify-status-banner"]}
-              data-status="pending"
-            >
-              <Clock size={16} />
-              <div>
-                <strong>Verification under review</strong>
-                <span>
-                  We'll notify you within 48 hours once your documents are
-                  reviewed.
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* What you get */}
-          <div className={styles["verify-what"]}>
-            <h3 className={styles["verify-what-title"]}>
-              What you get with a Verified badge
-            </h3>
-            <div className={styles["verify-benefits"]}>
+            <div className={styles.verifyBenefits}>
               {[
-                {
-                  icon: <Shield size={15} />,
-                  text: "✓ Green verified checkmark on every job post",
-                },
-                {
-                  icon: <Star size={15} />,
-                  text: "Higher placement in search results",
-                },
-                {
-                  icon: <CheckCircle2 size={15} />,
-                  text: 'Applicants can filter "Verified employers only"',
-                },
-                {
-                  icon: <BarChart2 size={15} />,
-                  text: "Build trust — verified jobs get more applications",
-                },
-                {
-                  icon: <Zap size={15} />,
-                  text: "Badge stays active as long as subscription is paid",
-                },
-              ].map((b, i) => (
-                <div key={i} className={styles["verify-benefit-item"]}>
-                  <span className={styles["verify-benefit-icon"]}>
-                    {b.icon}
-                  </span>
-                  <span>{b.text}</span>
-                </div>
+                "Verified badge on job posts and company profile",
+                "Clearer trust signal for candidates",
+                "Better employer credibility while hiring",
+                "Included with Growth and Scale plans",
+              ].map((item) => (
+                <span key={item}>
+                  <CheckCircle2 size={14} /> {item}
+                </span>
               ))}
             </div>
           </div>
-
-          {/* Pricing */}
-          <div className={styles["verify-pricing-card"]}>
-            <div className={styles["verify-pricing-left"]}>
-              <span className={styles["verify-pricing-label"]}>
-                Company Verification
-              </span>
-              <span className={styles["verify-pricing-sub"]}>
-                Monthly recurring · Cancel anytime
-              </span>
-            </div>
-            <div className={styles["verify-pricing-right"]}>
-              <span className={styles["verify-price"]}>
-                PKR <strong>3,999</strong>
-                <span>/mo</span>
-              </span>
-              {!isVerified && !verPending && (
-                <button
-                  className={styles["verify-btn"]}
-                  onClick={() => checkout("growth")}
-                  disabled={checkoutLoading}
-                >
-                  {checkoutLoading ? "Redirecting…" : "Get verified →"}
-                </button>
-              )}
-              {verPending && (
-                <span className={styles["verify-pending-label"]}>
-                  Under review
-                </span>
-              )}
-              {isVerified && (
-                <span className={styles["verify-active-label"]}>✓ Active</span>
-              )}
-            </div>
-          </div>
-
-          {/* Note */}
-          <p className={styles["verify-note"]}>
-            Verification requires submitting your NTN, business registration
-            number, and official email. Our team reviews submissions within 48
-            hours. The badge is automatically removed if the subscription
-            lapses.
-          </p>
-        </div>
+        </section>
       )}
 
-      {/* ══ History ══ */}
       {tab === "history" && (
-        <div className={styles["history-table"]}>
+        <section className={styles.sectionCard}>
+          <SectionTitle
+            title="Billing History"
+            copy="Track subscription charges, add-ons, refunds, and payment references."
+          />
           {history.length === 0 ? (
-            <div className={styles.empty}>
-              <CreditCard size={28} />
-              <p>No billing history yet</p>
-            </div>
+            <EmptyState
+              icon={<CreditCard size={26} />}
+              title="No billing history yet"
+              copy="Charges and add-on purchases will appear here after checkout."
+            />
           ) : (
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Amount</th>
-                  <th>Reference</th>
-                </tr>
-              </thead>
-              <tbody>
-                {history.map((ev: BillingEvent) => (
-                  <tr key={ev.id}>
-                    <td>{fmtDate(ev.createdAt)}</td>
-                    <td>
-                      <span
-                        className={`${styles["event-badge"]} ${styles[`event-${ev.type}`]}`}
-                      >
-                        {ev.type.replace(/_/g, " ")}
-                      </span>
-                    </td>
-                    <td
-                      className={
-                        ev.type === "refund"
-                          ? styles["amount-refund"]
-                          : styles["amount-charge"]
-                      }
-                    >
-                      {ev.type === "refund" ? "−" : "+"} PKR {fmt(ev.amount)}
-                    </td>
-                    <td className={styles["ref-id"]}>
-                      {ev.gatewayPaymentId ?? "—"}
-                    </td>
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Reference</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {history.map((event: BillingEvent) => (
+                    <tr key={event.id}>
+                      <td>{fmtDate(event.createdAt)}</td>
+                      <td>{event.type.replace(/_/g, " ")}</td>
+                      <td>
+                        {event.type === "refund" ? "-" : "+"} PKR {fmt(event.amount)}
+                      </td>
+                      <td>{event.gatewayPaymentId ?? "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
-        </div>
+        </section>
       )}
+    </div>
+  );
+}
+
+function UsageMeter({
+  icon,
+  label,
+  value,
+  pct,
+  warn,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  pct: number;
+  warn?: boolean;
+}) {
+  return (
+    <div className={styles.usageMeter}>
+      <div>
+        <span>{icon}</span>
+        <strong>{label}</strong>
+        <em>{value}</em>
+      </div>
+      <div className={styles.meterTrack}>
+        <span className={warn ? styles.warningFill : ""} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function PlanCard({
+  plan,
+  currentPlan,
+  interval,
+  onSelect,
+  onTrial,
+  loading,
+  trialAvailable,
+}: {
+  plan: PlanMeta;
+  currentPlan: SubscriptionPlan;
+  interval: BillingInterval;
+  onSelect: (p: SubscriptionPlan, interval?: BillingInterval) => void;
+  onTrial: (p: SubscriptionPlan) => void;
+  loading: boolean;
+  trialAvailable: boolean;
+}) {
+  const isCurrent = plan.key === currentPlan;
+  const upgrade = isUpgrade(currentPlan, plan.key);
+  const price = priceFor(plan, interval);
+  const monthlyEquivalent = interval === "yearly" && plan.price > 0 ? Math.round(price / 12) : null;
+  const features = planFeatures(plan);
+
+  const cta =
+    isCurrent
+      ? "Current plan"
+      : plan.key === "growth" && trialAvailable
+        ? "Start Growth trial"
+        : upgrade
+          ? `Upgrade to ${plan.label}`
+          : `Switch to ${plan.label}`;
+
+  return (
+    <article
+      className={`${styles.planCard} ${plan.key === "growth" ? styles.growthPlan : ""} ${isCurrent ? styles.currentPlan : ""}`}
+    >
+      <div className={styles.planTop}>
+        <div>
+          <span className={styles.planName}>{plan.label}</span>
+          <p>{BEST_FOR[plan.key]}</p>
+        </div>
+        {plan.key === "growth" && (
+          <span className={styles.popularBadge}>Most Popular</span>
+        )}
+      </div>
+
+      <div className={styles.priceBlock}>
+        {price === 0 ? (
+          <strong>Free</strong>
+        ) : (
+          <>
+            <small>PKR</small>
+            <strong>{fmt(price)}</strong>
+            <span>/{interval === "yearly" ? "yr" : "mo"}</span>
+          </>
+        )}
+      </div>
+      {monthlyEquivalent && (
+        <p className={styles.savingsLine}>
+          PKR {fmt(monthlyEquivalent)}/mo equivalent · 2 months free
+        </p>
+      )}
+      {plan.key === "growth" && <p className={styles.recommendedLine}>Recommended for teams hiring every month.</p>}
+
+      <ul className={styles.featureList}>
+        {features.map((feature) => (
+          <li key={feature}>
+            <CheckCircle2 size={13} /> {feature}
+          </li>
+        ))}
+      </ul>
+
+      <div className={styles.planActions}>
+        <button
+          className={`${styles.planButton} ${plan.key === "growth" ? styles.growthButton : ""}`}
+          disabled={isCurrent || loading}
+          onClick={() => {
+            if (isCurrent) return;
+            if (plan.key === "growth" && trialAvailable) {
+              onTrial(plan.key);
+            } else {
+              onSelect(plan.key, interval);
+            }
+          }}
+        >
+          {cta}
+        </button>
+        {plan.key !== "free" && !isCurrent && (
+          <span className={styles.ctaMicrocopy}>
+            7-day free trial · Cancel anytime · Yearly saves 2 months
+          </span>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function planFeatures(plan: PlanMeta) {
+  const features = [
+    `Post up to ${fmt(plan.jobPostsPerMonth)} jobs each month`,
+    `${formatLimit(plan.applicantsPerJob)} applicants per job`,
+    `${formatLimit(plan.maxApplicantsViewable)} applicant views`,
+    `${formatLimit(plan.maxInterviewsPerMonth)} interviews each month`,
+  ];
+  if (plan.hasInterviewReminders) features.push("Automate interview reminders");
+  if (plan.hasCustomEmailTemplates) features.push("Customize candidate emails");
+  if (plan.hasContractTemplates) features.push("Create offers and contracts faster");
+  if (plan.aiMatcher !== "None") features.push("AI-assisted candidate matching");
+  if (plan.hasTalentDb) features.push("Unlock candidate discovery");
+  if (plan.hasVerifiedBadge) features.push("Verified company badge");
+  if (plan.hasAutomation) features.push("Automate repetitive hiring tasks");
+  if (plan.hasMarketIntel) features.push("Market intelligence");
+  features.push(`${plan.support} support`);
+  return features;
+}
+
+function PremiumUnlocks() {
+  return (
+    <section className={styles.unlockSection}>
+      <SectionTitle
+        title="Unlock more hiring power"
+        copy="Premium plans are designed around hiring volume, automation, trust, and stronger decision-making."
+      />
+      <div className={styles.unlockGrid}>
+        {PREMIUM_UNLOCKS.map(([title, plan, copy]) => (
+          <article key={title} className={styles.unlockCard}>
+            <Lock size={16} />
+            <div>
+              <h3>{title}</h3>
+              <p>{copy}</p>
+            </div>
+            <span>{plan}</span>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AddonCard({
+  icon,
+  title,
+  desc,
+  price,
+  onBuy,
+  loading,
+}: {
+  icon: ReactNode;
+  title: string;
+  desc: string;
+  price: number;
+  onBuy: () => void;
+  loading: boolean;
+}) {
+  return (
+    <article className={styles.addonCard}>
+      <span className={styles.addonIcon}>{icon}</span>
+      <div>
+        <h3>{title}</h3>
+        <p>{desc}</p>
+      </div>
+      <div className={styles.addonAction}>
+        <strong>PKR {fmt(price)}</strong>
+        <button onClick={onBuy} disabled={loading} className={styles.secondaryButton}>
+          {loading ? "Processing..." : "Buy add-on"}
+        </button>
+      </div>
+    </article>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  icon,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      className={`${styles.tab} ${active ? styles.activeTab : ""}`}
+      onClick={onClick}
+    >
+      {icon} {children}
+    </button>
+  );
+}
+
+function SectionTitle({ title, copy }: { title: string; copy: string }) {
+  return (
+    <div className={styles.sectionTitle}>
+      <h2>{title}</h2>
+      <p>{copy}</p>
+    </div>
+  );
+}
+
+function EmptyState({
+  icon,
+  title,
+  copy,
+}: {
+  icon: ReactNode;
+  title: string;
+  copy: string;
+}) {
+  return (
+    <div className={styles.emptyState}>
+      <span>{icon}</span>
+      <h3>{title}</h3>
+      <p>{copy}</p>
     </div>
   );
 }

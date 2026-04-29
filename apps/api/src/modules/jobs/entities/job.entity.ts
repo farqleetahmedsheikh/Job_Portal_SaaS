@@ -22,8 +22,8 @@ import {
 import { Company } from '../../companies/entities/company.entity';
 import { User } from '../../users/entities/user.entity';
 import { JobSkill } from './job-skill.entity';
-import { Application } from 'src/modules/applications/entities/application.entity';
-import { CodingTest } from 'src/modules/coding-tests/entities/coding-test.entity';
+import { Application } from '../../applications/entities/application.entity';
+import { CodingTest } from '../../coding-tests/entities/coding-test.entity';
 
 @Entity('jobs')
 @Check(

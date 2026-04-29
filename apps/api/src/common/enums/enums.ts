@@ -185,6 +185,12 @@ export enum TemplateKind {
   OFFER_LETTER = 'offer_letter',
 }
 
+export enum ContractUsagePaymentStatus {
+  PENDING = 'pending',
+  PAID = 'paid',
+  FAILED = 'failed',
+}
+
 export enum EmailTemplateType {
   INTERVIEW_SCHEDULED = 'interview_scheduled',
   INTERVIEW_RESCHEDULED = 'interview_rescheduled',
