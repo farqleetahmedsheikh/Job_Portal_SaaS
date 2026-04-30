@@ -147,6 +147,16 @@ export class NotificationsService {
             company: p.meta?.company,
             reason: p.meta?.reason,
           });
+        case NotifType.IV_REMINDER:
+          return this.mail.sendInterviewReminder({
+            to: p.recipientEmail,
+            candidateName: p.meta?.candidateName,
+            jobTitle: p.meta?.jobTitle,
+            company: p.meta?.company,
+            scheduledAt: new Date(p.meta?.scheduledAt),
+            meetLink: p.meta?.meetLink,
+            reminderType: p.meta?.reminderType,
+          });
         case NotifType.APP_STATUS:
           if (p.meta?.status === 'rejected') {
             return this.mail.sendApplicationRejected({

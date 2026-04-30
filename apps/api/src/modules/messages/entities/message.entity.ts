@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Conversation } from './conversation.entity';
+import { MessageType } from '../../../common/enums/enums';
 
 // ─── Drop in: src/modules/messaging/entities/message.entity.ts ───────────────
 
@@ -24,11 +25,21 @@ export class Message {
   @Column({ name: 'conversation_id' })
   conversationId!: string;
 
-  @Column({ name: 'sender_id' })
-  senderId!: string;
+  @Column({ name: 'sender_id', nullable: true })
+  senderId!: string | null;
+
+  @Column({
+    type: 'varchar',
+    length: 40,
+    default: MessageType.USER,
+  })
+  type!: MessageType;
 
   @Column({ type: 'text' })
   text!: string;
+
+  @Column({ type: 'jsonb', nullable: true })
+  metadata?: Record<string, unknown> | null;
 
   // Soft-delete: message text hidden from UI but record kept for audit
   @Column({ name: 'is_deleted', default: false })
@@ -43,7 +54,7 @@ export class Message {
   @JoinColumn({ name: 'conversation_id' })
   conversation?: Conversation;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'sender_id' })
-  sender?: User;
+  sender?: User | null;
 }

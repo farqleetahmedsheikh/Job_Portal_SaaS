@@ -4,6 +4,7 @@
 
 import { type ReactNode, useState } from "react";
 import type { User } from "../../types/user.types";
+import { OnboardingExperience } from "../onboarding/OnboardingExperience";
 import { Navbar } from "./Navbar";
 import { Sidebar } from "./Sidebar";
 import styles from "../../styles/dashboard.module.css";
@@ -40,6 +41,7 @@ export const DashboardLayout = ({ user, children }: Props) => {
         <Navbar onMenuClick={() => setMobileSidebarOpen(true)} />
         <main className={styles["dashboard-content"]}>{children}</main>
       </div>
+      <OnboardingExperience />
     </div>
   );
 };

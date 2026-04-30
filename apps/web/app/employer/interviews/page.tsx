@@ -291,6 +291,13 @@ export default function EmployerInterviewsPage() {
         </button>
       </div>
 
+      <div className={styles.helpHint}>
+        <Calendar size={14} />
+        <span>
+          Schedule interviews here so candidate communication stays tracked.
+        </span>
+      </div>
+
       {/* Stats */}
       <div className={styles.statRow}>
         {[

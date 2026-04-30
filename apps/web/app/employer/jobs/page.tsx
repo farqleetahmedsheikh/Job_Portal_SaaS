@@ -377,6 +377,14 @@ export default function ManageJobsPage() {
 
       <JobPostQuota />
 
+      <div className={styles.helpHint}>
+        <Shield size={14} />
+        <span>
+          Start by posting a clear role with salary, location, and required
+          skills.
+        </span>
+      </div>
+
       {/* ── Stat pills ── */}
       <div className={styles.statRow}>
         {[

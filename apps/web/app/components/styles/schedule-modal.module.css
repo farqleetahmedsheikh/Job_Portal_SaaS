@@ -480,6 +480,25 @@
 }
 
 /* ── Footer ── */
+.automationNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  background: rgba(var(--glow-rgb), 0.06);
+  border: 1px solid rgba(var(--glow-rgb), 0.16);
+  border-radius: 12px;
+  padding: 11px 13px;
+}
+
+.automationNote svg {
+  flex-shrink: 0;
+  color: var(--color-secondary);
+  margin-top: 2px;
+}
+
 .footer {
   display: flex;
   gap: 10px;

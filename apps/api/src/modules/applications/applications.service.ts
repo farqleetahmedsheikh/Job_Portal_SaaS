@@ -17,6 +17,7 @@ import { UpdateApplicationStatusDto } from './dto/update-application-status.dto'
 import { BulkStatusUpdateDto } from './dto/bulk-status-update.dto';
 import { UpdateEmployerNotesDto } from './dto/update-employer-notes.dto';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AutomationService } from '../automation/automation.service';
 import {
   assertApplicationStatusTransition,
   TERMINAL_APPLICATION_STATUSES,
@@ -35,6 +36,7 @@ export class ApplicationsService {
     private readonly ds: DataSource,
     private readonly limitsService: LimitsService, // ← new
     private readonly notifications: NotificationsService,
+    private readonly automation: AutomationService,
   ) {}
 
   // ── Applicant: Apply ────────────────────────────────────────────────────────
@@ -77,7 +79,7 @@ export class ApplicationsService {
     });
     if (existing) throw new ConflictException('Already applied to this job');
 
-    return this.ds.transaction(async (m) => {
+    const created = await this.ds.transaction(async (m) => {
       const app = m.create(Application, {
         ...dto,
         applicantId,
@@ -100,6 +102,12 @@ export class ApplicationsService {
 
       return app;
     });
+
+    void this.automation
+      .handleApplicationCreated(created.id)
+      .catch(() => undefined);
+
+    return created;
   }
 
   // ── Applicant: My applications ──────────────────────────────────────────────
@@ -202,6 +210,9 @@ export class ApplicationsService {
         changed.toStatus,
         dto.note,
       );
+      void this.automation
+        .handleApplicationStatusChanged(changed.app.id, changed.toStatus)
+        .catch(() => undefined);
     }
 
     return changedApps[0].app;
@@ -263,13 +274,15 @@ export class ApplicationsService {
 
     const apps = await this.appRepo.findBy({ id: In(dto.applicationIds) });
 
-    return this.ds.transaction(async (m) => {
+    const changedApps = await this.ds.transaction(async (m) => {
+      const changed: Array<{ id: string; status: AppStatus }> = [];
       for (const app of apps) {
         const owned = await this.verifyEmployerOwnsApp(app.id, userId);
         assertApplicationStatusTransition(owned.status!, dto.status);
         const fromStatus = app.status;
         app.status = dto.status;
         await m.save(Application, app);
+        changed.push({ id: app.id, status: dto.status });
 
         await m.save(
           ApplicationStatusHistory,
@@ -282,7 +295,14 @@ export class ApplicationsService {
           }),
         );
       }
+      return changed;
     });
+
+    for (const changed of changedApps) {
+      void this.automation
+        .handleApplicationStatusChanged(changed.id, changed.status)
+        .catch(() => undefined);
+    }
   }
 
   // ── Employer: Toggle star ───────────────────────────────────────────────────

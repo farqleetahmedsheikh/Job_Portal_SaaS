@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bell, Menu, MessageSquare } from "lucide-react";
+import { Bell, HelpCircle, Menu, MessageSquare } from "lucide-react";
 import { useUser } from "../../store/session.store";
 import { useNotifications } from "../../hooks/useNotifications";
 import { Avatar } from "../ui/Avatar";
@@ -61,6 +61,18 @@ export function Navbar({ onMenuClick }: NavbarProps) {
         >
           <MessageSquare size={17} />
         </Link>
+
+        <button
+          type="button"
+          className={styles["icon-btn"]}
+          aria-label="Restart guided tour"
+          title="Restart guided tour"
+          onClick={() =>
+            window.dispatchEvent(new Event("hiringfly:restart-onboarding"))
+          }
+        >
+          <HelpCircle size={17} />
+        </button>
 
         {/* Notifications */}
         <div className={styles.notifWrap}>

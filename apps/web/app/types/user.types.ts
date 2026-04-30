@@ -1,6 +1,11 @@
 /** @format */
 
-export type UserRole = "APPLICANT" | "EMPLOYER";
+export type UserRole =
+  | "APPLICANT"
+  | "EMPLOYER"
+  | "ADMIN"
+  | "SUPER_ADMIN"
+  | "SUPERVISOR";
 
 export interface User {
   id: string;
@@ -8,4 +13,7 @@ export interface User {
   email: string;
   role: UserRole;
   avatar?: string | null;
+  hasCompletedOnboarding?: boolean;
+  onboardingCompletedAt?: string | null;
+  onboardingRole?: "applicant" | "employer" | null;
 }

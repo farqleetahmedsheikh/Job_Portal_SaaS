@@ -1,0 +1,267 @@
+.modalLayer,
+.tourLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+}
+
+.modalLayer {
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(10, 18, 32, 0.42);
+  backdrop-filter: blur(8px);
+}
+
+.welcomeModal,
+.tourCard {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(135deg, rgba(var(--glow-rgb), 0.1), transparent 48%),
+    linear-gradient(180deg, var(--surface-raised, var(--bg-card)), var(--bg-card));
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
+}
+
+.welcomeModal {
+  width: min(560px, 100%);
+  padding: 26px;
+}
+
+.modalIcon,
+.stepIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--color-secondary);
+  background: rgba(var(--glow-rgb), 0.1);
+  border: 1px solid rgba(var(--glow-rgb), 0.18);
+}
+
+.modalIcon {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 14px;
+}
+
+.kicker {
+  margin: 0 0 7px;
+  color: var(--color-secondary);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.welcomeModal h2,
+.tourCard h2 {
+  margin: 0 0 8px;
+  color: var(--text-primary);
+  font-size: 22px;
+  font-weight: 850;
+  letter-spacing: 0;
+}
+
+.modalCopy,
+.tourCard p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.stepGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 20px 0 24px;
+}
+
+.welcomeStep {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 72px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.welcomeStep strong {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.stepNumber {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.stepIcon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.modalActions,
+.tourActions,
+.tourNav,
+.tourTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modalActions,
+.tourActions,
+.tourTop {
+  justify-content: space-between;
+}
+
+.primaryButton,
+.secondaryButton,
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform var(--transition),
+    filter var(--transition),
+    background var(--transition),
+    border-color var(--transition);
+}
+
+.primaryButton {
+  padding: 9px 14px;
+  color: #fff;
+  background: linear-gradient(180deg, var(--color-primary), #1d4ed8);
+  box-shadow: 0 12px 26px rgba(var(--glow-rgb), 0.24);
+}
+
+.secondaryButton,
+.iconButton {
+  color: var(--text-secondary);
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.iconButton {
+  width: 38px;
+  padding: 0;
+}
+
+.primaryButton:hover,
+.secondaryButton:hover,
+.iconButton:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.iconButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+.tourLayer {
+  pointer-events: none;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 13, 24, 0.38);
+  backdrop-filter: blur(2px);
+}
+
+.spotlight {
+  position: absolute;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(var(--glow-rgb), 0.78);
+  box-shadow:
+    0 0 0 9999px rgba(8, 13, 24, 0.34),
+    0 16px 36px rgba(var(--glow-rgb), 0.18);
+}
+
+.tourCard {
+  position: absolute;
+  padding: 18px;
+  pointer-events: auto;
+}
+
+.progressPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  padding: 5px 8px;
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.progressTrack {
+  height: 7px;
+  margin: 16px 0;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+}
+
+.progressTrack span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-secondary), var(--status-success));
+}
+
+@media (max-width: 620px) {
+  .welcomeModal {
+    padding: 22px;
+  }
+
+  .stepGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .modalActions,
+  .tourActions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+  }
+
+  .tourCard {
+    right: 16px;
+    left: 16px !important;
+    width: auto !important;
+    transform: none !important;
+  }
+}

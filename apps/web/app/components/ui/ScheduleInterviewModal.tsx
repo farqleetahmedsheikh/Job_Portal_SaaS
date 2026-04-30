@@ -519,6 +519,14 @@ export function ScheduleInterviewModal({
               />
             </div>
 
+            <div className={styles.automationNote}>
+              <CheckCircle2 size={14} />
+              <span>
+                Candidate email and in-app notification are sent automatically.
+                Interview reminders follow your automation settings.
+              </span>
+            </div>
+
             {error && (
               <div className={styles.errorBox}>
                 <AlertCircle size={12} /> {error}

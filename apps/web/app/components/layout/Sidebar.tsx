@@ -21,6 +21,7 @@ import {
   CreditCard,
   Database,
   FileText,
+  Zap,
 } from "lucide-react";
 import styles from "../../styles/sidebar.module.css";
 import Image from "next/image";
@@ -79,6 +80,7 @@ const NAVIGATION: Record<"applicant" | "employer", NavSection[]> = {
         { label: "Applicants", icon: Users, href: "/employer/applicants" },
         { label: "Talent Database", icon: Database, href: "/employer/talent" },
         { label: "Interviews", icon: Calendar, href: "/employer/interviews" },
+        { label: "Automation", icon: Zap, href: "/employer/automation" },
         { label: "Contracts", icon: FileText, href: "/employer/contracts" },
         { label: "Messages", icon: MessageSquare, href: "/employer/messages" },
         { label: "Company", icon: Building2, href: "/employer/company" },
@@ -102,6 +104,24 @@ function toInitials(name: string) {
     .join("")
     .toUpperCase()
     .slice(0, 2);
+}
+
+function tourIdForHref(href: string) {
+  const map: Record<string, string> = {
+    "/employer/dashboard": "employer-dashboard",
+    "/employer/jobs": "employer-jobs",
+    "/employer/applicants": "employer-applicants",
+    "/employer/interviews": "employer-interviews",
+    "/employer/automation": "employer-automation",
+    "/applicant/dashboard": "applicant-dashboard",
+    "/applicant/browse-jobs": "applicant-browse-jobs",
+    "/applicant/applications": "applicant-applications",
+    "/applicant/profile": "applicant-profile",
+    "/applicant/resumes": "applicant-profile",
+    "/applicant/interviews": "applicant-interviews",
+  };
+
+  return map[href];
 }
 
 const ChevronLeft = () => (
@@ -135,7 +155,7 @@ export function Sidebar({
   const pathname = usePathname();
   const user = useUser();
 
-  const role = user?.role ?? "applicant";
+  const role = user?.role === "employer" ? "employer" : "applicant";
   const userName = user?.fullName ?? "—";
   const avatar = user?.avatar ?? null;
   const subtitle =
@@ -191,6 +211,7 @@ export function Sidebar({
                   key={item.href}
                   href={item.href}
                   className={`${styles["nav-item"]} ${isActive ? styles.active : ""}`}
+                  data-tour-id={tourIdForHref(item.href)}
                   title={collapsed ? item.label : undefined}
                   onClick={onNavigate}
                 >

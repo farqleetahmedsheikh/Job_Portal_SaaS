@@ -26,6 +26,7 @@ import { AnalyticsTier } from '../../common/enums/enums';
 import { NotificationsService } from '../notifications/notifications.service';
 import { assertJobStatusTransition } from './job-status.transitions';
 import { TERMINAL_APPLICATION_STATUSES } from '../applications/application-status.transitions';
+import { AutomationService } from '../automation/automation.service';
 
 @Injectable()
 export class JobsService {
@@ -42,6 +43,7 @@ export class JobsService {
     @InjectRepository(ApplicantProfile)
     private readonly profileRepo: Repository<ApplicantProfile>,
     private readonly notifications: NotificationsService,
+    private readonly automation: AutomationService,
   ) {}
 
   // ── Employer: Create ────────────────────────────────────────────────────────
@@ -154,6 +156,15 @@ export class JobsService {
           reason: 'Job closed',
         },
       });
+    }
+
+    if (dto.status === JobStatus.CLOSED && rejectedApps.length) {
+      void this.automation
+        .handleJobClosed(
+          jobId,
+          rejectedApps.map((app) => app.id),
+        )
+        .catch(() => undefined);
     }
 
     return saved;

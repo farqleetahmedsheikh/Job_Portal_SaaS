@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
   ContractUsagePaymentStatus,
+  MessageType,
   NotifType,
   SubscriptionPlan,
   TemplateKind,
@@ -18,6 +19,7 @@ import { Application } from '../applications/entities/application.entity';
 import { Company } from '../companies/entities/company.entity';
 import { ContractTemplate } from '../templates/entities/contract-template.entity';
 import { MailService } from '../mail/mail.service';
+import { MessagingService } from '../messages/messages.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AiGenerateContractDto } from './dto/ai-generate-contract.dto';
 import { CreateContractTemplateDto } from './dto/create-contract-template.dto';
@@ -40,6 +42,7 @@ export class ContractsService {
     private readonly companyRepo: Repository<Company>,
     private readonly limits: LimitsService,
     private readonly mail: MailService,
+    private readonly messaging: MessagingService,
     private readonly notifications: NotificationsService,
   ) {}
 
@@ -225,6 +228,25 @@ export class ContractsService {
       refId: app.id,
       refType: 'application',
     });
+
+    await this.messaging.findOrCreate(
+      company.ownerId,
+      {
+        recipientId: app.applicantId,
+        jobId: app.jobId,
+        firstMessage: `${company.companyName} sent ${dto.title}.`,
+      },
+      undefined,
+      {
+        system: true,
+        messageType: MessageType.OFFER_UPDATE,
+        metadata: {
+          applicationId: app.id,
+          usageId: usage.id,
+          title: dto.title,
+        },
+      },
+    );
 
     return {
       usageId: usage.id,

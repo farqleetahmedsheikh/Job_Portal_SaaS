@@ -63,6 +63,24 @@ export class User {
   @Column({ name: 'last_active_at', type: 'timestamptz', nullable: true })
   lastActiveAt?: Date;
 
+  @Column({ name: 'has_completed_onboarding', default: false })
+  hasCompletedOnboarding!: boolean;
+
+  @Column({
+    name: 'onboarding_completed_at',
+    type: 'timestamptz',
+    nullable: true,
+  })
+  onboardingCompletedAt?: Date | null;
+
+  @Column({
+    type: 'varchar',
+    name: 'onboarding_role',
+    length: 30,
+    nullable: true,
+  })
+  onboardingRole?: UserRole | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 

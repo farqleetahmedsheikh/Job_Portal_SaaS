@@ -381,6 +381,11 @@ export default function ApplicationsPage() {
         </Link>
       </div>
 
+      <div className={styles.helpHint}>
+        <AlertCircle size={14} />
+        <span>Employers update your status from their hiring pipeline.</span>
+      </div>
+
       {/* Stat cards */}
       <div className={styles["stat-row"]}>
         {[

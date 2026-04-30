@@ -48,6 +48,9 @@ export interface SafeUser {
   bio: string | null;
   isProfileComplete: boolean;
   isEmailVerified: boolean;
+  hasCompletedOnboarding: boolean;
+  onboardingCompletedAt: Date | null;
+  onboardingRole: UserRole | null;
   applicantProfile: SafeApplicantProfile | null;
   company: SafeCompany | null;
 }
@@ -101,6 +104,16 @@ export class AuthService {
   // Collects: fullName, email, password, role
   // isProfileComplete stays false → frontend redirects to /complete-profile
   async register(dto: RegisterDto, res: Response): Promise<SafeUser> {
+    if (
+      [UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.SUPERVISOR].includes(
+        dto.role,
+      )
+    ) {
+      throw new BadRequestException(
+        'Admin accounts must be created by a super admin',
+      );
+    }
+
     const existing = await this.users.findByEmail(dto.email);
     if (existing) throw new ConflictException('Email already registered');
 
@@ -289,6 +302,9 @@ export class AuthService {
       bio: user.bio ?? null,
       isProfileComplete: user.isProfileComplete ?? false,
       isEmailVerified: user.isEmailVerified ?? false,
+      hasCompletedOnboarding: user.hasCompletedOnboarding ?? false,
+      onboardingCompletedAt: user.onboardingCompletedAt ?? null,
+      onboardingRole: user.onboardingRole ?? null,
 
       // ✅ Map entity field names — no invented fields
       applicantProfile: ap

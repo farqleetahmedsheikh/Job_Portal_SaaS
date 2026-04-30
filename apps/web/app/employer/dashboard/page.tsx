@@ -9,7 +9,9 @@ import {
   Briefcase,
   Building2,
   CalendarCheck,
+  CheckCircle2,
   ClipboardList,
+  Circle,
   Eye,
   FileText,
   MessageSquare,
@@ -131,6 +133,12 @@ export default function EmployerDashboardPage() {
   const hasApplications = data.stats.totalApplications > 0;
   const hasUpcomingInterviews =
     data.stats.upcomingInterviews > 0 || data.interviews.length > 0;
+  const companyProfileComplete = Boolean(
+    user?.companies?.companyName &&
+      user.companies.industry &&
+      user.companies.location &&
+      user.companies.description,
+  );
 
   const plan = capabilities?.plan ?? subscription?.plan ?? "free";
   const planMeta = getPlanMeta(plan);
@@ -161,6 +169,12 @@ export default function EmployerDashboardPage() {
     activeJobs: data.stats.activeJobs,
     newApplications: data.stats.newApplications,
     interviewPercent,
+  });
+  const checklist = buildEmployerChecklist({
+    companyProfileComplete,
+    hasJobs,
+    hasApplications,
+    hasUpcomingInterviews,
   });
 
   return (
@@ -234,6 +248,8 @@ export default function EmployerDashboardPage() {
         />
       </section>
 
+      <GettingStartedChecklist checklist={checklist} />
+
       <section className={styles.commandGrid}>
         <div className={styles.mainColumn}>
           <RecentApplicationsPanel applications={data.applications} />
@@ -258,6 +274,93 @@ export default function EmployerDashboardPage() {
         </aside>
       </section>
     </div>
+  );
+}
+
+function buildEmployerChecklist({
+  companyProfileComplete,
+  hasJobs,
+  hasApplications,
+  hasUpcomingInterviews,
+}: {
+  companyProfileComplete: boolean;
+  hasJobs: boolean;
+  hasApplications: boolean;
+  hasUpcomingInterviews: boolean;
+}) {
+  return [
+    {
+      title: "Complete company profile",
+      description: "Help candidates understand your team before they apply.",
+      href: "/employer/company",
+      done: companyProfileComplete,
+    },
+    {
+      title: "Post first job",
+      description: "Open a role and start building your hiring pipeline.",
+      href: "/employer/jobs/new",
+      done: hasJobs,
+    },
+    {
+      title: "Review first applicant",
+      description: "Move candidates forward with status updates.",
+      href: "/employer/applicants",
+      done: hasApplications,
+    },
+    {
+      title: "Schedule first interview",
+      description: "Keep interviews and candidate communication tracked.",
+      href: "/employer/interviews",
+      done: hasUpcomingInterviews,
+    },
+    {
+      title: "Explore automation",
+      description: "See how HiringFly can send updates and reminders for you.",
+      href: "/employer/automation",
+      done: false,
+    },
+  ];
+}
+
+function GettingStartedChecklist({
+  checklist,
+}: {
+  checklist: ReturnType<typeof buildEmployerChecklist>;
+}) {
+  const completed = checklist.filter((item) => item.done).length;
+  if (completed === checklist.length) return null;
+
+  return (
+    <section className={styles.checklistCard}>
+      <div className={styles.checklistHeader}>
+        <div>
+          <span className={styles.kicker}>Getting started</span>
+          <h2>Set up your hiring workspace</h2>
+          <p>{completed} of {checklist.length} completed</p>
+        </div>
+        <div className={styles.checklistProgress}>
+          <span style={{ width: `${(completed / checklist.length) * 100}%` }} />
+        </div>
+      </div>
+      <div className={styles.checklistGrid}>
+        {checklist.map((item) => (
+          <Link key={item.title} href={item.href} className={styles.checklistItem}>
+            <span
+              className={
+                item.done ? styles.checklistDone : styles.checklistTodo
+              }
+            >
+              {item.done ? <CheckCircle2 size={15} /> : <Circle size={15} />}
+            </span>
+            <span className={styles.checklistBody}>
+              <strong>{item.title}</strong>
+              <small>{item.description}</small>
+            </span>
+            <ArrowRight size={13} className={styles.quickChevron} />
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 

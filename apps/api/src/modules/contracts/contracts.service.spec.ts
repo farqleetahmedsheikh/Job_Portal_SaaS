@@ -1,5 +1,9 @@
 import { ForbiddenException } from '@nestjs/common';
-import { JobType, SubscriptionPlan } from '../../common/enums/enums';
+import {
+  JobType,
+  MessageType,
+  SubscriptionPlan,
+} from '../../common/enums/enums';
 import { ContractsService } from './contracts.service';
 
 describe('ContractsService', () => {
@@ -36,6 +40,9 @@ describe('ContractsService', () => {
   const mail = {
     sendContract: jest.fn(),
   };
+  const messaging = {
+    findOrCreate: jest.fn(),
+  };
   const notifications = {
     notify: jest.fn(),
   };
@@ -48,6 +55,7 @@ describe('ContractsService', () => {
       companyRepo as never,
       limits as never,
       mail as never,
+      messaging as never,
       notifications as never,
     );
   }
@@ -58,6 +66,7 @@ describe('ContractsService', () => {
     applicationRepo.findOne.mockResolvedValue({
       id: 'app-1',
       applicantId: 'candidate-1',
+      jobId: 'job-1',
       applicant: {
         id: 'candidate-1',
         fullName: 'Aisha Khan',
@@ -101,6 +110,21 @@ describe('ContractsService', () => {
       }),
     );
     expect(notifications.notify).toHaveBeenCalled();
+    expect(messaging.findOrCreate).toHaveBeenCalled();
+    const messageCall = messaging.findOrCreate.mock.calls[0] as unknown as [
+      string,
+      { recipientId: string; jobId: string; firstMessage: string },
+      undefined,
+      { system: boolean; messageType: MessageType },
+    ];
+    expect(messageCall[0]).toBe('employer-1');
+    expect(messageCall[1].recipientId).toBe('candidate-1');
+    expect(messageCall[1].jobId).toBe('job-1');
+    expect(messageCall[1].firstMessage).toContain('Offer Letter');
+    expect(messageCall[3]).toMatchObject({
+      system: true,
+      messageType: MessageType.OFFER_UPDATE,
+    });
   });
 
   it('generates generic AI contract text without script content', () => {

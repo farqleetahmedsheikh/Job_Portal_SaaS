@@ -57,12 +57,15 @@ export type SessionUser = {
   id: string;
   fullName: string;
   email: string;
-  role: "applicant" | "employer";
+  role: "applicant" | "employer" | "admin" | "super_admin" | "supervisor";
   avatar: string | null;
   phone: string | null;
   bio: string | null;
   isProfileComplete: boolean;
   isEmailVerified: boolean;
+  hasCompletedOnboarding?: boolean;
+  onboardingCompletedAt?: string | null;
+  onboardingRole?: "applicant" | "employer" | null;
   applicantProfile: SafeApplicantProfile | null;
   companies: SafeCompany | null;
 };
@@ -161,6 +164,10 @@ export const useIsApplicant = () =>
   useSessionStore().state.user?.role === "applicant";
 export const useIsEmployer = () =>
   useSessionStore().state.user?.role === "employer";
+export const useIsAdmin = () =>
+  ["admin", "super_admin", "supervisor"].includes(
+    useSessionStore().state.user?.role ?? "",
+  );
 export const useApplicantProfile = () =>
   useSessionStore().state.user?.applicantProfile ?? null;
 export const useCompany = () => useSessionStore().state.user?.companies ?? null;

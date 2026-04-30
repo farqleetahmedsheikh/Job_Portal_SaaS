@@ -331,6 +331,11 @@ export default function BrowseJobsPage() {
           </span>
         </div>
 
+        <div className={styles.helpHint}>
+          <Sparkles size={14} />
+          <span>Apply early to new roles and keep your profile complete.</span>
+        </div>
+
         {/* Skill match banner — shown when sort=match */}
         {sort === "match" && profileSkills.length > 0 && (
           <div className={styles.matchBanner}>

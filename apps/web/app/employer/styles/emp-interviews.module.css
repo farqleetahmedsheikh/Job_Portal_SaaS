@@ -663,3 +663,20 @@
         display: none;
     }
 }
+.helpHint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(var(--glow-rgb), 0.18);
+  border-radius: var(--radius-sm);
+  background: rgba(var(--glow-rgb), 0.06);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.helpHint svg {
+  flex-shrink: 0;
+  color: var(--color-secondary);
+}

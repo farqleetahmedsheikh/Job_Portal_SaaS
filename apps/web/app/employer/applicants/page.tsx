@@ -18,6 +18,7 @@ import {
   Calendar,
   Award,
   ArrowUpDown,
+  Zap,
 } from "lucide-react";
 import { useAllApplicants } from "../../hooks/useAllApplicants";
 import type {
@@ -336,6 +337,14 @@ export default function AllApplicantsPage() {
           <Star size={13} />
           <strong>{stats.offered}</strong> Offered
         </div>
+      </div>
+
+      <div className={styles.automationBanner}>
+        <Zap size={14} />
+        <span>
+          Candidate status updates are sent automatically based on your{" "}
+          <Link href="/employer/automation">Automation settings</Link>.
+        </span>
       </div>
 
       {/* Toolbar */}

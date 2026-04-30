@@ -2,9 +2,11 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Body,
   Param,
+  Query,
   ParseUUIDPipe,
   UseGuards,
   HttpCode,
@@ -25,8 +27,10 @@ export class MessagingController {
   @Get('inbox')
   inbox(
     @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+    @Query('search') search?: string,
+    @Query('filter') filter?: string,
   ) {
-    return this.svc.getInbox(user.sub);
+    return this.svc.getInbox(user.sub, user.role, { search, filter });
   }
 
   // GET /api/messaging/unread-count
@@ -43,7 +47,7 @@ export class MessagingController {
     @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
     @Body() dto: CreateConversationDto,
   ) {
-    return this.svc.findOrCreate(user.sub, dto);
+    return this.svc.findOrCreate(user.sub, dto, user.role);
   }
 
   // GET /api/messaging/conversations/:id/messages
@@ -63,6 +67,32 @@ export class MessagingController {
     @Body() dto: SendMessageDto,
   ) {
     return this.svc.sendMessage(id, user.sub, dto);
+  }
+
+  // PATCH /api/messaging/conversations/:id/read
+  @Patch('conversations/:id/read')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  markRead(
+    @Param('id', ParseUUIDPipe) id: string,
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+  ) {
+    return this.svc.markRead(id, user.sub);
+  }
+
+  // PATCH /api/messaging/conversations/:id/archive
+  @Patch('conversations/:id/archive')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  archive(
+    @Param('id', ParseUUIDPipe) id: string,
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+    @Body('archived') archived?: boolean,
+  ) {
+    return this.svc.archiveConversation(
+      id,
+      user.sub,
+      user.role,
+      archived ?? true,
+    );
   }
 
   // DELETE /api/messaging/messages/:id

@@ -35,6 +35,9 @@ type UpdateUserPayload = Partial<
     | 'isProfileComplete'
     | 'isEmailVerified'
     | 'isActive'
+    | 'hasCompletedOnboarding'
+    | 'onboardingCompletedAt'
+    | 'onboardingRole'
     | 'passwordHash'
   >
 >;
@@ -51,6 +54,9 @@ const SAFE_SELECT: (keyof User)[] = [
   'isProfileComplete',
   'isEmailVerified',
   'isActive',
+  'hasCompletedOnboarding',
+  'onboardingCompletedAt',
+  'onboardingRole',
   'createdAt',
   'updatedAt',
 ];

@@ -1,10 +1,10 @@
 /** @format */
-import type { UserRole, NavSection } from "../types";
+import type { NavSection } from "../types";
 
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:9000/api";
 
-export const NAVIGATION: Record<UserRole, NavSection[]> = {
+export const NAVIGATION: Record<"applicant" | "employer", NavSection[]> = {
   applicant: [
     {
       label: "Main",

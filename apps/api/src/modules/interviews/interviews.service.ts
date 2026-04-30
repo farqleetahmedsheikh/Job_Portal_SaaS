@@ -22,6 +22,7 @@ import { CompleteInterviewDto } from './dto/complete-interview.dto';
 import { CancelInterviewDto } from './dto/cancel-interview.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { LimitsService } from '../billing/limits.service';
+import { AutomationService } from '../automation/automation.service';
 
 @Injectable()
 export class InterviewsService {
@@ -37,6 +38,7 @@ export class InterviewsService {
     private readonly ds: DataSource,
     private readonly notifications: NotificationsService,
     private readonly limits: LimitsService,
+    private readonly automation: AutomationService,
   ) {}
 
   // ── Employer: Schedule ──────────────────────────────────────────────────────
@@ -124,6 +126,12 @@ export class InterviewsService {
       });
     }
 
+    if (interview) {
+      void this.automation
+        .handleInterviewScheduled(interview.id)
+        .catch(() => undefined);
+    }
+
     return interview;
   }
 
@@ -163,6 +171,9 @@ export class InterviewsService {
         },
       });
     }
+    void this.automation
+      .handleInterviewRescheduled(saved.id)
+      .catch(() => undefined);
     return saved;
   }
 
@@ -207,6 +218,9 @@ export class InterviewsService {
         },
       });
     }
+    void this.automation
+      .handleInterviewCancelled(saved.id)
+      .catch(() => undefined);
     return saved;
   }
 

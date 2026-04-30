@@ -336,6 +336,11 @@ export default function InterviewsPage() {
         </div>
       </div>
 
+      <div className={styles.helpHint}>
+        <Bell size={14} />
+        <span>Interview details and reminders appear here.</span>
+      </div>
+
       {/* Today banner */}
       {todayList[0] && (
         <div className={styles["today-banner"]}>

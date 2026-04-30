@@ -254,6 +254,13 @@ export default function ApplicantDashboard() {
     applicationsCount: stats?.totalApplications ?? 0,
     interviewsCount: interviews.length,
   });
+  const checklist = buildApplicantChecklist({
+    strength,
+    hasResume,
+    savedJobsCount: recommended.savedCount,
+    applicationsCount: stats?.totalApplications ?? 0,
+    interviewsCount: interviews.length,
+  });
 
   if (loading) return <DashboardSkeleton />;
 
@@ -346,6 +353,8 @@ export default function ApplicantDashboard() {
         />
       </section>
 
+      <GettingStartedChecklist checklist={checklist} />
+
       <section className={styles.commandLayout}>
         <main className={styles.commandMain}>
           <RecommendedJobsSection recommended={recommended} />
@@ -360,6 +369,97 @@ export default function ApplicantDashboard() {
         </aside>
       </section>
     </div>
+  );
+}
+
+function buildApplicantChecklist({
+  strength,
+  hasResume,
+  savedJobsCount,
+  applicationsCount,
+  interviewsCount,
+}: {
+  strength: number;
+  hasResume: boolean;
+  savedJobsCount: number;
+  applicationsCount: number;
+  interviewsCount: number;
+}) {
+  return [
+    {
+      title: "Complete profile",
+      description: "Help employers evaluate your background faster.",
+      href: "/applicant/profile",
+      done: strength >= 80,
+    },
+    {
+      title: "Upload resume",
+      description: "Keep your latest resume ready for applications.",
+      href: "/applicant/resumes",
+      done: hasResume,
+    },
+    {
+      title: "Browse or save jobs",
+      description: "Build a shortlist of roles worth applying to.",
+      href: "/applicant/browse-jobs",
+      done: savedJobsCount > 0 || applicationsCount > 0,
+    },
+    {
+      title: "Apply to first job",
+      description: "Start tracking your hiring pipeline in HiringFly.",
+      href: "/applicant/browse-jobs",
+      done: applicationsCount > 0,
+    },
+    {
+      title: "Track application status",
+      description: "Return here to follow applications and interviews.",
+      href: "/applicant/applications",
+      done: applicationsCount > 0 || interviewsCount > 0,
+    },
+  ];
+}
+
+function GettingStartedChecklist({
+  checklist,
+}: {
+  checklist: ReturnType<typeof buildApplicantChecklist>;
+}) {
+  const completed = checklist.filter((item) => item.done).length;
+  if (completed === checklist.length) return null;
+
+  return (
+    <section className={styles.gettingStartedCard}>
+      <div className={styles.gettingStartedHeader}>
+        <div>
+          <span className={styles.commandKicker}>Getting started</span>
+          <h2>Build your job-search momentum</h2>
+          <p>{completed} of {checklist.length} completed</p>
+        </div>
+        <div className={styles.gettingStartedProgress}>
+          <span style={{ width: `${(completed / checklist.length) * 100}%` }} />
+        </div>
+      </div>
+      <div className={styles.gettingStartedGrid}>
+        {checklist.map((item) => (
+          <Link key={item.title} href={item.href} className={styles.gettingStartedItem}>
+            <span
+              className={
+                item.done
+                  ? styles.gettingStartedDone
+                  : styles.gettingStartedTodo
+              }
+            >
+              {item.done ? <CheckCircle2 size={15} /> : <Clock size={15} />}
+            </span>
+            <span className={styles.gettingStartedBody}>
+              <strong>{item.title}</strong>
+              <small>{item.description}</small>
+            </span>
+            <ArrowRight size={13} />
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 

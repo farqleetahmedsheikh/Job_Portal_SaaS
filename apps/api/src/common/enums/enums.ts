@@ -4,6 +4,8 @@ export enum UserRole {
   APPLICANT = 'applicant',
   EMPLOYER = 'employer',
   ADMIN = 'admin',
+  SUPER_ADMIN = 'super_admin',
+  SUPERVISOR = 'supervisor',
 }
 
 export enum JobType {
@@ -120,6 +122,14 @@ export enum NotifType {
   SYSTEM = 'system',
 }
 
+export enum MessageType {
+  USER = 'user',
+  SYSTEM = 'system',
+  STATUS_UPDATE = 'status_update',
+  INTERVIEW_UPDATE = 'interview_update',
+  OFFER_UPDATE = 'offer_update',
+}
+
 export enum SubscriptionPlan {
   FREE = 'free',
   STARTER = 'starter',
@@ -189,6 +199,36 @@ export enum ContractUsagePaymentStatus {
   PENDING = 'pending',
   PAID = 'paid',
   FAILED = 'failed',
+}
+
+export enum ComplaintType {
+  BILLING = 'billing',
+  EMPLOYER = 'employer',
+  CANDIDATE = 'candidate',
+  BUG = 'bug',
+}
+
+export enum ComplaintStatus {
+  OPEN = 'open',
+  IN_PROGRESS = 'in_progress',
+  RESOLVED = 'resolved',
+}
+
+export enum SystemLogLevel {
+  INFO = 'info',
+  WARNING = 'warning',
+  ERROR = 'error',
+}
+
+export enum AutomationLogStatus {
+  SUCCESS = 'success',
+  FAILED = 'failed',
+  SKIPPED = 'skipped',
+}
+
+export enum InterviewReminderType {
+  TWENTY_FOUR_HOURS = 'twenty_four_hours',
+  ONE_HOUR = 'one_hour',
 }
 
 export enum EmailTemplateType {

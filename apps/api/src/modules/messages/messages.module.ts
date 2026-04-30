@@ -11,10 +11,12 @@ import { Message } from './entities/message.entity';
 import { MessagingService } from './messages.service';
 import { MessagingController } from './messages.controller';
 import { ChatGateway } from './chat.gateway';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Conversation, ConversationParticipant, Message]),
+    NotificationsModule,
 
     // Gateway needs JwtService to verify the socket handshake token
     JwtModule.registerAsync({

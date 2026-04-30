@@ -147,6 +147,41 @@ export class MailService {
     });
   }
 
+  async sendInterviewReminder(opts: {
+    to: string;
+    candidateName: string;
+    jobTitle: string;
+    company: string;
+    scheduledAt: Date;
+    meetLink?: string;
+    reminderType: string;
+  }): Promise<void> {
+    const { date, time } = this.formatDateTime(opts.scheduledAt);
+    const isOneHour = opts.reminderType === 'one_hour';
+    await this.send({
+      to: opts.to,
+      subject: `${isOneHour ? 'Interview starts soon' : 'Interview reminder'} - ${opts.jobTitle} at ${opts.company}`,
+      html: this.base(`
+        <h2>${isOneHour ? 'Your interview starts in about 1 hour' : 'Your interview is coming up'}</h2>
+        <p>Hi ${opts.candidateName}, this is a reminder for your upcoming interview.</p>
+        ${this.metaCard([
+          ['Role', `${opts.jobTitle} at ${opts.company}`],
+          ['Date', date],
+          ['Time', time],
+          ...(opts.meetLink
+            ? [
+                ['Link', `<a href="${opts.meetLink}">${opts.meetLink}</a>`] as [
+                  string,
+                  string,
+                ],
+              ]
+            : []),
+        ])}
+        ${opts.meetLink ? this.btn('Join Meeting', opts.meetLink) : ''}
+      `),
+    });
+  }
+
   // ── Applications ───────────────────────────────────────────────────────────
 
   async sendApplicationReceived(opts: {
@@ -166,6 +201,26 @@ export class MailService {
           ['Applicant', opts.candidateName],
         ])}
         ${this.btn('View Application', 'https://hiringfly.com/employer/applications')}
+      `),
+    });
+  }
+
+  async sendApplicationConfirmation(opts: {
+    to: string;
+    candidateName: string;
+    jobTitle: string;
+    company: string;
+  }): Promise<void> {
+    await this.send({
+      to: opts.to,
+      subject: `Application received - ${opts.jobTitle} at ${opts.company}`,
+      html: this.base(`
+        <h2>Application received</h2>
+        <p>Hi ${opts.candidateName}, your application for
+          <strong>${opts.jobTitle}</strong> at <strong>${opts.company}</strong>
+          has been received.</p>
+        <p>You will be notified when the hiring team updates your status.</p>
+        ${this.btn('Track Application', 'https://hiringfly.com/applicant/applications')}
       `),
     });
   }

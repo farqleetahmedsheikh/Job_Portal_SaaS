@@ -47,9 +47,11 @@ export function useSession() {
         }
 
         router.push(
-          user.role === "applicant"
-            ? "/applicant/dashboard"
-            : "/employer/dashboard",
+          ["admin", "super_admin", "supervisor"].includes(user.role)
+            ? "/admin/dashboard"
+            : user.role === "applicant"
+              ? "/applicant/dashboard"
+              : "/employer/dashboard",
         );
         return null;
       } catch (err) {

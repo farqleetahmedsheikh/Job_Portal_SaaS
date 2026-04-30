@@ -1,41 +1,60 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
 /** @format */
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
-import { api } from "../lib";
 import { API_BASE } from "../constants";
+import { api } from "../lib";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+export type MessageType =
+  | "user"
+  | "system"
+  | "status_update"
+  | "interview_update"
+  | "offer_update";
+
 export interface ChatMessage {
   id: string;
   conversationId: string;
-  senderId: string;
+  senderId: string | null;
+  type?: MessageType;
   text: string;
+  metadata?: Record<string, unknown> | null;
   createdAt: string;
   isDeleted: boolean;
-  sender: {
+  sender?: {
     id: string;
     fullName: string;
-    avatar: string | null;
-  };
+    avatar?: string | null;
+    avatarUrl?: string | null;
+  } | null;
 }
 
 export interface Conversation {
   id: string;
+  job_id?: string | null;
+  company_id?: string | null;
+  application_id?: string | null;
+  employer_id?: string | null;
+  applicant_id?: string | null;
   other_user_id: string;
   other_user_name: string;
   other_user_avatar: string | null;
   other_user_role: string;
   last_message: string | null;
+  last_message_type?: MessageType | null;
+  last_message_metadata?: Record<string, unknown> | null;
   last_message_at: string | null;
   last_message_sender_id: string | null;
   unread_count: number;
   job_title: string | null;
+  company_name?: string | null;
+  company_logo_url?: string | null;
+  application_status?: string | null;
+  archived_by_employer?: boolean;
+  archived_by_applicant?: boolean;
 }
 
-// ── Event names (must match backend WS_EVENTS) ────────────────────────────────
 const EV = {
   JOIN: "join_conversation",
   LEAVE: "leave_conversation",
@@ -49,25 +68,45 @@ const EV = {
 } as const;
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:9000";
-
 const TYPING_DEBOUNCE = 1500;
 
 export function useChat(currentUserId: string) {
   const socketRef = useRef<Socket | null>(null);
+  const activeConvIdRef = useRef<string | null>(null);
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTypingRef = useRef(false);
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [loadingInbox, setLoadingInbox] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [sending, setSending] = useState(false);
   const [connected, setConnected] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
 
-  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isTypingRef = useRef(false);
+  const refreshInbox = useCallback(async () => {
+    setLoadingInbox(true);
+    setError(null);
+    try {
+      const data = await api<Conversation[]>(`${API_BASE}/messaging/inbox`);
+      setConversations(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load messages");
+    } finally {
+      setLoadingInbox(false);
+    }
+  }, []);
 
-  // ── Connect socket ─────────────────────────────────────────────────────────
   useEffect(() => {
+    activeConvIdRef.current = activeConvId;
+  }, [activeConvId]);
+
+  useEffect(() => {
+    if (!currentUserId) return;
+
     const socket = io(`${SOCKET_URL}/chat`, {
       withCredentials: true,
       transports: ["websocket"],
@@ -76,25 +115,37 @@ export function useChat(currentUserId: string) {
     socket.on("connect", () => setConnected(true));
     socket.on("disconnect", () => setConnected(false));
 
-    // ── NEW_MESSAGE handler fix (snake_case to match Conversation interface) ──
     socket.on(EV.NEW_MESSAGE, (msg: ChatMessage) => {
       setMessages((prev) => {
         if (prev.some((m) => m.id === msg.id)) return prev;
+        const optimisticIndex = prev.findIndex(
+          (m) =>
+            m.id.startsWith("opt-") &&
+            m.senderId === msg.senderId &&
+            m.text === msg.text,
+        );
+        if (optimisticIndex >= 0) {
+          const next = [...prev];
+          next[optimisticIndex] = msg;
+          return next;
+        }
         return [...prev, msg];
       });
+
       setConversations((prev) =>
         prev.map((c) =>
           c.id === msg.conversationId
             ? {
                 ...c,
-                last_message: msg.text, // ✅ was lastMessage
-                last_message_at: msg.createdAt, // ✅ was lastMessageAt
-                last_message_sender_id: msg.senderId, // ✅ was lastMessageSenderId
-                // ✅ was unreadCount
+                last_message: msg.text,
+                last_message_type: msg.type ?? "user",
+                last_message_at: msg.createdAt,
+                last_message_sender_id: msg.senderId,
                 unread_count:
-                  activeConvId === c.id
+                  activeConvIdRef.current === c.id
                     ? 0
-                    : c.unread_count + (msg.senderId !== currentUserId ? 1 : 0),
+                    : c.unread_count +
+                      (msg.senderId !== currentUserId ? 1 : 0),
               }
             : c,
         ),
@@ -106,73 +157,72 @@ export function useChat(currentUserId: string) {
       ({ userId, isTyping }: { userId: string; isTyping: boolean }) => {
         setTypingUsers((prev) => {
           const next = new Set(prev);
-          isTyping ? next.add(userId) : next.delete(userId);
+          if (isTyping) {
+            next.add(userId);
+          } else {
+            next.delete(userId);
+          }
           return next;
         });
       },
     );
 
-    socket.on(EV.ERROR, (err: { message: string }) => {
-      console.error("[WS]", err.message);
+    socket.on(EV.ERROR, (err: { message?: string }) => {
+      setSendError(err.message ?? "Message failed to send");
+      setSending(false);
     });
 
     socketRef.current = socket;
     return () => {
       socket.disconnect();
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentUserId]);
 
-  // ── Fetch inbox ────────────────────────────────────────────────────────────
   useEffect(() => {
-    setLoadingInbox(true);
-    api<Conversation[]>(`${API_BASE}/messaging/inbox`, "GET")
-      .then((data) => setConversations(data))
-      .catch(console.error)
-      .finally(() => setLoadingInbox(false));
-  }, []);
+    void refreshInbox();
+  }, [refreshInbox]);
 
-  // ── Open conversation by conversation ID ───────────────────────────────────
   const openConversation = useCallback(
     async (convId: string) => {
       const socket = socketRef.current;
-      if (!socket) return;
 
-      if (activeConvId && activeConvId !== convId) {
-        socket.emit(EV.LEAVE, { conversationId: activeConvId });
+      if (activeConvIdRef.current && activeConvIdRef.current !== convId) {
+        socket?.emit(EV.LEAVE, { conversationId: activeConvIdRef.current });
       }
 
       setActiveConvId(convId);
       setLoadingMessages(true);
+      setSendError(null);
       setTypingUsers(new Set());
 
       try {
         const history = await api<ChatMessage[]>(
           `${API_BASE}/messaging/conversations/${convId}/messages`,
-          "GET",
         );
         setMessages(history);
-        socket.emit(EV.JOIN, { conversationId: convId });
-        socket.emit(EV.MARK_READ, { conversationId: convId });
+        socket?.emit(EV.JOIN, { conversationId: convId });
+        socket?.emit(EV.MARK_READ, { conversationId: convId });
         setConversations((prev) =>
-          prev.map((c) => (c.id === convId ? { ...c, unreadCount: 0 } : c)),
+          prev.map((c) => (c.id === convId ? { ...c, unread_count: 0 } : c)),
         );
       } catch (err) {
-        console.error(err);
+        setError(
+          err instanceof Error ? err.message : "Failed to load conversation",
+        );
       } finally {
         setLoadingMessages(false);
       }
     },
-    [activeConvId],
+    [],
   );
 
-  // ── startConversation — no more blank firstMessage ─────────────────────────
   const startConversation = useCallback(
     async (otherUserId: string) => {
       const existing = conversations.find(
         (c) => c.other_user_id === otherUserId,
       );
       if (existing) {
-        openConversation(existing.id);
+        await openConversation(existing.id);
         return;
       }
 
@@ -180,52 +230,97 @@ export function useChat(currentUserId: string) {
         const conv = await api<{ id: string }>(
           `${API_BASE}/messaging/conversations`,
           "POST",
-          { recipientId: otherUserId }, // ✅ no firstMessage at all
+          { recipientId: otherUserId },
         );
-        // Refresh inbox so the new conversation appears with correct shape
-        const inbox = await api<Conversation[]>(
-          `${API_BASE}/messaging/inbox`,
-          "GET",
-        );
-        setConversations(inbox);
-        openConversation(conv.id);
+        await refreshInbox();
+        await openConversation(conv.id);
       } catch (err) {
-        console.error(err);
+        setError(
+          err instanceof Error ? err.message : "Could not start conversation",
+        );
       }
     },
-    [conversations, openConversation],
+    [conversations, openConversation, refreshInbox],
   );
-  // ── Send message ───────────────────────────────────────────────────────────
-  const sendMessage = useCallback(
-    (text: string) => {
-      const socket = socketRef.current;
-      if (!socket || !activeConvId || !text.trim()) return;
 
-      const optimistic: ChatMessage = {
-        id: `opt-${Date.now()}`,
-        conversationId: activeConvId,
-        senderId: currentUserId,
-        text: text.trim(),
-        createdAt: new Date().toISOString(),
-        isDeleted: false,
-        sender: { id: currentUserId, fullName: "You", avatar: null },
-      };
-      setMessages((prev) => [...prev, optimistic]);
+  const sendMessage = useCallback(
+    async (text: string) => {
+      const body = text.trim();
+      if (!activeConvId || !body || sending) return;
+
+      const socket = socketRef.current;
+      setSending(true);
+      setSendError(null);
 
       if (isTypingRef.current) {
-        socket.emit(EV.STOP_TYPING, { conversationId: activeConvId });
+        socket?.emit(EV.STOP_TYPING, { conversationId: activeConvId });
         isTypingRef.current = false;
       }
 
-      socket.emit(EV.SEND, { conversationId: activeConvId, text: text.trim() });
+      if (socket?.connected) {
+        const optimistic: ChatMessage = {
+          id: `opt-${Date.now()}`,
+          conversationId: activeConvId,
+          senderId: currentUserId,
+          type: "user",
+          text: body,
+          createdAt: new Date().toISOString(),
+          isDeleted: false,
+          sender: { id: currentUserId, fullName: "You", avatar: null },
+        };
+        setMessages((prev) => [...prev, optimistic]);
+        socket.emit(EV.SEND, { conversationId: activeConvId, text: body });
+        setSending(false);
+        return;
+      }
+
+      try {
+        const message = await api<ChatMessage>(
+          `${API_BASE}/messaging/conversations/${activeConvId}/messages`,
+          "POST",
+          { text: body },
+        );
+        setMessages((prev) => [...prev, message]);
+        await refreshInbox();
+      } catch (err) {
+        setSendError(err instanceof Error ? err.message : "Message failed");
+      } finally {
+        setSending(false);
+      }
     },
-    [activeConvId, currentUserId],
+    [activeConvId, currentUserId, refreshInbox, sending],
   );
 
-  // ── Typing ─────────────────────────────────────────────────────────────────
+  const markRead = useCallback(async (convId: string) => {
+    try {
+      await api(`${API_BASE}/messaging/conversations/${convId}/read`, "PATCH");
+      setConversations((prev) =>
+        prev.map((c) => (c.id === convId ? { ...c, unread_count: 0 } : c)),
+      );
+    } catch {
+      /* read state is best-effort */
+    }
+  }, []);
+
+  const archiveConversation = useCallback(
+    async (convId: string, archived = true) => {
+      await api(
+        `${API_BASE}/messaging/conversations/${convId}/archive`,
+        "PATCH",
+        { archived },
+      );
+      setConversations((prev) => prev.filter((c) => c.id !== convId));
+      if (activeConvId === convId) {
+        setActiveConvId(null);
+        setMessages([]);
+      }
+    },
+    [activeConvId],
+  );
+
   const handleTyping = useCallback(() => {
     const socket = socketRef.current;
-    if (!socket || !activeConvId) return;
+    if (!socket?.connected || !activeConvId) return;
 
     if (!isTypingRef.current) {
       isTypingRef.current = true;
@@ -247,9 +342,15 @@ export function useChat(currentUserId: string) {
     connected,
     loadingInbox,
     loadingMessages,
+    sending,
+    error,
+    sendError,
+    refreshInbox,
     openConversation,
-    startConversation, // ← new
+    startConversation,
     sendMessage,
+    markRead,
+    archiveConversation,
     handleTyping,
   };
 }

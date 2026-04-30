@@ -7,10 +7,10 @@ import { JobsController } from './jobs.controller';
 import { JobsService } from './jobs.service';
 import { JobSkill } from './entities/job-skill.entity';
 import { SavedJob } from './entities/saved-job.entity';
-import { ScheduleModule } from '@nestjs/schedule';
 import { JobsExpiryTask } from './jobs-expiry.task';
 import { ApplicantProfile } from '../applicants/entities/applicant-profile.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { AutomationModule } from '../automation/automation.module';
 
 @Module({
   imports: [
@@ -22,8 +22,8 @@ import { NotificationsModule } from '../notifications/notifications.module';
       Application,
       ApplicantProfile,
     ]),
-    ScheduleModule.forRoot(),
     NotificationsModule,
+    AutomationModule,
   ],
   controllers: [JobsController],
   providers: [JobsService, JobsExpiryTask],

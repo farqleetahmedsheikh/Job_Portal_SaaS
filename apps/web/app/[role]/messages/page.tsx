@@ -1,28 +1,96 @@
 /** @format */
 "use client";
 
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { MessageSquare, Search, Send } from "lucide-react";
-import { useUser } from "../../store/session.store";
+import Image from "next/image";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import {
+  Archive,
+  ArrowLeft,
+  Bell,
+  BriefcaseBusiness,
+  CalendarDays,
+  CheckCircle2,
+  ChevronRight,
+  Inbox,
+  MessageSquare,
+  RefreshCcw,
+  Search,
+  Send,
+  Sparkles,
+  UserRound,
+  Users,
+} from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
+import type { ChatMessage, Conversation } from "../../hooks/useChat";
 import { useChat } from "../../hooks/useChat";
 import { timeAgo } from "../../lib";
-import { useSearchParams } from "next/navigation";
-import type { Conversation, ChatMessage } from "../../hooks/useChat";
+import { useUser } from "../../store/session.store";
 import styles from "../../styles/messages.module.css";
-import Image from "next/image";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function toInitials(name: string) {
-  if (!name) return "?";
-  return name
+function toInitials(name = "") {
+  const initials = name
     .split(" ")
+    .filter(Boolean)
     .slice(0, 2)
-    .map((n) => n[0])
+    .map((part) => part[0])
     .join("")
     .toUpperCase();
+  return initials || "?";
 }
 
-// ── ConversationItem ──────────────────────────────────────────────────────────
+function formatRole(role?: string | null) {
+  if (!role) return "Hiring contact";
+  return role.replace(/_/g, " ");
+}
+
+function formatStatus(status?: string | null) {
+  if (!status) return "";
+  return status.replace(/_/g, " ");
+}
+
+function formatDay(value: string) {
+  return new Date(value).toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function isSameDay(a?: string, b?: string) {
+  if (!a || !b) return false;
+  return new Date(a).toDateString() === new Date(b).toDateString();
+}
+
+function avatarUrl(conv: Conversation) {
+  return conv.other_user_avatar ?? conv.company_logo_url ?? null;
+}
+
+function conversationContext(conv: Conversation) {
+  if (conv.job_title && conv.company_name) {
+    return `${conv.job_title} • ${conv.company_name}`;
+  }
+  return conv.job_title ?? conv.company_name ?? formatRole(conv.other_user_role);
+}
+
+function messagePreview(conv: Conversation, currentUserId: string) {
+  if (!conv.last_message) return "No messages yet";
+  const prefix =
+    conv.last_message_type && conv.last_message_type !== "user"
+      ? "Update: "
+      : conv.last_message_sender_id === currentUserId
+        ? "You: "
+        : "";
+  return `${prefix}${conv.last_message}`;
+}
+
 function ConversationItem({
   conv,
   active,
@@ -34,77 +102,180 @@ function ConversationItem({
   currentUserId: string;
   onClick: () => void;
 }) {
-  const isOwn = conv.last_message_sender_id === currentUserId;
+  const avatar = avatarUrl(conv);
+
   return (
-    <div
+    <button
       className={`${styles.convItem} ${active ? styles.convItemActive : ""}`}
       onClick={onClick}
+      type="button"
     >
-      <div className={styles.convAvatar}>
-        {conv.other_user_avatar ? (
+      <span className={styles.convAvatar}>
+        {avatar ? (
           <Image
-            width={40}
-            height={40}
-            src={conv.other_user_avatar}
+            width={42}
+            height={42}
+            src={avatar}
             alt={conv.other_user_name}
-            style={{
-              width: "100%",
-              height: "100%",
-              borderRadius: "50%",
-              objectFit: "cover",
-            }}
+            className={styles.avatarImage}
           />
         ) : (
           toInitials(conv.other_user_name)
         )}
-      </div>
-      <div className={styles.convInfo}>
-        <p className={styles.convName}>
-          <span>{conv.other_user_name}</span>
-          {conv.last_message_at && (
+      </span>
+
+      <span className={styles.convInfo}>
+        <span className={styles.convTopLine}>
+          <span className={styles.convName}>{conv.other_user_name}</span>
+          {conv.last_message_at ? (
             <span className={styles.convTime}>
               {timeAgo(conv.last_message_at)}
             </span>
-          )}
-        </p>
-        <p className={styles.convPreview}>
-          {conv.last_message
-            ? `${isOwn ? "You: " : ""}${conv.last_message}`
-            : "No messages yet"}
-        </p>
-      </div>
-      {conv.unread_count > 0 && (
+          ) : null}
+        </span>
+        <span className={styles.convContext}>{conversationContext(conv)}</span>
+        <span className={styles.convPreview}>
+          {messagePreview(conv, currentUserId)}
+        </span>
+      </span>
+
+      {conv.unread_count > 0 ? (
         <span className={styles.unreadBadge}>{conv.unread_count}</span>
+      ) : (
+        <ChevronRight size={16} className={styles.convArrow} />
       )}
+    </button>
+  );
+}
+
+function ConversationSkeletons() {
+  return (
+    <>
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div key={index} className={styles.convSkeleton}>
+          <span className={`${styles.skeleton} ${styles.skeletonAvatar}`} />
+          <span className={styles.skeletonStack}>
+            <span className={`${styles.skeleton} ${styles.skeletonLineLg}`} />
+            <span className={`${styles.skeleton} ${styles.skeletonLineMd}`} />
+            <span className={`${styles.skeleton} ${styles.skeletonLineSm}`} />
+          </span>
+        </div>
+      ))}
+    </>
+  );
+}
+
+function RoleEmptyState({ role }: { role: string }) {
+  const isEmployer = role === "employer";
+  const actions = isEmployer
+    ? [
+        { label: "View applicants", href: "/employer/applicants" },
+        { label: "Post a job", href: "/employer/jobs" },
+        { label: "Browse Talent Database", href: "/employer/talent" },
+      ]
+    : [
+        { label: "Browse jobs", href: "/applicant/browse-jobs" },
+        { label: "View applications", href: "/applicant/applications" },
+      ];
+
+  return (
+    <div className={styles.emptyList}>
+      <span className={styles.emptyIcon}>
+        {isEmployer ? <Users size={22} /> : <Inbox size={22} />}
+      </span>
+      <h2>
+        {isEmployer ? "No candidate conversations yet" : "No messages yet"}
+      </h2>
+      <p>
+        {isEmployer
+          ? "Conversations begin when candidates apply, when you message applicants, or when interviews are scheduled."
+          : "Messages from employers will appear here when your applications move forward or interviews are scheduled."}
+      </p>
+      <div className={styles.emptyActions}>
+        {actions.map((action, index) => (
+          <Link
+            key={action.href}
+            className={index === 0 ? styles.primaryLink : styles.secondaryLink}
+            href={action.href}
+          >
+            {action.label}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
 
-// ── MessageBubble ─────────────────────────────────────────────────────────────
-function MessageBubble({ msg, isOwn }: { msg: ChatMessage; isOwn: boolean }) {
+function ChatEmptyState({ hasConversations }: { hasConversations: boolean }) {
+  return (
+    <div className={styles.emptyPanel}>
+      <span className={styles.emptyHeroIcon}>
+        <MessageSquare size={28} />
+      </span>
+      <h2>
+        {hasConversations
+          ? "Select a conversation"
+          : "Your hiring conversations will appear here"}
+      </h2>
+      <p>
+        {hasConversations
+          ? "Choose a conversation to view messages, interview updates, and hiring decisions."
+          : "HiringFly keeps candidate communication, interview updates, and status changes in one place."}
+      </p>
+    </div>
+  );
+}
+
+function SystemMessage({ msg }: { msg: ChatMessage }) {
+  const icon =
+    msg.type === "interview_update" ? (
+      <CalendarDays size={14} />
+    ) : msg.type === "status_update" ? (
+      <CheckCircle2 size={14} />
+    ) : (
+      <Bell size={14} />
+    );
+
+  return (
+    <div className={styles.systemMessage}>
+      <span className={styles.systemIcon}>{icon}</span>
+      <span>{msg.text}</span>
+      <time>{timeAgo(msg.createdAt)}</time>
+    </div>
+  );
+}
+
+function MessageBubble({
+  msg,
+  isOwn,
+}: {
+  msg: ChatMessage;
+  isOwn: boolean;
+}) {
+  if (msg.type && msg.type !== "user") return <SystemMessage msg={msg} />;
+  if (!msg.senderId) return <SystemMessage msg={msg} />;
+
+  const senderName = msg.sender?.fullName ?? "HiringFly user";
+  const senderAvatar = msg.sender?.avatarUrl ?? msg.sender?.avatar ?? null;
+
   return (
     <div className={`${styles.msgGroup} ${isOwn ? styles.msgGroupOwn : ""}`}>
-      {!isOwn && (
-        <div className={styles.msgAvatar}>
-          {msg.sender.avatar ? (
+      {!isOwn ? (
+        <span className={styles.msgAvatar}>
+          {senderAvatar ? (
             <Image
-              width={40}
-              height={40}
-              src={msg.sender.avatar}
-              alt={msg.sender.fullName}
-              style={{
-                width: "100%",
-                height: "100%",
-                borderRadius: "50%",
-                objectFit: "cover",
-              }}
+              width={30}
+              height={30}
+              src={senderAvatar}
+              alt={senderName}
+              className={styles.avatarImage}
             />
           ) : (
-            toInitials(msg.sender.fullName)
+            toInitials(senderName)
           )}
-        </div>
-      )}
-      <div>
+        </span>
+      ) : null}
+      <div className={styles.msgContent}>
         <div
           className={`${styles.msgBubble} ${isOwn ? styles.msgBubbleOwn : ""}`}
         >
@@ -118,7 +289,26 @@ function MessageBubble({ msg, isOwn }: { msg: ChatMessage; isOwn: boolean }) {
   );
 }
 
-// ── TypingIndicator ───────────────────────────────────────────────────────────
+function MessageSkeletons() {
+  return (
+    <>
+      {[44, 64, 38, 52].map((width, index) => (
+        <div
+          key={width}
+          className={`${styles.msgGroup} ${
+            index % 2 === 1 ? styles.msgGroupOwn : ""
+          }`}
+        >
+          <span
+            className={`${styles.skeleton} ${styles.messageSkeleton}`}
+            style={{ width: `${width}%` }}
+          />
+        </div>
+      ))}
+    </>
+  );
+}
+
 function TypingIndicator() {
   return (
     <div className={styles.msgGroup}>
@@ -131,10 +321,13 @@ function TypingIndicator() {
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
 export default function MessagesPage() {
   const user = useUser();
+  const role = user?.role ?? "applicant";
   const currentUserId = user?.id ?? "";
+  const searchParams = useSearchParams();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const didAutoOpen = useRef(false);
 
   const {
     conversations,
@@ -144,137 +337,190 @@ export default function MessagesPage() {
     connected,
     loadingInbox,
     loadingMessages,
+    sending,
+    error,
+    sendError,
+    refreshInbox,
     openConversation,
     startConversation,
     sendMessage,
+    archiveConversation,
     handleTyping,
   } = useChat(currentUserId);
-  const searchParams = useSearchParams();
+
   const [search, setSearch] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
   const [inputText, setInputText] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const didAutoOpen = useRef(false);
+  const [mobileChatOpen, setMobileChatOpen] = useState(false);
+
   useEffect(() => {
     if (loadingInbox || didAutoOpen.current) return;
     const to = searchParams.get("to");
     if (to) {
       didAutoOpen.current = true;
-      startConversation(to); // ← was openConversation(to)
+      void startConversation(to).then(() => setMobileChatOpen(true));
     }
-  }, [loadingInbox, searchParams, startConversation]); // ← wait for inbox before checking existing convs
+  }, [loadingInbox, searchParams, startConversation]);
 
-  // Auto-scroll to bottom on new message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, typingUsers.size]);
 
   const filteredConvs = useMemo(() => {
-    if (!search) return conversations;
-    const q = search.toLowerCase();
-    return conversations.filter(
-      (c) =>
-        c.other_user_name.toLowerCase().includes(q) ||
-        c.last_message?.toLowerCase().includes(q),
-    );
-  }, [conversations, search]);
+    const q = search.trim().toLowerCase();
+    return conversations.filter((conv) => {
+      if (activeFilter === "unread" && conv.unread_count < 1) return false;
+      if (activeFilter === "applicants" && conv.other_user_role !== "applicant") {
+        return false;
+      }
+      if (activeFilter === "employers" && conv.other_user_role !== "employer") {
+        return false;
+      }
+      if (!q) return true;
+      return [
+        conv.other_user_name,
+        conv.company_name,
+        conv.job_title,
+        conv.last_message,
+      ].some((value) => `${value ?? ""}`.toLowerCase().includes(q));
+    });
+  }, [activeFilter, conversations, search]);
 
   const activeConv = useMemo(
-    () => conversations.find((c) => c.id === activeConvId) ?? null,
-    [conversations, activeConvId],
+    () => conversations.find((conv) => conv.id === activeConvId) ?? null,
+    [activeConvId, conversations],
   );
 
+  const unreadTotal = conversations.reduce(
+    (sum, conv) => sum + (conv.unread_count ?? 0),
+    0,
+  );
+  const isEmployer = role === "employer";
   const isSomeoneTyping = typingUsers.size > 0;
 
-  const handleSend = useCallback(() => {
+  const filters = useMemo(
+    () => [
+      { id: "all", label: "All" },
+      { id: "unread", label: `Unread${unreadTotal ? ` (${unreadTotal})` : ""}` },
+      { id: isEmployer ? "applicants" : "employers", label: isEmployer ? "Applicants" : "Employers" },
+    ],
+    [isEmployer, unreadTotal],
+  );
+
+  const selectConversation = useCallback(
+    async (conv: Conversation) => {
+      await openConversation(conv.id);
+      setMobileChatOpen(true);
+    },
+    [openConversation],
+  );
+
+  const handleSend = useCallback(async () => {
     if (!inputText.trim()) return;
-    sendMessage(inputText);
+    const text = inputText;
     setInputText("");
+    await sendMessage(text);
   }, [inputText, sendMessage]);
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        handleSend();
+    (event: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        void handleSend();
       }
     },
     [handleSend],
   );
 
+  const actionLinks = activeConv
+    ? [
+        {
+          label: isEmployer ? "View application" : "View applications",
+          href: isEmployer ? "/employer/applicants" : "/applicant/applications",
+          icon: <UserRound size={15} />,
+          show: Boolean(activeConv.application_id),
+        },
+        {
+          label: "View job",
+          href: isEmployer ? "/employer/jobs" : "/applicant/browse-jobs",
+          icon: <BriefcaseBusiness size={15} />,
+          show: Boolean(activeConv.job_id),
+        },
+        {
+          label: "Schedule interview",
+          href: "/employer/interviews",
+          icon: <CalendarDays size={15} />,
+          show: isEmployer,
+        },
+      ].filter((action) => action.show)
+    : [];
+
   return (
-    <div className={styles.page}>
-      {/* ── Sidebar ──────────────────────────────────────────────────────── */}
+    <div
+      className={`${styles.page} ${
+        mobileChatOpen ? styles.mobileChatOpen : ""
+      }`}
+    >
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHead}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 10,
-            }}
-          >
-            <h1 className={styles.sidebarTitle}>Messages</h1>
-            <span className={styles.connBadge}>
-              <span
-                className={`${styles.connDot} ${connected ? styles.connOnline : styles.connOffline}`}
-              />
-              {connected ? "Online" : "Offline"}
-            </span>
+          <div className={styles.titleRow}>
+            <div>
+              <p className={styles.eyebrow}>Communication center</p>
+              <h1 className={styles.sidebarTitle}>Messages</h1>
+            </div>
+            <button
+              className={styles.iconButton}
+              type="button"
+              onClick={() => void refreshInbox()}
+              aria-label="Refresh conversations"
+            >
+              <RefreshCcw size={16} />
+            </button>
           </div>
+
+          <div className={styles.liveBadge}>
+            <span className={connected ? styles.liveDot : styles.idleDot} />
+            {connected ? "Live updates on" : "Refreshes safely"}
+          </div>
+
           <div className={styles.searchWrap}>
-            <Search size={13} className={styles.searchIcon} />
+            <Search size={15} className={styles.searchIcon} />
             <input
               className={styles.searchInput}
-              placeholder="Search conversations…"
+              placeholder="Search name, role, job, or message"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
             />
           </div>
+
+          <div className={styles.filterTabs}>
+            {filters.map((filter) => (
+              <button
+                key={filter.id}
+                className={
+                  activeFilter === filter.id ? styles.filterTabActive : ""
+                }
+                type="button"
+                onClick={() => setActiveFilter(filter.id)}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+
+          {error ? <div className={styles.errorStrip}>{error}</div> : null}
         </div>
 
         <div className={styles.convList}>
           {loadingInbox ? (
-            Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className={styles.convItem}>
-                <div
-                  className={`${styles.skeleton}`}
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    flexShrink: 0,
-                  }}
-                />
-                <div
-                  style={{
-                    flex: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                  }}
-                >
-                  <div
-                    className={styles.skeleton}
-                    style={{ height: 13, width: "60%" }}
-                  />
-                  <div
-                    className={styles.skeleton}
-                    style={{ height: 11, width: "80%" }}
-                  />
-                </div>
-              </div>
-            ))
+            <ConversationSkeletons />
+          ) : conversations.length === 0 ? (
+            <RoleEmptyState role={role} />
           ) : filteredConvs.length === 0 ? (
-            <div
-              style={{
-                padding: "24px 16px",
-                textAlign: "center",
-                color: "var(--text-muted)",
-                fontSize: 13,
-              }}
-            >
-              {search ? `No results for "${search}"` : "No conversations yet"}
+            <div className={styles.emptySearch}>
+              <Search size={22} />
+              <h2>No conversations match your search.</h2>
+              <p>Try a candidate name, company name, job title, or message.</p>
             </div>
           ) : (
             filteredConvs.map((conv) => (
@@ -283,131 +529,151 @@ export default function MessagesPage() {
                 conv={conv}
                 active={conv.id === activeConvId}
                 currentUserId={currentUserId}
-                onClick={() => openConversation(conv.id)}
+                onClick={() => void selectConversation(conv)}
               />
             ))
           )}
         </div>
       </aside>
 
-      {/* ── Chat panel ───────────────────────────────────────────────────── */}
-      <div className={styles.chatPanel}>
+      <section className={styles.chatPanel}>
         {!activeConv ? (
-          <div className={styles.emptyPanel}>
-            <MessageSquare size={40} />
-            <p>Select a conversation</p>
-            <span>Choose a conversation from the list to start chatting</span>
-          </div>
+          <ChatEmptyState hasConversations={conversations.length > 0} />
         ) : (
           <>
-            {/* Header */}
-            <div className={styles.chatHeader}>
-              <div className={styles.chatHeaderAvatar}>
-                {activeConv.other_user_avatar ? (
+            <header className={styles.chatHeader}>
+              <button
+                className={styles.mobileBack}
+                type="button"
+                onClick={() => setMobileChatOpen(false)}
+                aria-label="Back to conversations"
+              >
+                <ArrowLeft size={18} />
+              </button>
+
+              <span className={styles.chatHeaderAvatar}>
+                {avatarUrl(activeConv) ? (
                   <Image
-                    src={activeConv.other_user_avatar}
+                    src={avatarUrl(activeConv)!}
                     alt={activeConv.other_user_name}
-                    width={40}
-                    height={40}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      borderRadius: "50%",
-                      objectFit: "cover",
-                    }}
+                    width={44}
+                    height={44}
+                    className={styles.avatarImage}
                   />
                 ) : (
                   toInitials(activeConv.other_user_name)
                 )}
-              </div>
-              <div className={styles.chatHeaderInfo}>
-                <p className={styles.chatHeaderName}>
-                  {activeConv.other_user_name}
-                </p>
-                <p className={styles.chatHeaderSub}>
-                  {isSomeoneTyping ? (
-                    <>
-                      <span className={styles.onlineDot} />
-                      typing...
-                    </>
-                  ) : activeConv.job_title ? (
-                    `Re: ${activeConv.job_title}`
-                  ) : (
-                    activeConv.other_user_role
-                  )}
-                </p>
-              </div>
-            </div>
+              </span>
 
-            {/* Messages */}
+              <div className={styles.chatHeaderInfo}>
+                <div className={styles.chatTitleLine}>
+                  <h2>{activeConv.other_user_name}</h2>
+                  {activeConv.application_status ? (
+                    <span className={styles.statusBadge}>
+                      {formatStatus(activeConv.application_status)}
+                    </span>
+                  ) : null}
+                </div>
+                <p>
+                  {isSomeoneTyping
+                    ? "Typing..."
+                    : conversationContext(activeConv)}
+                </p>
+              </div>
+
+              <div className={styles.headerActions}>
+                {actionLinks.map((action) => (
+                  <Link
+                    key={action.label}
+                    className={styles.headerAction}
+                    href={action.href}
+                  >
+                    {action.icon}
+                    <span>{action.label}</span>
+                  </Link>
+                ))}
+                <button
+                  className={styles.headerIconAction}
+                  type="button"
+                  onClick={() => void archiveConversation(activeConv.id)}
+                  aria-label="Archive conversation"
+                >
+                  <Archive size={16} />
+                </button>
+              </div>
+            </header>
+
             <div className={styles.messages}>
               {loadingMessages ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={
-                      i % 2 === 0
-                        ? styles.msgGroup
-                        : `${styles.msgGroup} ${styles.msgGroupOwn}`
-                    }
-                  >
-                    <div
-                      className={styles.skeleton}
-                      style={{
-                        height: 40,
-                        width: `${30 + Math.random() * 30}%`,
-                        borderRadius: 16,
-                      }}
-                    />
-                  </div>
-                ))
+                <MessageSkeletons />
               ) : messages.length === 0 ? (
-                <div className={styles.emptyPanel} style={{ flex: 1 }}>
-                  <MessageSquare size={32} />
-                  <p>No messages yet</p>
-                  <span>Say hello!</span>
+                <div className={styles.emptyThread}>
+                  <Sparkles size={24} />
+                  <h2>Start the conversation</h2>
+                  <p>
+                    Keep hiring context, interview details, and decisions in
+                    this thread.
+                  </p>
                 </div>
               ) : (
                 messages
-                  .filter((m) => !m.isDeleted)
-                  .map((msg) => (
-                    <MessageBubble
-                      key={msg.id}
-                      msg={msg}
-                      isOwn={msg.senderId === currentUserId}
-                    />
-                  ))
+                  .filter((message) => !message.isDeleted)
+                  .map((message, index, visibleMessages) => {
+                    const previous = visibleMessages[index - 1];
+                    const showDay = !isSameDay(
+                      previous?.createdAt,
+                      message.createdAt,
+                    );
+
+                    return (
+                      <div key={message.id} className={styles.messageBlock}>
+                        {showDay ? (
+                          <div className={styles.dateSeparator}>
+                            <span>{formatDay(message.createdAt)}</span>
+                          </div>
+                        ) : null}
+                        <MessageBubble
+                          msg={message}
+                          isOwn={message.senderId === currentUserId}
+                        />
+                      </div>
+                    );
+                  })
               )}
 
-              {isSomeoneTyping && <TypingIndicator />}
+              {isSomeoneTyping ? <TypingIndicator /> : null}
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
-            <div className={styles.inputArea}>
-              <textarea
-                className={styles.msgInput}
-                placeholder="Type a message… (Enter to send, Shift+Enter for new line)"
-                value={inputText}
-                rows={1}
-                onChange={(e) => {
-                  setInputText(e.target.value);
-                  handleTyping();
-                }}
-                onKeyDown={handleKeyDown}
-              />
-              <button
-                className={styles.sendBtn}
-                onClick={handleSend}
-                disabled={!inputText.trim()}
-                aria-label="Send message"
-              >
-                <Send size={16} />
-              </button>
-            </div>
+            <footer className={styles.inputArea}>
+              {sendError ? <div className={styles.sendError}>{sendError}</div> : null}
+              <div className={styles.composer}>
+                <textarea
+                  className={styles.msgInput}
+                  placeholder="Type a message. Enter sends, Shift+Enter adds a line."
+                  value={inputText}
+                  rows={1}
+                  onChange={(event) => {
+                    setInputText(event.target.value);
+                    handleTyping();
+                  }}
+                  onKeyDown={handleKeyDown}
+                  disabled={sending}
+                />
+                <button
+                  className={styles.sendBtn}
+                  onClick={() => void handleSend()}
+                  disabled={!inputText.trim() || sending}
+                  type="button"
+                  aria-label="Send message"
+                >
+                  <Send size={16} />
+                </button>
+              </div>
+            </footer>
           </>
         )}
-      </div>
+      </section>
     </div>
   );
 }

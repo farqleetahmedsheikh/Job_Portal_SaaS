@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/user.module';
 import { ResumesModule } from './modules/resumes/resumes.module';
@@ -26,6 +27,9 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { TemplatesModule } from './modules/templates/templates.module';
 import { TalentDbModule } from './modules/talent-db/talent-db.module';
 import { ContractsModule } from './modules/contracts/contracts.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { AutomationModule } from './modules/automation/automation.module';
+import { OnboardingModule } from './modules/onboarding/onboarding.module';
 
 @Module({
   imports: [
@@ -83,6 +87,7 @@ import { ContractsModule } from './modules/contracts/contracts.module';
         },
       ],
     }),
+    ScheduleModule.forRoot(),
 
     // ── Feature modules ─────────────────────────────────
     AuthModule,
@@ -102,6 +107,9 @@ import { ContractsModule } from './modules/contracts/contracts.module';
     TemplatesModule,
     TalentDbModule,
     ContractsModule,
+    AdminModule,
+    AutomationModule,
+    OnboardingModule,
   ],
 
   providers: [

@@ -1,7 +1,12 @@
 /** @format */
 
 // ─── User ─────────────────────────────────────────────────
-export type UserRole = "applicant" | "employer";
+export type UserRole =
+  | "applicant"
+  | "employer"
+  | "admin"
+  | "super_admin"
+  | "supervisor";
 
 export interface User {
   id: string;
@@ -32,9 +37,12 @@ export interface AuthResponse {
   id: string;
   fullName: string;
   email: string;
-  role: "applicant" | "employer";
+  role: UserRole;
   avatar: string | null;
   isProfileComplete: boolean;
+  hasCompletedOnboarding?: boolean;
+  onboardingCompletedAt?: string | null;
+  onboardingRole?: "applicant" | "employer" | null;
 }
 
 // ─── Job ──────────────────────────────────────────────────
