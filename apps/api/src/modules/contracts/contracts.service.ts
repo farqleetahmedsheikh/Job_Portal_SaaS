@@ -18,7 +18,7 @@ import { LimitsService } from '../billing/limits.service';
 import { Application } from '../applications/entities/application.entity';
 import { Company } from '../companies/entities/company.entity';
 import { ContractTemplate } from '../templates/entities/contract-template.entity';
-import { MailService } from '../mail/mail.service';
+// import { MailService } from '../mail/mail.service';
 import { MessagingService } from '../messages/messages.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AiGenerateContractDto } from './dto/ai-generate-contract.dto';
@@ -41,7 +41,7 @@ export class ContractsService {
     @InjectRepository(Company)
     private readonly companyRepo: Repository<Company>,
     private readonly limits: LimitsService,
-    private readonly mail: MailService,
+    // private readonly mail: MailService,
     private readonly messaging: MessagingService,
     private readonly notifications: NotificationsService,
   ) {}
@@ -209,14 +209,14 @@ export class ContractsService {
       }),
     );
 
-    await this.mail.sendContract({
-      to: app.applicant.email,
-      candidateName: app.applicant.fullName,
-      jobTitle: app.job?.title ?? 'your role',
-      company: company.companyName,
-      title: dto.title,
-      content: clean,
-    });
+    // await this.mail.sendContract({
+    //   to: app.applicant.email,
+    //   candidateName: app.applicant.fullName,
+    //   jobTitle: app.job?.title ?? 'your role',
+    //   company: company.companyName,
+    //   title: dto.title,
+    //   content: clean,
+    // });
 
     await this.notifications.notify({
       recipientId: app.applicantId,

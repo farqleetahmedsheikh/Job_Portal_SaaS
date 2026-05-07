@@ -1,14 +1,25 @@
 /** @format */
 
+import {
+  CURRENCIES as REGION_CURRENCIES,
+  DEFAULT_COUNTRY,
+  DEFAULT_CURRENCY,
+  DEFAULT_TIMEZONE,
+} from "../lib/region";
+
 export interface JobForm {
   title: string;
   department: string;
   type: string;
   location: string;
+  city: string;
+  country: string;
   locationType: string;
   salaryMin: string;
   salaryMax: string;
+  currency: string;
   salaryCurrency: string;
+  timezone: string;
   experienceLevel: string;
   deadline: string;
   openings: string;
@@ -28,10 +39,14 @@ export const INIT: JobForm = {
   department: "",
   type: "full-time",
   location: "",
+  city: "",
+  country: DEFAULT_COUNTRY,
   locationType: "remote",
   salaryMin: "",
   salaryMax: "",
-  salaryCurrency: "USD",
+  currency: DEFAULT_CURRENCY,
+  salaryCurrency: DEFAULT_CURRENCY,
+  timezone: DEFAULT_TIMEZONE,
   experienceLevel: "3-5",
   deadline: "",
   openings: "1",
@@ -60,7 +75,7 @@ export const EXPERIENCE_LEVELS = [
   { value: "10+", label: "10+ years (Staff/Principal)" },
 ];
 
-export const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD"] as const;
+export const CURRENCIES = REGION_CURRENCIES.map((currency) => currency.code);
 
 export const LOCATION_TYPES = [
   { value: "remote", label: "Remote", desc: "Work from anywhere" },

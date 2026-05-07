@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
 import {
   Injectable,
   Logger,
@@ -11,7 +10,7 @@ import { Repository } from 'typeorm';
 import { Notification } from './entities/notification.entity';
 import { NotifType } from '../../common/enums/enums';
 import { NotificationsGateway } from './notifications.gateway';
-import { MailService } from '../mail/mail.service';
+// import { MailService } from '../mail/mail.service';
 
 export interface CreateNotifPayload {
   recipientId: string;
@@ -34,7 +33,7 @@ export class NotificationsService {
     private readonly repo: Repository<Notification>,
     @Inject(forwardRef(() => NotificationsGateway))
     private readonly gateway: NotificationsGateway,
-    private readonly mail: MailService,
+    // private readonly mail: MailService,
   ) {}
 
   normalize(notification: Notification) {
@@ -81,7 +80,7 @@ export class NotificationsService {
     );
 
     this.gateway.emitToUser(payload.recipientId, this.normalize(saved));
-    await this.sendEmailIfNeeded(payload);
+    this.sendEmailIfNeeded(payload);
   }
 
   async findAll(userId: string, unreadOnly: boolean) {
@@ -113,77 +112,77 @@ export class NotificationsService {
     await this.repo.delete(id);
   }
 
-  private async sendEmailIfNeeded(p: CreateNotifPayload): Promise<void> {
+  private sendEmailIfNeeded(p: CreateNotifPayload): void {
     if (!p.recipientEmail) return;
 
     try {
-      switch (p.type) {
-        case NotifType.IV_SCHEDULED:
-          return this.mail.sendInterviewScheduled({
-            to: p.recipientEmail,
-            candidateName: p.meta?.candidateName,
-            jobTitle: p.meta?.jobTitle,
-            company: p.meta?.company,
-            scheduledAt: new Date(p.meta?.scheduledAt),
-            durationMins: p.meta?.durationMins,
-            format: p.meta?.format,
-            meetLink: p.meta?.meetLink,
-            notes: p.meta?.notes,
-          });
-        case NotifType.IV_RESCHEDULED:
-          return this.mail.sendInterviewRescheduled({
-            to: p.recipientEmail,
-            candidateName: p.meta?.candidateName,
-            jobTitle: p.meta?.jobTitle,
-            company: p.meta?.company,
-            scheduledAt: new Date(p.meta?.scheduledAt),
-            meetLink: p.meta?.meetLink,
-          });
-        case NotifType.IV_CANCELLED:
-          return this.mail.sendInterviewCancelled({
-            to: p.recipientEmail,
-            candidateName: p.meta?.candidateName,
-            jobTitle: p.meta?.jobTitle,
-            company: p.meta?.company,
-            reason: p.meta?.reason,
-          });
-        case NotifType.IV_REMINDER:
-          return this.mail.sendInterviewReminder({
-            to: p.recipientEmail,
-            candidateName: p.meta?.candidateName,
-            jobTitle: p.meta?.jobTitle,
-            company: p.meta?.company,
-            scheduledAt: new Date(p.meta?.scheduledAt),
-            meetLink: p.meta?.meetLink,
-            reminderType: p.meta?.reminderType,
-          });
-        case NotifType.APP_STATUS:
-          if (p.meta?.status === 'rejected') {
-            return this.mail.sendApplicationRejected({
-              to: p.recipientEmail,
-              candidateName: p.meta?.candidateName,
-              jobTitle: p.meta?.jobTitle,
-              company: p.meta?.company,
-              reason: p.meta?.reason,
-            });
-          }
-          return this.mail.sendApplicationStatus({
-            to: p.recipientEmail,
-            candidateName: p.meta?.candidateName,
-            jobTitle: p.meta?.jobTitle,
-            company: p.meta?.company,
-            status: p.meta?.status,
-          });
-        case NotifType.OFFER:
-          return this.mail.sendOffer({
-            to: p.recipientEmail,
-            candidateName: p.meta?.candidateName,
-            jobTitle: p.meta?.jobTitle,
-            company: p.meta?.company,
-          });
-        default:
-          return;
-      }
+      //   switch (p.type) {
+      //     case NotifType.IV_SCHEDULED:
+      //       return this.mail.sendInterviewScheduled({
+      //         to: p.recipientEmail,
+      //         candidateName: p.meta?.candidateName,
+      //         jobTitle: p.meta?.jobTitle,
+      //         company: p.meta?.company,
+      //         scheduledAt: new Date(p.meta?.scheduledAt),
+      //         durationMins: p.meta?.durationMins,
+      //         format: p.meta?.format,
+      //         meetLink: p.meta?.meetLink,
+      //         notes: p.meta?.notes,
+      //       });
+      //     case NotifType.IV_RESCHEDULED:
+      //       return this.mail.sendInterviewRescheduled({
+      //         to: p.recipientEmail,
+      //         candidateName: p.meta?.candidateName,
+      //         jobTitle: p.meta?.jobTitle,
+      //         company: p.meta?.company,
+      //         scheduledAt: new Date(p.meta?.scheduledAt),
+      //         meetLink: p.meta?.meetLink,
+      //       });
+      //     case NotifType.IV_CANCELLED:
+      //       return this.mail.sendInterviewCancelled({
+      //         to: p.recipientEmail,
+      //         candidateName: p.meta?.candidateName,
+      //         jobTitle: p.meta?.jobTitle,
+      //         company: p.meta?.company,
+      //         reason: p.meta?.reason,
+      //       });
+      //     case NotifType.IV_REMINDER:
+      //       return this.mail.sendInterviewReminder({
+      //         to: p.recipientEmail,
+      //         candidateName: p.meta?.candidateName,
+      //         jobTitle: p.meta?.jobTitle,
+      //         company: p.meta?.company,
+      //         scheduledAt: new Date(p.meta?.scheduledAt),
+      //         meetLink: p.meta?.meetLink,
+      //         reminderType: p.meta?.reminderType,
+      //       });
+      //     case NotifType.APP_STATUS:
+      //       if (p.meta?.status === 'rejected') {
+      //         return this.mail.sendApplicationRejected({
+      //           to: p.recipientEmail,
+      //           candidateName: p.meta?.candidateName,
+      //           jobTitle: p.meta?.jobTitle,
+      //           company: p.meta?.company,
+      //           reason: p.meta?.reason,
+      //         });
+      //       }
+      //       return this.mail.sendApplicationStatus({
+      //         to: p.recipientEmail,
+      //         candidateName: p.meta?.candidateName,
+      //         jobTitle: p.meta?.jobTitle,
+      //         company: p.meta?.company,
+      //         status: p.meta?.status,
+      //       });
+      //     case NotifType.OFFER:
+      //       return this.mail.sendOffer({
+      //         to: p.recipientEmail,
+      //         candidateName: p.meta?.candidateName,
+      //         jobTitle: p.meta?.jobTitle,
+      //         company: p.meta?.company,
+      //       });
+      //     default:
+      //       return;
+      // }
     } catch (err) {
       this.logger.error(
         `Email failed for ${p.type} to ${p.recipientEmail}`,

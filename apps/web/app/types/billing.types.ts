@@ -27,6 +27,7 @@ export interface Subscription {
   plan: SubscriptionPlan;
   status: SubscriptionStatus;
   billingInterval?: BillingInterval;
+  currency?: string;
   trialStartAt?: string;
   trialEndAt?: string;
   trialUsedAt?: string;
@@ -45,6 +46,8 @@ export interface PlanCapabilities {
   plan: SubscriptionPlan;
   status: SubscriptionStatus;
   billingInterval?: BillingInterval;
+  currency?: string;
+  paymentProvider?: string;
   trialEndAt?: string;
   currentPeriodStart?: string;
   currentPeriodEnd?: string;
@@ -60,6 +63,15 @@ export interface PlanCapabilities {
     jobPostsRemaining: number;
     featuredSlotsRemaining: number;
   };
+}
+
+export interface PaymentOptions {
+  country: string;
+  currency: string;
+  provider: "safepay" | "manual" | "stripe";
+  configured: boolean;
+  checkoutAvailable: boolean;
+  message: string;
 }
 
 export interface BillingEvent {

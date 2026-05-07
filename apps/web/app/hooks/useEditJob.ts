@@ -6,6 +6,13 @@ import { useRouter } from "next/navigation";
 import { api } from "../lib";
 import { API_BASE } from "../constants";
 import {
+  DEFAULT_COUNTRY,
+  DEFAULT_CURRENCY,
+  DEFAULT_TIMEZONE,
+  currencyForCountry,
+  timezoneForCountry,
+} from "../lib/region";
+import {
   PROGRESS_FIELDS,
   type JobForm,
   type JobFormErrors,
@@ -18,6 +25,10 @@ interface JobDetail {
   department: string | null;
   type: string;
   location: string;
+  city: string | null;
+  country: string;
+  currency: string;
+  timezone: string;
   locationType: string;
   salaryMin: number | null;
   salaryMax: number | null;
@@ -41,10 +52,14 @@ function jobToForm(j: JobDetail): JobForm {
     department: j.department ?? "",
     type: j.type,
     location: j.location,
+    city: j.city ?? "",
+    country: j.country ?? DEFAULT_COUNTRY,
+    currency: j.currency ?? j.salaryCurrency ?? DEFAULT_CURRENCY,
+    timezone: j.timezone ?? DEFAULT_TIMEZONE,
     locationType: j.locationType,
     salaryMin: j.salaryMin != null ? String(j.salaryMin) : "",
     salaryMax: j.salaryMax != null ? String(j.salaryMax) : "",
-    salaryCurrency: j.salaryCurrency,
+    salaryCurrency: j.salaryCurrency ?? j.currency ?? DEFAULT_CURRENCY,
     experienceLevel: j.experienceLevel,
     // prefer deadline column, fall back to expiresAt
     deadline: (j.deadline ?? j.expiresAt ?? "").slice(0, 10),
@@ -149,7 +164,24 @@ export function useEditJob(jobId: string) {
           HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
         >,
       ) => {
-        setForm((prev) => (prev ? { ...prev, [key]: e.target.value } : prev));
+        const value = e.target.value;
+        setForm((prev) => {
+          if (!prev) return prev;
+          if (key === "country") {
+            const currency = currencyForCountry(value);
+            return {
+              ...prev,
+              country: value,
+              currency,
+              salaryCurrency: currency,
+              timezone: timezoneForCountry(value),
+            };
+          }
+          if (key === "currency" || key === "salaryCurrency") {
+            return { ...prev, currency: value, salaryCurrency: value };
+          }
+          return { ...prev, [key]: value };
+        });
         setErrors((prev) => ({ ...prev, [key]: undefined }));
       },
     [],
@@ -225,6 +257,10 @@ export function useEditJob(jobId: string) {
           department: form.department.trim() || undefined,
           type: form.type,
           location: form.location.trim(),
+          city: form.city.trim() || undefined,
+          country: form.country,
+          currency: form.currency,
+          timezone: form.timezone,
           locationType: form.locationType,
           salaryMin: form.salaryMin ? Number(form.salaryMin) : undefined,
           salaryMax: form.salaryMax ? Number(form.salaryMax) : undefined,

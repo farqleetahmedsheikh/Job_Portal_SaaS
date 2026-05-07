@@ -10,7 +10,11 @@ import {
   Min,
   Max,
 } from 'class-validator';
-import { ExperienceLevel } from 'src/common/enums/enums';
+import {
+  CountryCode,
+  ExperienceLevel,
+  SupportedTimezone,
+} from 'src/common/enums/enums';
 
 export class CompleteApplicantProfileDto {
   @IsOptional()
@@ -69,6 +73,19 @@ export class CompleteEmployerProfileDto {
   @IsString()
   @MaxLength(150)
   location!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  city?: string;
+
+  @IsOptional()
+  @IsEnum(CountryCode)
+  country?: CountryCode;
+
+  @IsOptional()
+  @IsEnum(SupportedTimezone)
+  timezone?: SupportedTimezone;
 
   @IsString()
   @MaxLength(100)

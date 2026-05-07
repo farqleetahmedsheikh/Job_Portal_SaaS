@@ -30,6 +30,9 @@ import { ContractsModule } from './modules/contracts/contracts.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AutomationModule } from './modules/automation/automation.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
+import { SupportModule } from './modules/support/support.module';
+import { AccountModule } from './modules/account/account.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -108,6 +111,9 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
     TalentDbModule,
     ContractsModule,
     AdminModule,
+    SupportModule,
+    AccountModule,
+    HealthModule,
     AutomationModule,
     OnboardingModule,
   ],

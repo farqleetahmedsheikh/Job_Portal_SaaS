@@ -2,7 +2,8 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import Link from "next/link";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { registerSchema } from "../../validations/auth.schema";
@@ -10,8 +11,15 @@ import { InputField } from "../../components/Auth/InputField";
 import { AuthForm } from "../../components/Auth/AuthForm";
 import { AuthLinks } from "../../components/Auth/AuthLinks";
 import { useSession } from "../../hooks/useSession";
+import {
+  COUNTRIES,
+  DEFAULT_COUNTRY,
+  DEFAULT_TIMEZONE,
+  TIMEZONES,
+} from "../../lib/region";
 
-type FormData = z.infer<typeof registerSchema>;
+type FormInput = z.input<typeof registerSchema>;
+type FormData = z.output<typeof registerSchema>;
 
 export default function RegisterPage() {
   const { register: registerUser, isLoading } = useSession();
@@ -22,9 +30,20 @@ export default function RegisterPage() {
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<FormData>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: { role: "applicant" },
+  } = useForm<FormInput, unknown, FormData>({
+    resolver: zodResolver(registerSchema) as Resolver<
+      FormInput,
+      unknown,
+      FormData
+    >,
+    defaultValues: {
+      role: "applicant",
+      country: DEFAULT_COUNTRY,
+      timezone: DEFAULT_TIMEZONE,
+      termsAccepted: false,
+      privacyAccepted: false,
+      marketingConsent: false,
+    },
   });
 
   const selectedRole = watch("role");
@@ -132,6 +151,100 @@ export default function RegisterPage() {
             {errors.role.message}
           </p>
         )}
+      </div>
+
+      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr" }}>
+        <label style={{ display: "grid", gap: 6, fontSize: 13 }}>
+          <span style={{ color: "var(--text-secondary)", fontWeight: 500 }}>
+            Country
+          </span>
+          <select
+            {...register("country")}
+            style={{
+              minHeight: 42,
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-sm)",
+              background: "var(--surface)",
+              color: "var(--text-primary)",
+              padding: "0 12px",
+            }}
+          >
+            {COUNTRIES.map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.label}
+              </option>
+            ))}
+          </select>
+          {errors.country && (
+            <span style={{ color: "var(--status-danger)", fontSize: 12 }}>
+              {errors.country.message}
+            </span>
+          )}
+        </label>
+        <label style={{ display: "grid", gap: 6, fontSize: 13 }}>
+          <span style={{ color: "var(--text-secondary)", fontWeight: 500 }}>
+            Timezone
+          </span>
+          <select
+            {...register("timezone")}
+            style={{
+              minHeight: 42,
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-sm)",
+              background: "var(--surface)",
+              color: "var(--text-primary)",
+              padding: "0 12px",
+            }}
+          >
+            {TIMEZONES.map((timezone) => (
+              <option key={timezone.code} value={timezone.code}>
+                {timezone.label}
+              </option>
+            ))}
+          </select>
+          {errors.timezone && (
+            <span style={{ color: "var(--status-danger)", fontSize: 12 }}>
+              {errors.timezone.message}
+            </span>
+          )}
+        </label>
+      </div>
+
+      <div style={{ display: "grid", gap: 10, fontSize: 13 }}>
+        <label style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+          <input type="checkbox" {...register("termsAccepted")} />
+          <span>
+            I accept the{" "}
+            <Link href="/terms" style={{ color: "var(--color-secondary)" }}>
+              Terms
+            </Link>
+            .
+          </span>
+        </label>
+        {errors.termsAccepted && (
+          <span style={{ color: "var(--status-danger)", fontSize: 12 }}>
+            {errors.termsAccepted.message}
+          </span>
+        )}
+        <label style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+          <input type="checkbox" {...register("privacyAccepted")} />
+          <span>
+            I accept the{" "}
+            <Link href="/privacy" style={{ color: "var(--color-secondary)" }}>
+              Privacy Policy
+            </Link>
+            .
+          </span>
+        </label>
+        {errors.privacyAccepted && (
+          <span style={{ color: "var(--status-danger)", fontSize: 12 }}>
+            {errors.privacyAccepted.message}
+          </span>
+        )}
+        <label style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+          <input type="checkbox" {...register("marketingConsent")} />
+          <span>Send me product and hiring updates by email.</span>
+        </label>
       </div>
 
       <AuthLinks

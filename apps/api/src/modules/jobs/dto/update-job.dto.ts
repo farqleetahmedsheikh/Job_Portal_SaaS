@@ -18,6 +18,9 @@ import {
   LocationType,
   ExperienceLevel,
   SalaryCurrency,
+  CountryCode,
+  CurrencyCode,
+  SupportedTimezone,
 } from '../../../common/enums/enums';
 // ─── Update (all fields optional) ────────────────────────────────────────────
 export class UpdateJobDto {
@@ -44,6 +47,23 @@ export class UpdateJobDto {
   @IsString()
   @MaxLength(150)
   location?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  city?: string;
+
+  @IsOptional()
+  @IsEnum(CountryCode)
+  country?: CountryCode;
+
+  @IsOptional()
+  @IsEnum(CurrencyCode)
+  currency?: CurrencyCode;
+
+  @IsOptional()
+  @IsEnum(SupportedTimezone)
+  timezone?: SupportedTimezone;
 
   @IsOptional()
   @IsEnum(ExperienceLevel)

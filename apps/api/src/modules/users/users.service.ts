@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 // src/modules/users/users.service.ts
@@ -23,6 +22,11 @@ interface CreateUserPayload {
   passwordHash: string;
   fullName: string;
   role: User['role'];
+  country?: User['country'];
+  timezone?: User['timezone'];
+  marketingConsent?: boolean;
+  termsAcceptedAt?: Date | null;
+  privacyAcceptedAt?: Date | null;
 }
 
 type UpdateUserPayload = Partial<
@@ -39,6 +43,11 @@ type UpdateUserPayload = Partial<
     | 'onboardingCompletedAt'
     | 'onboardingRole'
     | 'passwordHash'
+    | 'country'
+    | 'timezone'
+    | 'marketingConsent'
+    | 'deletionRequestedAt'
+    | 'dataExportRequestedAt'
   >
 >;
 
@@ -48,6 +57,8 @@ const SAFE_SELECT: (keyof User)[] = [
   'email',
   'role',
   'fullName',
+  'country',
+  'timezone',
   'phone',
   'avatarUrl',
   'bio',
@@ -57,6 +68,11 @@ const SAFE_SELECT: (keyof User)[] = [
   'hasCompletedOnboarding',
   'onboardingCompletedAt',
   'onboardingRole',
+  'marketingConsent',
+  'termsAcceptedAt',
+  'privacyAcceptedAt',
+  'deletionRequestedAt',
+  'dataExportRequestedAt',
   'createdAt',
   'updatedAt',
 ];
@@ -107,7 +123,7 @@ export class UsersService {
     return this.userRepo
       .createQueryBuilder('user')
       .leftJoin('user.applicantProfile', 'ap')
-      .leftJoin('user.companies', 'co')
+      .leftJoin('user.company', 'co')
       .where('user.id = :id', { id })
       .andWhere('user.deletedAt IS NULL')
       .select([
@@ -134,6 +150,9 @@ export class UsersService {
         'co.companyName',
         'co.industry',
         'co.location',
+        'co.country',
+        'co.city',
+        'co.timezone',
         'co.websiteUrl',
         'co.logoUrl',
         'co.about',
@@ -214,7 +233,7 @@ export class UsersService {
   calculateProfileStrength(user: User): ProfileStrengthResponse {
     const isApplicant = user.role === UserRole.APPLICANT;
     const profile = user.applicantProfile; // OneToOne — direct, no [0]
-    const company = user.companies; // OneToOne — was wrongly [0]
+    const company = user.company;
 
     const checklist: ProfileStrengthItem[] = isApplicant
       ? [

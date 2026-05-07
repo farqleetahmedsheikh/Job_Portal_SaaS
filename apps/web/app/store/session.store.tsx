@@ -7,68 +7,9 @@ import React, {
   useReducer,
   useCallback,
 } from "react";
+import type { SessionUser } from "../types/user.types";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-export interface SafeApplicantProfile {
-  id: string;
-  jobTitle: string | null;
-  experienceYears: number | null;
-  skills: string[];
-  location: string | null;
-  summary: string | null;
-  linkedinUrl: string | null;
-  githubUrl: string | null;
-  portfolioUrl: string | null;
-  isOpenToWork: boolean;
-  isPublic: boolean;
-  educations: unknown[];
-  experiences: unknown[];
-
-  // ── Visibility ──────────────────────────────────────────────────────────────
-  openToWork: boolean;
-  recruitersOnly: boolean;
-  showEmail: boolean;
-  showPhone: boolean;
-  activityVisible: boolean;
-
-  // ── Notification preferences ────────────────────────────────────────────────
-  notifEmailApplications: boolean;
-  notifEmailMessages: boolean;
-  notifEmailDigest: boolean;
-  notifEmailMarketing: boolean;
-  notifPushApplications: boolean;
-  notifPushMessages: boolean;
-  notifPushReminders: boolean;
-  notifPushJobAlerts: boolean;
-}
-
-export interface SafeCompany {
-  id: string;
-  companyName: string;
-  industry: string;
-  location: string;
-  website: string | null;
-  logoUrl: string | null;
-  description: string | null;
-  isVerified: boolean;
-}
-
-export type SessionUser = {
-  id: string;
-  fullName: string;
-  email: string;
-  role: "applicant" | "employer" | "admin" | "super_admin" | "supervisor";
-  avatar: string | null;
-  phone: string | null;
-  bio: string | null;
-  isProfileComplete: boolean;
-  isEmailVerified: boolean;
-  hasCompletedOnboarding?: boolean;
-  onboardingCompletedAt?: string | null;
-  onboardingRole?: "applicant" | "employer" | null;
-  applicantProfile: SafeApplicantProfile | null;
-  companies: SafeCompany | null;
-};
+export type { SessionUser } from "../types/user.types";
 
 // ─── State ────────────────────────────────────────────────────────────────────
 interface SessionState {
@@ -170,4 +111,4 @@ export const useIsAdmin = () =>
   );
 export const useApplicantProfile = () =>
   useSessionStore().state.user?.applicantProfile ?? null;
-export const useCompany = () => useSessionStore().state.user?.companies ?? null;
+export const useCompany = () => useSessionStore().state.user?.company ?? null;

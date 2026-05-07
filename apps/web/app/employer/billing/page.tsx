@@ -20,6 +20,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useBilling } from "../../hooks/useBilling";
+import { countryLabel, formatMoney } from "../../lib";
 import {
   PLANS,
   getPlanMeta,
@@ -62,16 +63,40 @@ const VALUE_CARDS = [
 ];
 
 const PREMIUM_UNLOCKS = [
-  ["Talent Database", "Growth", "Discover candidates beyond inbound applicants."],
-  ["Custom email templates", "Growth", "Send polished candidate updates faster."],
-  ["Contract templates", "Starter", "Create offers and contracts with less repetition."],
-  ["Verified badge", "Growth", "Build candidate trust on jobs and company pages."],
-  ["Advanced analytics", "Growth", "Understand pipeline health and conversion."],
+  [
+    "Talent Database",
+    "Growth",
+    "Discover candidates beyond inbound applicants.",
+  ],
+  [
+    "Custom email templates",
+    "Growth",
+    "Send polished candidate updates faster.",
+  ],
+  [
+    "Contract templates",
+    "Starter",
+    "Create offers and contracts with less repetition.",
+  ],
+  [
+    "Verified badge",
+    "Growth",
+    "Build candidate trust on jobs and company pages.",
+  ],
+  [
+    "Advanced analytics",
+    "Growth",
+    "Understand pipeline health and conversion.",
+  ],
   ["Automation", "Growth", "Automate repetitive hiring tasks."],
 ] as const;
 
 function fmt(n: number) {
   return new Intl.NumberFormat("en-PK").format(n);
+}
+
+function money(n: number, currency: string) {
+  return formatMoney(n, currency) || `${currency} ${fmt(n)}`;
 }
 
 function fmtDate(iso?: string) {
@@ -93,7 +118,8 @@ function formatLimit(value: number | "Unlimited") {
 }
 
 function percent(used: number, total?: number | "unlimited" | "Unlimited") {
-  if (!total || total === "unlimited" || total === "Unlimited" || total <= 0) return 0;
+  if (!total || total === "unlimited" || total === "Unlimited" || total <= 0)
+    return 0;
   return Math.min(100, Math.round((used / total) * 100));
 }
 
@@ -123,9 +149,12 @@ export default function BillingPage() {
     checkoutLoading,
     checkoutError,
     capabilities,
+    paymentOptions,
   } = useBilling();
 
-  const [tab, setTab] = useState<"plans" | "addons" | "verification" | "history">("plans");
+  const [tab, setTab] = useState<
+    "plans" | "addons" | "verification" | "history"
+  >("plans");
   const [interval, setInterval] = useState<BillingInterval>("monthly");
 
   const currentPlan = subscription?.plan ?? "free";
@@ -133,14 +162,28 @@ export default function BillingPage() {
   const trialAvailable = !subscription?.trialUsedAt;
   const isVerified = subscription?.verificationStatus === "verified";
   const verPending = subscription?.verificationStatus === "pending";
-  const jobLimit = Number(capabilities?.limits.jobPostsPerMonth ?? planMeta.jobPostsPerMonth);
-  const jobsRemaining = capabilities?.usage.jobPostsRemaining ?? subscription?.jobPostsRemaining ?? 0;
+  const jobLimit = Number(
+    capabilities?.limits.jobPostsPerMonth ?? planMeta.jobPostsPerMonth,
+  );
+  const jobsRemaining =
+    capabilities?.usage.jobPostsRemaining ??
+    subscription?.jobPostsRemaining ??
+    0;
   const jobsUsed = Math.max(0, jobLimit - jobsRemaining);
   const jobsPct = percent(jobsUsed, jobLimit);
   const interviewUsage = capabilities?.usage.interviews;
-  const interviewLimit = interviewUsage?.limit ?? planMeta.maxInterviewsPerMonth;
-  const interviewPct = percent(interviewUsage?.currentUsage ?? 0, interviewLimit);
+  const interviewLimit =
+    interviewUsage?.limit ?? planMeta.maxInterviewsPerMonth;
+  const interviewPct = percent(
+    interviewUsage?.currentUsage ?? 0,
+    interviewLimit,
+  );
   const talentLocked = capabilities?.limits.hasTalentDb !== true;
+  const billingCurrency =
+    paymentOptions?.currency ??
+    capabilities?.currency ??
+    subscription?.currency ??
+    "PKR";
 
   const pressure = usageMessage({
     currentPlan,
@@ -210,6 +253,13 @@ export default function BillingPage() {
             Current usage helps you choose when to upgrade. Yearly plans include
             2 months free.
           </p>
+          {paymentOptions && (
+            <span className={styles.renewal}>
+              <CreditCard size={13} />
+              {countryLabel(paymentOptions.country)} · {paymentOptions.currency}{" "}
+              · {paymentOptions.provider}
+            </span>
+          )}
           {subscription?.currentPeriodEnd && (
             <span className={styles.renewal}>
               <Clock size={13} />
@@ -251,6 +301,12 @@ export default function BillingPage() {
         </div>
       </section>
 
+      {paymentOptions && !paymentOptions.checkoutAvailable && (
+        <div className={styles.errorBox}>
+          <AlertCircle size={16} /> {paymentOptions.message}
+        </div>
+      )}
+
       <section className={styles.valueGrid}>
         {VALUE_CARDS.map((card) => (
           <article key={card.title} className={styles.valueCard}>
@@ -262,16 +318,32 @@ export default function BillingPage() {
       </section>
 
       <div className={styles.tabs}>
-        <TabButton active={tab === "plans"} onClick={() => setTab("plans")} icon={<Zap size={14} />}>
+        <TabButton
+          active={tab === "plans"}
+          onClick={() => setTab("plans")}
+          icon={<Zap size={14} />}
+        >
           Plans
         </TabButton>
-        <TabButton active={tab === "addons"} onClick={() => setTab("addons")} icon={<Package size={14} />}>
+        <TabButton
+          active={tab === "addons"}
+          onClick={() => setTab("addons")}
+          icon={<Package size={14} />}
+        >
           Add-ons
         </TabButton>
-        <TabButton active={tab === "verification"} onClick={() => setTab("verification")} icon={<Shield size={14} />}>
+        <TabButton
+          active={tab === "verification"}
+          onClick={() => setTab("verification")}
+          icon={<Shield size={14} />}
+        >
           Verification
         </TabButton>
-        <TabButton active={tab === "history"} onClick={() => setTab("history")} icon={<CreditCard size={14} />}>
+        <TabButton
+          active={tab === "history"}
+          onClick={() => setTab("history")}
+          icon={<CreditCard size={14} />}
+        >
           History
         </TabButton>
       </div>
@@ -289,6 +361,7 @@ export default function BillingPage() {
                 onTrial={startTrial}
                 loading={checkoutLoading}
                 trialAvailable={trialAvailable}
+                currency={billingCurrency}
               />
             ))}
           </section>
@@ -308,6 +381,7 @@ export default function BillingPage() {
               title="Add another active job"
               desc="Post one additional job outside your monthly quota."
               price={999}
+              currency={billingCurrency}
               onBuy={() => purchaseAddon("extra_post")}
               loading={checkoutLoading}
             />
@@ -316,6 +390,7 @@ export default function BillingPage() {
               title="Boost job visibility"
               desc="Feature a priority job for 7 days to help it stand out."
               price={1999}
+              currency={billingCurrency}
               onBuy={() => purchaseAddon("feature_job")}
               loading={checkoutLoading}
             />
@@ -324,6 +399,7 @@ export default function BillingPage() {
               title="Expand applicant capacity"
               desc="Add 25 more applicant slots to a role that needs more reach."
               price={1499}
+              currency={billingCurrency}
               onBuy={() => purchaseAddon("boost_cap")}
               loading={checkoutLoading}
             />
@@ -356,7 +432,11 @@ export default function BillingPage() {
                 onClick={() => checkout("growth")}
                 disabled={checkoutLoading || isVerified || verPending}
               >
-                {isVerified ? "Verified" : verPending ? "Under review" : "Get verified"}
+                {isVerified
+                  ? "Verified"
+                  : verPending
+                    ? "Under review"
+                    : "Get verified"}
               </button>
             </div>
             <div className={styles.verifyBenefits}>
@@ -404,7 +484,8 @@ export default function BillingPage() {
                       <td>{fmtDate(event.createdAt)}</td>
                       <td>{event.type.replace(/_/g, " ")}</td>
                       <td>
-                        {event.type === "refund" ? "-" : "+"} PKR {fmt(event.amount)}
+                        {event.type === "refund" ? "-" : "+"}{" "}
+                        {money(event.amount, event.currency)}
                       </td>
                       <td>{event.gatewayPaymentId ?? "-"}</td>
                     </tr>
@@ -440,7 +521,10 @@ function UsageMeter({
         <em>{value}</em>
       </div>
       <div className={styles.meterTrack}>
-        <span className={warn ? styles.warningFill : ""} style={{ width: `${pct}%` }} />
+        <span
+          className={warn ? styles.warningFill : ""}
+          style={{ width: `${pct}%` }}
+        />
       </div>
     </div>
   );
@@ -454,6 +538,7 @@ function PlanCard({
   onTrial,
   loading,
   trialAvailable,
+  currency,
 }: {
   plan: PlanMeta;
   currentPlan: SubscriptionPlan;
@@ -462,21 +547,22 @@ function PlanCard({
   onTrial: (p: SubscriptionPlan) => void;
   loading: boolean;
   trialAvailable: boolean;
+  currency: string;
 }) {
   const isCurrent = plan.key === currentPlan;
   const upgrade = isUpgrade(currentPlan, plan.key);
   const price = priceFor(plan, interval);
-  const monthlyEquivalent = interval === "yearly" && plan.price > 0 ? Math.round(price / 12) : null;
+  const monthlyEquivalent =
+    interval === "yearly" && plan.price > 0 ? Math.round(price / 12) : null;
   const features = planFeatures(plan);
 
-  const cta =
-    isCurrent
-      ? "Current plan"
-      : plan.key === "growth" && trialAvailable
-        ? "Start Growth trial"
-        : upgrade
-          ? `Upgrade to ${plan.label}`
-          : `Switch to ${plan.label}`;
+  const cta = isCurrent
+    ? "Current plan"
+    : plan.key === "growth" && trialAvailable
+      ? "Start Growth trial"
+      : upgrade
+        ? `Upgrade to ${plan.label}`
+        : `Switch to ${plan.label}`;
 
   return (
     <article
@@ -497,7 +583,7 @@ function PlanCard({
           <strong>Free</strong>
         ) : (
           <>
-            <small>PKR</small>
+            <small>{currency}</small>
             <strong>{fmt(price)}</strong>
             <span>/{interval === "yearly" ? "yr" : "mo"}</span>
           </>
@@ -505,10 +591,14 @@ function PlanCard({
       </div>
       {monthlyEquivalent && (
         <p className={styles.savingsLine}>
-          PKR {fmt(monthlyEquivalent)}/mo equivalent · 2 months free
+          {money(monthlyEquivalent, currency)}/mo equivalent · 2 months free
         </p>
       )}
-      {plan.key === "growth" && <p className={styles.recommendedLine}>Recommended for teams hiring every month.</p>}
+      {plan.key === "growth" && (
+        <p className={styles.recommendedLine}>
+          Recommended for teams hiring every month.
+        </p>
+      )}
 
       <ul className={styles.featureList}>
         {features.map((feature) => (
@@ -552,8 +642,10 @@ function planFeatures(plan: PlanMeta) {
   ];
   if (plan.hasInterviewReminders) features.push("Automate interview reminders");
   if (plan.hasCustomEmailTemplates) features.push("Customize candidate emails");
-  if (plan.hasContractTemplates) features.push("Create offers and contracts faster");
-  if (plan.aiMatcher !== "None") features.push("AI-assisted candidate matching");
+  if (plan.hasContractTemplates)
+    features.push("Create offers and contracts faster");
+  if (plan.aiMatcher !== "None")
+    features.push("AI-assisted candidate matching");
   if (plan.hasTalentDb) features.push("Unlock candidate discovery");
   if (plan.hasVerifiedBadge) features.push("Verified company badge");
   if (plan.hasAutomation) features.push("Automate repetitive hiring tasks");
@@ -590,6 +682,7 @@ function AddonCard({
   title,
   desc,
   price,
+  currency,
   onBuy,
   loading,
 }: {
@@ -597,6 +690,7 @@ function AddonCard({
   title: string;
   desc: string;
   price: number;
+  currency: string;
   onBuy: () => void;
   loading: boolean;
 }) {
@@ -608,8 +702,12 @@ function AddonCard({
         <p>{desc}</p>
       </div>
       <div className={styles.addonAction}>
-        <strong>PKR {fmt(price)}</strong>
-        <button onClick={onBuy} disabled={loading} className={styles.secondaryButton}>
+        <strong>{money(price, currency)}</strong>
+        <button
+          onClick={onBuy}
+          disabled={loading}
+          className={styles.secondaryButton}
+        >
           {loading ? "Processing..." : "Buy add-on"}
         </button>
       </div>

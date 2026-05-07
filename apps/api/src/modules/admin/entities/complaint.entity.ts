@@ -24,6 +24,9 @@ export class Complaint {
   @Column({ type: 'enum', enum: ComplaintType })
   type!: ComplaintType;
 
+  @Column({ type: 'varchar', length: 180, nullable: true })
+  subject!: string | null;
+
   @Column({ type: 'text' })
   message!: string;
 
@@ -42,6 +45,15 @@ export class Complaint {
 
   @Column({ name: 'response', type: 'text', nullable: true })
   response!: string | null;
+
+  @Column({ name: 'related_job_id', type: 'uuid', nullable: true })
+  relatedJobId!: string | null;
+
+  @Column({ name: 'related_company_id', type: 'uuid', nullable: true })
+  relatedCompanyId!: string | null;
+
+  @Column({ name: 'related_user_id', type: 'uuid', nullable: true })
+  relatedUserId!: string | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;

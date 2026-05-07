@@ -39,7 +39,7 @@ export function RecentApplications({ applications }: Props) {
         {/* FIX: was href="jobs" (relative — breaks depending on route).
             Now role-aware absolute path. */}
         <Link
-          href={isApplicant ? "/jobs" : "/employer/applicants"}
+          href={isApplicant ? "/applicant/applications" : "/employer/applicants"}
           className={styles["section-link"]}
         >
           View all →
@@ -51,7 +51,7 @@ export function RecentApplications({ applications }: Props) {
           <p className={styles["empty-text"]}>
             No applications yet.{" "}
             {isApplicant && (
-              <Link href="/jobs" className={styles["link-accent"]}>
+              <Link href="/applicant/browse-jobs" className={styles["link-accent"]}>
                 Browse jobs →
               </Link>
             )}

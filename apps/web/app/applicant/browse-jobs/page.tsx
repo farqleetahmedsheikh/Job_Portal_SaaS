@@ -1,90 +1,158 @@
 /** @format */
 "use client";
 
-import Link               from "next/link";
+import Link from "next/link";
 import {
-  MapPin, Briefcase, Clock, DollarSign,
-  Bookmark, BookmarkCheck, Search, Sparkles,
+  MapPin,
+  Briefcase,
+  Clock,
+  DollarSign,
+  Bookmark,
+  BookmarkCheck,
+  Search,
+  Sparkles,
   ShieldCheck,
 } from "lucide-react";
-import { useBrowseJobs }  from "../../hooks/useBrowseJobs";
-import { formatDate }     from "../../lib";
+import { useBrowseJobs } from "../../hooks/useBrowseJobs";
+import {
+  CURRENCIES,
+  COUNTRIES,
+  DEFAULT_CURRENCY,
+  countryLabel,
+  formatDate,
+  formatMoney,
+} from "../../lib";
 import type { BrowseJob } from "../../hooks/useBrowseJobs";
 import styles from "../styles/browse-jobs.module.css";
 import Image from "next/image";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const JOB_TYPES  = ["Full-time", "Part-time", "Contract", "Internship"];
-const MODES      = ["Remote", "Hybrid", "On-site"];
+const JOB_TYPES = [
+  { value: "full-time", label: "Full-time" },
+  { value: "part-time", label: "Part-time" },
+  { value: "contract", label: "Contract" },
+  { value: "internship", label: "Internship" },
+];
+const MODES = [
+  { value: "remote", label: "Remote" },
+  { value: "hybrid", label: "Hybrid" },
+  { value: "on-site", label: "On-site" },
+];
 const EXPERIENCE = ["0-1", "1-3", "3-5", "5+", "10+"];
 
 const EXP_LABELS: Record<string, string> = {
-  "0-1":  "0–1 yrs",
-  "1-3":  "1–3 yrs",
-  "3-5":  "3–5 yrs",
-  "5+":   "5+ yrs",
-  "10+":  "10+ yrs",
+  "0-1": "0–1 yrs",
+  "1-3": "1–3 yrs",
+  "3-5": "3–5 yrs",
+  "5+": "5+ yrs",
+  "10+": "10+ yrs",
 };
 
 // ── MatchRing — visual skill match indicator ──────────────────────────────────
 function MatchRing({ score }: { score: number }) {
-  const color = score >= 70 ? "var(--status-success)"
-    : score >= 40 ? "var(--status-warning)"
-    : "var(--text-muted)";
+  const color =
+    score >= 70
+      ? "var(--status-success)"
+      : score >= 40
+        ? "var(--status-warning)"
+        : "var(--text-muted)";
 
   if (score === 0) return null;
 
   return (
-    <div className={styles.matchRing} style={{ "--match-color": color } as React.CSSProperties}>
+    <div
+      className={styles.matchRing}
+      style={{ "--match-color": color } as React.CSSProperties}
+    >
       <svg viewBox="0 0 36 36" className={styles.matchSvg}>
-        <circle cx="18" cy="18" r="15.9" fill="none"
-          stroke="var(--border)" strokeWidth="3" />
-        <circle cx="18" cy="18" r="15.9" fill="none"
-          stroke={color} strokeWidth="3"
+        <circle
+          cx="18"
+          cy="18"
+          r="15.9"
+          fill="none"
+          stroke="var(--border)"
+          strokeWidth="3"
+        />
+        <circle
+          cx="18"
+          cy="18"
+          r="15.9"
+          fill="none"
+          stroke={color}
+          strokeWidth="3"
           strokeDasharray={`${score} 100`}
           strokeLinecap="round"
           transform="rotate(-90 18 18)"
         />
       </svg>
-      <span className={styles.matchPct} style={{ color }}>{score}%</span>
+      <span className={styles.matchPct} style={{ color }}>
+        {score}%
+      </span>
     </div>
   );
 }
 
 // ── JobCard ───────────────────────────────────────────────────────────────────
 function JobCard({
-  job, isSaved, onSave, profileSkills,
+  job,
+  isSaved,
+  onSave,
+  profileSkills,
 }: {
-  job:           BrowseJob;
-  isSaved:       boolean;
-  onSave:        () => void;
+  job: BrowseJob;
+  isSaved: boolean;
+  onSave: () => void;
   profileSkills: string[];
 }) {
-  const salary = job.salaryMin && job.salaryMax
-    ? `${job.salaryCurrency} ${(job.salaryMin / 1000).toFixed(0)}k – ${(job.salaryMax / 1000).toFixed(0)}k`
-    : job.salaryMin
-      ? `From ${job.salaryCurrency} ${(job.salaryMin / 1000).toFixed(0)}k`
-      : null;
+  const currency = job.currency ?? job.salaryCurrency ?? DEFAULT_CURRENCY;
+  const salary =
+    job.salaryMin && job.salaryMax
+      ? `${formatMoney(job.salaryMin, currency)} – ${formatMoney(job.salaryMax, currency)}`
+      : job.salaryMin
+        ? `From ${formatMoney(job.salaryMin, currency)}`
+        : null;
+  const place = [job.city, countryLabel(job.country)]
+    .filter(Boolean)
+    .join(", ");
 
   return (
-    <div className={`${styles["job-card"]} ${job.isFeatured ? styles.featured : ""}`}>
+    <div
+      className={`${styles["job-card"]} ${job.isFeatured ? styles.featured : ""}`}
+    >
       {/* Badges */}
       <div className={styles["job-card-top"]}>
         <div className={styles["company-logo"]}>
-          {job.company.logoUrl
-            ? <Image src={job.company.logoUrl} alt={job.company.companyName} width={40} height={40} />
-            : job.company.companyName[0]}
+          {job.company.logoUrl ? (
+            <Image
+              src={job.company.logoUrl}
+              alt={job.company.companyName}
+              width={40}
+              height={40}
+            />
+          ) : (
+            job.company.companyName[0]
+          )}
         </div>
         <div className={styles["job-card-badges"]}>
-          {job.isFeatured && <span className={`${styles.badge} ${styles["badge-featured"]}`}>Featured</span>}
+          {job.isFeatured && (
+            <span className={`${styles.badge} ${styles["badge-featured"]}`}>
+              Featured
+            </span>
+          )}
           {job.company.isVerified && (
             <span className={`${styles.badge} ${styles["badge-verified"]}`}>
               <ShieldCheck size={11} /> Verified
             </span>
           )}
-          {job.isUrgent  && <span className={`${styles.badge} ${styles["badge-urgent"]}`}>Urgent</span>}
+          {job.isUrgent && (
+            <span className={`${styles.badge} ${styles["badge-urgent"]}`}>
+              Urgent
+            </span>
+          )}
           {job.locationType === "remote" && (
-            <span className={`${styles.badge} ${styles["badge-remote"]}`}>Remote</span>
+            <span className={`${styles.badge} ${styles["badge-remote"]}`}>
+              Remote
+            </span>
           )}
         </div>
         {/* Match ring — only if profile has skills */}
@@ -101,18 +169,29 @@ function JobCard({
               <ShieldCheck size={11} /> Verified
             </span>
           )}
-          {job.location && <> · <MapPin size={11} style={{ display: "inline", verticalAlign: "middle" }} /> {job.location}</>}
+          {(job.location || place) && (
+            <>
+              {" "}
+              ·{" "}
+              <MapPin
+                size={11}
+                style={{ display: "inline", verticalAlign: "middle" }}
+              />{" "}
+              {place || job.location}
+            </>
+          )}
         </p>
       </div>
 
       {/* Meta pills */}
       <div className={styles["job-meta"]}>
         <span className={styles["meta-pill"]}>
-          <Briefcase size={11} /> {job.type}
+          <Briefcase size={11} /> {job.type.replace("-", " ")}
         </span>
         {job.experienceLevel && (
           <span className={styles["meta-pill"]}>
-            <Clock size={11} /> {EXP_LABELS[job.experienceLevel] ?? job.experienceLevel}
+            <Clock size={11} />{" "}
+            {EXP_LABELS[job.experienceLevel] ?? job.experienceLevel}
           </span>
         )}
         {salary && (
@@ -140,7 +219,9 @@ function JobCard({
             </span>
           ))}
           {job.skills.length > 5 && (
-            <span className={styles["skill-tag"]}>+{job.skills.length - 5}</span>
+            <span className={styles["skill-tag"]}>
+              +{job.skills.length - 5}
+            </span>
           )}
         </div>
       )}
@@ -148,7 +229,8 @@ function JobCard({
       {/* Matched skills summary */}
       {job.matchedSkills.length > 0 && (
         <p className={styles.matchHint}>
-          <Sparkles size={11} /> You match {job.matchedSkills.length} of {job.skills.length} required skills
+          <Sparkles size={11} /> You match {job.matchedSkills.length} of{" "}
+          {job.skills.length} required skills
         </p>
       )}
 
@@ -165,7 +247,10 @@ function JobCard({
           >
             {isSaved ? <BookmarkCheck size={15} /> : <Bookmark size={15} />}
           </button>
-          <Link href={`/applicant/jobs/${job.id}`} className={styles["apply-btn"]}>
+          <Link
+            href={`/applicant/jobs/${job.id}`}
+            className={styles["apply-btn"]}
+          >
             Apply Now
           </Link>
         </div>
@@ -181,14 +266,36 @@ function JobSkeleton() {
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className={styles["job-card"]}>
           <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
-            <div className={styles.skeleton} style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0 }} />
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-              <div className={styles.skeleton} style={{ height: 16, width: "70%" }} />
-              <div className={styles.skeleton} style={{ height: 12, width: "50%" }} />
+            <div
+              className={styles.skeleton}
+              style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0 }}
+            />
+            <div
+              style={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+              }}
+            >
+              <div
+                className={styles.skeleton}
+                style={{ height: 16, width: "70%" }}
+              />
+              <div
+                className={styles.skeleton}
+                style={{ height: 12, width: "50%" }}
+              />
             </div>
           </div>
-          <div className={styles.skeleton} style={{ height: 12, width: "90%", marginBottom: 6 }} />
-          <div className={styles.skeleton} style={{ height: 12, width: "75%" }} />
+          <div
+            className={styles.skeleton}
+            style={{ height: 12, width: "90%", marginBottom: 6 }}
+          />
+          <div
+            className={styles.skeleton}
+            style={{ height: 12, width: "75%" }}
+          />
         </div>
       ))}
     </div>
@@ -198,12 +305,24 @@ function JobSkeleton() {
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function BrowseJobsPage() {
   const {
-    jobs, loading, error,
-    total, page, totalPages, setPage,
-    sort, setSort,
-    filters, setSearch, toggleSet, setSalary,
-    resetFilters, activeChips,
-    savedIds, toggleSave,
+    jobs,
+    loading,
+    error,
+    total,
+    page,
+    totalPages,
+    setPage,
+    sort,
+    setSort,
+    filters,
+    setSearch,
+    toggleSet,
+    setSalary,
+    setRegionFilter,
+    resetFilters,
+    activeChips,
+    savedIds,
+    toggleSave,
     profileSkills,
     toggleMatchedOnly,
   } = useBrowseJobs();
@@ -225,13 +344,13 @@ export default function BrowseJobsPage() {
         <div className={styles["filter-group"]}>
           <span className={styles["filter-label"]}>Job Type</span>
           {JOB_TYPES.map((type) => (
-            <label key={type} className={styles["check-row"]}>
+            <label key={type.value} className={styles["check-row"]}>
               <input
                 type="checkbox"
-                checked={filters.types.has(type)}
-                onChange={() => toggleSet("types", type)}
+                checked={filters.types.has(type.value)}
+                onChange={() => toggleSet("types", type.value)}
               />
-              <span className={styles["check-text"]}>{type}</span>
+              <span className={styles["check-text"]}>{type.label}</span>
             </label>
           ))}
         </div>
@@ -240,15 +359,48 @@ export default function BrowseJobsPage() {
         <div className={styles["filter-group"]}>
           <span className={styles["filter-label"]}>Work Mode</span>
           {MODES.map((mode) => (
-            <label key={mode} className={styles["check-row"]}>
+            <label key={mode.value} className={styles["check-row"]}>
               <input
                 type="checkbox"
-                checked={filters.modes.has(mode)}
-                onChange={() => toggleSet("modes", mode)}
+                checked={filters.modes.has(mode.value)}
+                onChange={() => toggleSet("modes", mode.value)}
               />
-              <span className={styles["check-text"]}>{mode}</span>
+              <span className={styles["check-text"]}>{mode.label}</span>
             </label>
           ))}
+        </div>
+
+        <div className={styles["filter-group"]}>
+          <span className={styles["filter-label"]}>Region</span>
+          <select
+            className={styles["salary-input"]}
+            value={filters.country}
+            onChange={(e) => setRegionFilter("country", e.target.value)}
+          >
+            {COUNTRIES.map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.label}
+              </option>
+            ))}
+          </select>
+          <input
+            className={styles["salary-input"]}
+            placeholder="City"
+            value={filters.city}
+            onChange={(e) => setRegionFilter("city", e.target.value)}
+          />
+          <select
+            className={styles["salary-input"]}
+            value={filters.currency}
+            onChange={(e) => setRegionFilter("currency", e.target.value)}
+          >
+            <option value="">Any currency</option>
+            {CURRENCIES.map((currency) => (
+              <option key={currency.code} value={currency.code}>
+                {currency.code}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Experience */}
@@ -268,7 +420,9 @@ export default function BrowseJobsPage() {
 
         {/* Salary */}
         <div className={styles["filter-group"]}>
-          <span className={styles["filter-label"]}>Salary (PKR k / yr)</span>
+          <span className={styles["filter-label"]}>
+            Salary ({filters.currency || DEFAULT_CURRENCY} / yr)
+          </span>
           <div className={styles["salary-inputs"]}>
             <input
               className={styles["salary-input"]}

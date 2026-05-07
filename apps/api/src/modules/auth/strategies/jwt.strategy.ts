@@ -6,10 +6,10 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { UsersService } from '../../users/users.service';
+import { normalizeUserRole } from '../../../common/utils/role.util';
 
 // Extracts token from cookie — NOT Authorization header
 const cookieExtractor = (req: Request): string | null => {
-  console.log('🍪 Cookies received:', req.cookies); // ← add this temporarily
   return req?.cookies?.['token'] ?? null;
 };
 
@@ -27,9 +27,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: { sub: string; role: string }) {
-    console.log('✅ JWT payload validated:', payload); // ← add temporarily
     const user = await this.users.findById(payload.sub);
     if (!user) throw new UnauthorizedException('User not found');
-    return { sub: user.id, role: user.role };
+    return { sub: user.id, role: normalizeUserRole(user.role) ?? user.role };
   }
 }

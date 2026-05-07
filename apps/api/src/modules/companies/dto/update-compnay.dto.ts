@@ -7,7 +7,11 @@ import {
   Max,
   MinLength,
 } from 'class-validator';
-import { CompanySize } from '../../../common/enums/enums';
+import {
+  CompanySize,
+  CountryCode,
+  SupportedTimezone,
+} from '../../../common/enums/enums';
 
 export class UpdateCompanyDto {
   @IsOptional() @IsString() @MinLength(2) companyName?: string;
@@ -17,6 +21,9 @@ export class UpdateCompanyDto {
   @IsOptional() @IsString() industry?: string;
   @IsOptional() @IsEnum(CompanySize) size?: CompanySize;
   @IsOptional() @IsString() location?: string;
+  @IsOptional() @IsString() city?: string;
+  @IsOptional() @IsEnum(CountryCode) country?: CountryCode;
+  @IsOptional() @IsEnum(SupportedTimezone) timezone?: SupportedTimezone;
   @IsOptional() @IsInt() @Min(1800) @Max(2100) foundedYear?: number;
   @IsOptional() @IsString() websiteUrl?: string;
   @IsOptional() @IsString() logoUrl?: string;

@@ -59,4 +59,8 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   ttl(key: string): Promise<number> {
     return this.client.ttl(key);
   }
+
+  ping(): Promise<string> {
+    return this.client.ping();
+  }
 }

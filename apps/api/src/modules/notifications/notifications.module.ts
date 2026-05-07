@@ -6,10 +6,10 @@ import { CompanyPerk } from '../companies/entities/company-perk.entity';
 import { Notification } from './entities/notification.entity';
 import { NotificationsGateway } from './notifications.gateway';
 import { JwtService } from '@nestjs/jwt';
-import { MailModule } from '../mail/mail.module';
-
+// import { MailModule } from '../mail/mail.module';
+// MailModule;
 @Module({
-  imports: [TypeOrmModule.forFeature([Notification, CompanyPerk]), MailModule],
+  imports: [TypeOrmModule.forFeature([Notification, CompanyPerk])],
   controllers: [NotificationsController],
   providers: [NotificationsService, NotificationsGateway, JwtService],
   exports: [NotificationsService, NotificationsGateway],

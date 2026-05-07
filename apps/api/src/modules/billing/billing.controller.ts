@@ -48,6 +48,14 @@ export class BillingController {
     return this.billing.getCapabilities(user.sub);
   }
 
+  @Get('payment-options')
+  @UseGuards(JwtAuthGuard)
+  getPaymentOptions(
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+  ) {
+    return this.billing.getPaymentOptions(user.sub);
+  }
+
   // POST /api/billing/checkout/:plan
   @Post('checkout/:plan')
   @UseGuards(JwtAuthGuard, RolesGuard)

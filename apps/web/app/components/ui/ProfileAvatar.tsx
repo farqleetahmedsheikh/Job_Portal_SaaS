@@ -29,7 +29,7 @@ export function ProfileAvatar({
   const isApplicant = user.role === "applicant";
   const subtitle = isApplicant
     ? (user.applicantProfile?.jobTitle ?? "Applicant")
-    : (user.companies?.companyName ?? "Employer");
+    : (user.company?.companyName ?? "Employer");
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];

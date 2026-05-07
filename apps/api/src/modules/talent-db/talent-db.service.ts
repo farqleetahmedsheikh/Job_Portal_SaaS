@@ -12,7 +12,8 @@ import { Application } from '../applications/entities/application.entity';
 import { User } from '../users/entities/user.entity';
 import { LimitsService } from '../billing/limits.service';
 import { PLAN_LIMITS } from '../../config/plan-limits.config';
-import { SubscriptionPlan, UserRole } from '../../common/enums/enums';
+import { SubscriptionPlan } from '../../common/enums/enums';
+import { UserRole } from '../../common/enums/user-role.enum';
 import {
   QueryTalentDbDto,
   TalentExperienceLevel,

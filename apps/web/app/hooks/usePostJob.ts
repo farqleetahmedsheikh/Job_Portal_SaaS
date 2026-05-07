@@ -5,6 +5,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "../lib";
+import { currencyForCountry, timezoneForCountry } from "../lib/region";
 import { API_BASE } from "../constants";
 import {
   INIT,
@@ -48,7 +49,23 @@ export function usePostJob() {
           HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
         >,
       ) => {
-        setForm((prev) => ({ ...prev, [key]: e.target.value }));
+        const value = e.target.value;
+        setForm((prev) => {
+          if (key === "country") {
+            const currency = currencyForCountry(value);
+            return {
+              ...prev,
+              country: value,
+              currency,
+              salaryCurrency: currency,
+              timezone: timezoneForCountry(value),
+            };
+          }
+          if (key === "currency" || key === "salaryCurrency") {
+            return { ...prev, currency: value, salaryCurrency: value };
+          }
+          return { ...prev, [key]: value };
+        });
         setErrors((prev) => ({ ...prev, [key]: undefined }));
       },
     [],
@@ -96,18 +113,21 @@ export function usePostJob() {
       }
       setSubmitting(true);
       try {
-        const job = await api<{ id: string; title: string }>(`${API_BASE}/jobs`, "POST", {
-          ...form,
-          salaryMin: form.salaryMin ? Number(form.salaryMin) : undefined,
-          salaryMax: form.salaryMax ? Number(form.salaryMax) : undefined,
-          openings: Number(form.openings) || 1,
-          status,
-          isFeatured: false,
-        });
+        const job = await api<{ id: string; title: string }>(
+          `${API_BASE}/jobs`,
+          "POST",
+          {
+            ...form,
+            salaryMin: form.salaryMin ? Number(form.salaryMin) : undefined,
+            salaryMax: form.salaryMax ? Number(form.salaryMax) : undefined,
+            openings: Number(form.openings) || 1,
+            status,
+            isFeatured: false,
+          },
+        );
         router.push(
           `/employer/jobs?featured=${job.id}&title=${encodeURIComponent(job.title)}`,
         );
-
       } catch (err) {
         setServerError(
           err instanceof Error ? err.message : "Failed to post job",

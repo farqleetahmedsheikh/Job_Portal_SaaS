@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Application } from '../applications/entities/application.entity';
 import { Company } from '../companies/entities/company.entity';
-import { MailModule } from '../mail/mail.module';
+// import { MailModule } from '../mail/mail.module';
 import { MessagingModule } from '../messages/messages.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ContractTemplate } from '../templates/entities/contract-template.entity';
@@ -18,7 +18,7 @@ import { ContractUsage } from './entities/contract-usage.entity';
       ContractTemplate,
       ContractUsage,
     ]),
-    MailModule,
+    // MailModule,
     MessagingModule,
     NotificationsModule,
   ],

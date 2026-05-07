@@ -15,12 +15,11 @@ import { ProfileAvatar } from "../../components/ui/ProfileAvatar";
 import { ProfileField } from "../../components/ui/ProfileField";
 import { DangerZone } from "../../components/ui/DangerZone";
 import { StatusBanners } from "../../components/ui/StatusBanners";
+import { AccountPrivacyControls } from "../../components/account/AccountPrivacyControls";
 import styles from "../styles/profile.module.css";
 
 // Employer personal fields = shared fields only (no applicantOnly, no employerOnly company fields)
-const EMPLOYER_FIELDS = FIELDS.filter(
-  (f) => !f.applicantOnly,
-);
+const EMPLOYER_FIELDS = FIELDS.filter((f) => !f.applicantOnly);
 
 export default function EmployerProfilePage() {
   const router = useRouter();
@@ -108,6 +107,11 @@ function EmployerProfileContent({
       </div>
 
       {/* ── Account / danger zone ─────────────────────────────────────────── */}
+      <div className={styles.card}>
+        <div className={styles["card-body"]}>
+          <AccountPrivacyControls />
+        </div>
+      </div>
       <DangerZone />
     </div>
   );

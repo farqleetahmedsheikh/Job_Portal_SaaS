@@ -13,6 +13,10 @@ import { UpdateCompanyDto } from './dto/update-compnay.dto';
 import { CreateCompanyDto } from './dto/company.dto';
 import { CompanyPerk } from './entities/company-perk.entity';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import {
+  DEFAULT_COUNTRY,
+  DEFAULT_TIMEZONE,
+} from '../../common/region/defaults';
 
 @Injectable()
 export class CompaniesService {
@@ -28,8 +32,8 @@ export class CompaniesService {
   ) {}
 
   // ── Find by owner ──────────────────────────────────────────────────────────
-  async findByOwner(ownerId: string): Promise<Company[]> {
-    return this.companyRepo.find({
+  async findByOwner(ownerId: string): Promise<Company | null> {
+    return this.companyRepo.findOne({
       where: { ownerId },
       relations: ['perks'],
     });
@@ -47,14 +51,21 @@ export class CompaniesService {
   // ── Create ─────────────────────────────────────────────────────────────────
   async create(ownerId: string, payload: CreateCompanyDto): Promise<Company> {
     const existing = await this.companyRepo.findOne({
-      where: { ownerId, companyName: payload.companyName },
+      where: { ownerId },
     });
     if (existing) {
-      throw new ConflictException('You already have a company with this name');
+      throw new ConflictException('You already have a company profile');
     }
 
     try {
-      const company = this.companyRepo.create({ ...payload, ownerId });
+      const company = this.companyRepo.create({
+        ...payload,
+        about: payload.description,
+        ownerId,
+        country: payload.country ?? DEFAULT_COUNTRY,
+        city: payload.city ?? null,
+        timezone: payload.timezone ?? DEFAULT_TIMEZONE,
+      });
       return await this.companyRepo.save(company);
     } catch (err) {
       this.logger.error(

@@ -9,7 +9,10 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { ComplaintStatus, UserRole } from '../../../common/enums/enums';
+import { Transform } from 'class-transformer';
+import { ComplaintStatus } from '../../../common/enums/enums';
+import { UserRole } from '../../../common/enums/user-role.enum';
+import { normalizeUserRole } from '../../../common/utils/role.util';
 
 export class CreateAdminUserDto {
   @IsEmail()
@@ -25,6 +28,9 @@ export class CreateAdminUserDto {
   fullName!: string;
 
   @IsEnum(UserRole)
+  @Transform(
+    ({ value }: { value: unknown }) => normalizeUserRole(value) ?? value,
+  )
   role!: UserRole.ADMIN | UserRole.SUPERVISOR | UserRole.SUPER_ADMIN;
 }
 
@@ -35,6 +41,9 @@ export class UpdateAdminUserDto {
 
   @IsOptional()
   @IsEnum(UserRole)
+  @Transform(
+    ({ value }: { value: unknown }) => normalizeUserRole(value) ?? value,
+  )
   role?: UserRole;
 }
 
@@ -52,7 +61,7 @@ export class UpdateComplaintDto {
 
   @IsOptional()
   @IsUUID()
-  assignedTo?: string;
+  assignedTo?: string | null;
 
   @IsOptional()
   @IsString()

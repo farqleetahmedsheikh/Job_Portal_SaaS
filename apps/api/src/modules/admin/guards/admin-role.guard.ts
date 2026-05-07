@@ -1,6 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { UserRole } from '../../../common/enums/enums';
+import { UserRole } from '../../../common/enums/user-role.enum';
+import { rolesMatch } from '../../../common/utils/role.util';
 
 export const ADMIN_ROLES_KEY = 'admin_roles';
 export const AdminRoles = (...roles: UserRole[]) =>
@@ -20,6 +21,6 @@ export class AdminRolesGuard implements CanActivate {
     const request = ctx
       .switchToHttp()
       .getRequest<{ user?: { role?: UserRole } }>();
-    return required.includes(request.user?.role as UserRole);
+    return rolesMatch(request.user?.role, required);
   }
 }

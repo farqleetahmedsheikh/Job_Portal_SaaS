@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import {
@@ -9,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { UserRole } from '../enums/enums';
+import { rolesMatch } from '../utils/role.util';
 
 export const ROLES_KEY = 'roles';
 export const Roles = (...roles: string[]) => Reflect.metadata(ROLES_KEY, roles);
@@ -24,6 +24,6 @@ export class RolesGuard implements CanActivate {
     ]);
     if (!required?.length) return true;
     const { user } = ctx.switchToHttp().getRequest();
-    return required.includes(user?.role);
+    return rolesMatch(user?.role, required);
   }
 }

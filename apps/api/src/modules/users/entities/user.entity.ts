@@ -13,13 +13,19 @@ import {
   Index,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import { UserRole } from '../../../common/enums/enums';
+import { UserRole } from '../../../common/enums/user-role.enum';
 import { ApplicantProfile } from '../../applicants/entities/applicant-profile.entity';
 import { Company } from '../../companies/entities/company.entity';
 import { Subscription } from '../../billing/entities/subscription.entity';
+import { CountryCode, SupportedTimezone } from '../../../common/enums/enums';
+import {
+  DEFAULT_COUNTRY,
+  DEFAULT_TIMEZONE,
+} from '../../../common/region/defaults';
 
 @Entity('users')
 @Index(['email'], { unique: true, where: 'deleted_at IS NULL' })
+@Index(['role'])
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -38,6 +44,12 @@ export class User {
 
   @Column({ type: 'enum', enum: UserRole })
   role!: UserRole;
+
+  @Column({ type: 'varchar', length: 2, default: DEFAULT_COUNTRY })
+  country!: CountryCode;
+
+  @Column({ type: 'varchar', length: 64, default: DEFAULT_TIMEZONE })
+  timezone!: SupportedTimezone;
 
   @Column({ name: 'avatar_url', type: 'text', nullable: true })
   avatarUrl?: string;
@@ -65,6 +77,37 @@ export class User {
 
   @Column({ name: 'has_completed_onboarding', default: false })
   hasCompletedOnboarding!: boolean;
+
+  @Column({ name: 'marketing_consent', type: 'boolean', default: false })
+  marketingConsent!: boolean;
+
+  @Column({
+    name: 'terms_accepted_at',
+    type: 'timestamptz',
+    nullable: true,
+  })
+  termsAcceptedAt?: Date | null;
+
+  @Column({
+    name: 'privacy_accepted_at',
+    type: 'timestamptz',
+    nullable: true,
+  })
+  privacyAcceptedAt?: Date | null;
+
+  @Column({
+    name: 'deletion_requested_at',
+    type: 'timestamptz',
+    nullable: true,
+  })
+  deletionRequestedAt?: Date | null;
+
+  @Column({
+    name: 'data_export_requested_at',
+    type: 'timestamptz',
+    nullable: true,
+  })
+  dataExportRequestedAt?: Date | null;
 
   @Column({
     name: 'onboarding_completed_at',
@@ -96,14 +139,10 @@ export class User {
   applicantProfile?: ApplicantProfile;
 
   @OneToOne(() => Company, (c) => c.owner, { cascade: true })
-  companies?: Company;
+  company?: Company;
 
   @OneToOne(() => Subscription, (s) => s.user, { nullable: true })
   subscription?: Subscription;
-
-  // Import Company lazily to avoid circular deps
-  // @OneToMany(() => Company, (c) => c.owner)
-  // companies: Company[];
 
   // ── Hooks ──
 

@@ -4,6 +4,8 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
+import { API_BASE } from "../constants";
+import { SOCKET_SERVER_ORIGIN } from "../lib/socket";
 
 export type CallState = "idle" | "connecting" | "connected" | "ended" | "error";
 export type ConnectionQuality = "unknown" | "good" | "fair" | "poor";
@@ -17,8 +19,6 @@ export interface ChatMessage {
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-
-const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:9000";
 
 const ICE_SERVERS: RTCConfiguration = {
   iceServers: [
@@ -107,7 +107,7 @@ export function useInterviewRoom(
 
   // ── Mark interview complete ─────────────────────────────────────────────────
   const markComplete = useCallback(() => {
-    void fetch(`${SOCKET_URL}/api/interviews/${interviewId}/complete`, {
+    void fetch(`${API_BASE}/interviews/${interviewId}/complete`, {
       method: "PATCH",
       credentials: "include",
     }).catch(() => {});
@@ -371,7 +371,7 @@ export function useInterviewRoom(
   useEffect(() => {
     // FIX 7: socket had no reconnection config. One dropped packet killed
     //         signalling permanently. Now retries with exponential backoff.
-    const socket = io(`${SOCKET_URL}/interview`, {
+    const socket = io(`${SOCKET_SERVER_ORIGIN}/interview`, {
       withCredentials: true,
       transports: ["websocket", "polling"], // fall back to polling if WS is blocked
       reconnection: true,

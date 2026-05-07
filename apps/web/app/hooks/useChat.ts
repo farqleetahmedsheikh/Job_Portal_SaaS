@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { API_BASE } from "../constants";
 import { api } from "../lib";
+import { SOCKET_SERVER_ORIGIN } from "../lib/socket";
 
 export type MessageType =
   | "user"
@@ -67,7 +68,6 @@ const EV = {
   ERROR: "ws_error",
 } as const;
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:9000";
 const TYPING_DEBOUNCE = 1500;
 
 export function useChat(currentUserId: string) {
@@ -107,7 +107,7 @@ export function useChat(currentUserId: string) {
   useEffect(() => {
     if (!currentUserId) return;
 
-    const socket = io(`${SOCKET_URL}/chat`, {
+    const socket = io(`${SOCKET_SERVER_ORIGIN}/chat`, {
       withCredentials: true,
       transports: ["websocket"],
     });
@@ -144,8 +144,7 @@ export function useChat(currentUserId: string) {
                 unread_count:
                   activeConvIdRef.current === c.id
                     ? 0
-                    : c.unread_count +
-                      (msg.senderId !== currentUserId ? 1 : 0),
+                    : c.unread_count + (msg.senderId !== currentUserId ? 1 : 0),
               }
             : c,
         ),
@@ -182,39 +181,36 @@ export function useChat(currentUserId: string) {
     void refreshInbox();
   }, [refreshInbox]);
 
-  const openConversation = useCallback(
-    async (convId: string) => {
-      const socket = socketRef.current;
+  const openConversation = useCallback(async (convId: string) => {
+    const socket = socketRef.current;
 
-      if (activeConvIdRef.current && activeConvIdRef.current !== convId) {
-        socket?.emit(EV.LEAVE, { conversationId: activeConvIdRef.current });
-      }
+    if (activeConvIdRef.current && activeConvIdRef.current !== convId) {
+      socket?.emit(EV.LEAVE, { conversationId: activeConvIdRef.current });
+    }
 
-      setActiveConvId(convId);
-      setLoadingMessages(true);
-      setSendError(null);
-      setTypingUsers(new Set());
+    setActiveConvId(convId);
+    setLoadingMessages(true);
+    setSendError(null);
+    setTypingUsers(new Set());
 
-      try {
-        const history = await api<ChatMessage[]>(
-          `${API_BASE}/messaging/conversations/${convId}/messages`,
-        );
-        setMessages(history);
-        socket?.emit(EV.JOIN, { conversationId: convId });
-        socket?.emit(EV.MARK_READ, { conversationId: convId });
-        setConversations((prev) =>
-          prev.map((c) => (c.id === convId ? { ...c, unread_count: 0 } : c)),
-        );
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load conversation",
-        );
-      } finally {
-        setLoadingMessages(false);
-      }
-    },
-    [],
-  );
+    try {
+      const history = await api<ChatMessage[]>(
+        `${API_BASE}/messaging/conversations/${convId}/messages`,
+      );
+      setMessages(history);
+      socket?.emit(EV.JOIN, { conversationId: convId });
+      socket?.emit(EV.MARK_READ, { conversationId: convId });
+      setConversations((prev) =>
+        prev.map((c) => (c.id === convId ? { ...c, unread_count: 0 } : c)),
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to load conversation",
+      );
+    } finally {
+      setLoadingMessages(false);
+    }
+  }, []);
 
   const startConversation = useCallback(
     async (otherUserId: string) => {

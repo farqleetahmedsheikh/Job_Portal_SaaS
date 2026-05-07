@@ -31,6 +31,38 @@
 $ pnpm install
 ```
 
+## Production Environment
+
+Core deployment variables:
+
+```bash
+NODE_ENV=production
+PORT=9000
+FRONTEND_URL=https://app.example.com
+FRONTEND_URLS=https://app.example.com,https://www.example.com
+COOKIE_SAMESITE=none
+COOKIE_SECURE=true
+JWT_SECRET=replace-with-a-strong-secret
+JWT_EXPIRES_IN=7d
+BCRYPT_SALT_ROUNDS=12
+```
+
+Launch and operations variables:
+
+```bash
+SUPER_ADMIN_EMAIL=admin@example.com
+SUPER_ADMIN_PASSWORD=replace-with-a-strong-password
+SUPER_ADMIN_FULL_NAME="Platform Admin"
+SAFEPAY_API_KEY=
+SAFEPAY_MERCHANT_ID=
+SAFEPAY_WEBHOOK_SECRET=
+STRIPE_SECRET_KEY=
+```
+
+Safepay and Stripe variables are optional at boot. Checkout endpoints fail
+safely until provider credentials and provider-specific checkout clients are
+wired.
+
 ## Compile and run the project
 
 ```bash

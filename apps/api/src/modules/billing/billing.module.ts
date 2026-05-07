@@ -8,6 +8,7 @@ import { DailyApplyLimit } from './entities/daily-apply-limit.entity';
 import { VerificationDoc } from './entities/verification-doc.entity';
 import { Job } from '../jobs/entities/job.entity';
 import { Company } from '../companies/entities/company.entity';
+import { User } from '../users/entities/user.entity';
 
 import { BillingService } from './billing.service';
 import { BillingController } from './billing.controller';
@@ -16,6 +17,9 @@ import { LimitsService } from './limits.service';
 import { VerificationService } from './verification.service';
 import { Interview } from '../interviews/entities/interview.entity';
 import { BillingCron } from './billing.cron';
+import { SafepayProvider } from './providers/safepay.provider';
+import { StripeProvider } from './providers/stripe.provider';
+import { ManualPaymentProvider } from './providers/manual.provider';
 
 @Global() // LimitsService needed everywhere
 @Module({
@@ -28,6 +32,7 @@ import { BillingCron } from './billing.cron';
       VerificationDoc,
       Job,
       Company,
+      User,
       Interview,
     ]),
   ],
@@ -38,6 +43,9 @@ import { BillingCron } from './billing.cron';
     LimitsService,
     VerificationService,
     BillingCron,
+    SafepayProvider,
+    StripeProvider,
+    ManualPaymentProvider,
   ],
   exports: [
     LimitsService,

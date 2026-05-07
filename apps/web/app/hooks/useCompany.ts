@@ -4,6 +4,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "../lib";
 import { API_BASE } from "../constants";
+import {
+  DEFAULT_COUNTRY,
+  DEFAULT_TIMEZONE,
+  timezoneForCountry,
+} from "../lib/region";
 import type { Company, CompanyForm } from "../types/company.types";
 
 // ── Perk type — exported so page.tsx can import it ────────────────────────────
@@ -18,8 +23,11 @@ function buildForm(c: Company): CompanyForm {
     companyName: c.companyName ?? "",
     industry: c.industry ?? "",
     location: c.location ?? "",
+    city: c.city ?? "",
+    country: c.country ?? DEFAULT_COUNTRY,
+    timezone: c.timezone ?? DEFAULT_TIMEZONE,
     websiteUrl: c.websiteUrl ?? "",
-    description: c.description ?? "",
+    description: c.description ?? c.about ?? "",
     tagline: c.tagline ?? "",
     culture: c.culture ?? "",
     size: c.size ?? "",
@@ -76,16 +84,14 @@ export function useCompany() {
   // ── Fetch ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
-    api<Company[]>(`${API_BASE}/companies/me`, "GET")
+    api<Company | null>(`${API_BASE}/companies/me`, "GET")
       .then((data) => {
         if (cancelled) return;
-        const c = data[0] ?? null;
-        setCompany(c);
-        if (c) {
-          setForm(buildForm(c));
-          setDraft(buildForm(c));
-          // FIX: c.perks from API is {id, perk}[] — cast correctly
-          setPerks((c.perks as unknown as Perk[]) ?? []);
+        setCompany(data);
+        if (data) {
+          setForm(buildForm(data));
+          setDraft(buildForm(data));
+          setPerks((data.perks as unknown as Perk[]) ?? []);
         }
         setLoading(false);
       })
@@ -110,7 +116,15 @@ export function useCompany() {
       >,
     ) =>
       setDraft((prev) =>
-        prev ? { ...prev, [e.target.name]: e.target.value } : prev,
+        prev
+          ? e.target.name === "country"
+            ? {
+                ...prev,
+                country: e.target.value,
+                timezone: timezoneForCountry(e.target.value),
+              }
+            : { ...prev, [e.target.name]: e.target.value }
+          : prev,
       ),
     [],
   );
@@ -140,8 +154,11 @@ export function useCompany() {
           companyName: draft.companyName || undefined,
           industry: draft.industry || undefined,
           location: draft.location || undefined,
+          city: draft.city || undefined,
+          country: draft.country || undefined,
+          timezone: draft.timezone || undefined,
           websiteUrl: draft.websiteUrl || undefined,
-          description: draft.description || undefined,
+          about: draft.description || undefined,
           tagline: draft.tagline || undefined,
           culture: draft.culture || undefined,
           size: draft.size || undefined,

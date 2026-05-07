@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 // src/modules/auth/auth.service.ts
 import {
   Injectable,
@@ -19,7 +17,7 @@ import { Response } from 'express';
 import { UsersService } from '../users/users.service';
 import { ApplicantsService } from '../applicants/applicant.service';
 import { CompaniesService } from '../companies/companies.service';
-// import { MailService } from '../mail/mail.service';
+import { MailService } from '../mail/mail.service';
 import { CacheService } from '../cache/cache.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -29,6 +27,11 @@ import {
 } from './dto/complete-profile.dto';
 import { UserRole } from '../../common/enums/user-role.enum';
 import type { User } from '../users/entities/user.entity';
+import {
+  DEFAULT_COUNTRY,
+  DEFAULT_TIMEZONE,
+} from '../../common/region/defaults';
+import { CountryCode, SupportedTimezone } from '../../common/enums/enums';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface JwtPayload {
@@ -43,6 +46,8 @@ export interface SafeUser {
   fullName: string;
   email: string;
   role: UserRole;
+  country: CountryCode;
+  timezone: SupportedTimezone;
   avatar: string | null;
   phone: string | null;
   bio: string | null;
@@ -51,6 +56,11 @@ export interface SafeUser {
   hasCompletedOnboarding: boolean;
   onboardingCompletedAt: Date | null;
   onboardingRole: UserRole | null;
+  marketingConsent: boolean;
+  termsAcceptedAt: Date | null;
+  privacyAcceptedAt: Date | null;
+  deletionRequestedAt: Date | null;
+  dataExportRequestedAt: Date | null;
   applicantProfile: SafeApplicantProfile | null;
   company: SafeCompany | null;
 }
@@ -74,8 +84,11 @@ export interface SafeApplicantProfile {
 export interface SafeCompany {
   id: string;
   companyName: string;
-  industry: string;
-  location: string;
+  industry: string | null;
+  location: string | null;
+  country: CountryCode;
+  city: string | null;
+  timezone: SupportedTimezone;
   websiteUrl: string | null;
   logoUrl: string | null;
   description: string | null;
@@ -85,6 +98,7 @@ export interface SafeCompany {
 // ─── Constants ────────────────────────────────────────────────────────────────
 const OTP_TTL_SECONDS = 5 * 60;
 const OTP_CACHE_PREFIX = 'otp:';
+const OTP_VERIFIED_CACHE_PREFIX = 'otp-verified:';
 
 @Injectable()
 export class AuthService {
@@ -96,7 +110,7 @@ export class AuthService {
     private readonly companies: CompaniesService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
-    // private readonly mail: MailService,
+    private readonly mail: MailService,
     private readonly cache: CacheService,
   ) {}
 
@@ -113,6 +127,11 @@ export class AuthService {
         'Admin accounts must be created by a super admin',
       );
     }
+    if (!dto.termsAccepted || !dto.privacyAccepted) {
+      throw new BadRequestException(
+        'Terms and privacy policy must be accepted to register',
+      );
+    }
 
     const existing = await this.users.findByEmail(dto.email);
     if (existing) throw new ConflictException('Email already registered');
@@ -125,6 +144,11 @@ export class AuthService {
       passwordHash,
       role: dto.role,
       fullName: dto.fullName,
+      country: dto.country ?? DEFAULT_COUNTRY,
+      timezone: dto.timezone ?? DEFAULT_TIMEZONE,
+      marketingConsent: dto.marketingConsent ?? false,
+      termsAcceptedAt: new Date(),
+      privacyAcceptedAt: new Date(),
     });
 
     this.setAuthCookie(res, user.id, user.role);
@@ -167,20 +191,26 @@ export class AuthService {
   // ── Forgot password ────────────────────────────────────────────────────────
   async sendForgotPasswordOtp(email: string): Promise<{ message: string }> {
     const SAFE_MESSAGE = 'If that email exists, an OTP has been sent';
+    const normalizedEmail = email.toLowerCase().trim();
 
-    const user = await this.users.findByEmail(email);
+    const user = await this.users.findByEmail(normalizedEmail);
     if (!user) return { message: SAFE_MESSAGE };
 
-    await this.cache.del(`${OTP_CACHE_PREFIX}${email}`);
+    await this.cache.del(`${OTP_CACHE_PREFIX}${normalizedEmail}`);
+    await this.cache.del(`${OTP_VERIFIED_CACHE_PREFIX}${normalizedEmail}`);
     const otp = String(randomInt(100000, 999999));
-    await this.cache.set(`${OTP_CACHE_PREFIX}${email}`, otp, OTP_TTL_SECONDS);
+    await this.cache.set(
+      `${OTP_CACHE_PREFIX}${normalizedEmail}`,
+      otp,
+      OTP_TTL_SECONDS,
+    );
 
     try {
-      // await this.mail.sendOtp(email, otp);
+      await this.mail.sendOtp(normalizedEmail, otp);
     } catch (err) {
-      await this.cache.del(`${OTP_CACHE_PREFIX}${email}`);
+      await this.cache.del(`${OTP_CACHE_PREFIX}${normalizedEmail}`);
       this.logger.error(
-        `Failed to send OTP email to ${email}`,
+        `Failed to send OTP email to ${normalizedEmail}`,
         err instanceof Error ? err.stack : String(err),
       );
       throw new InternalServerErrorException('Failed to send OTP email');
@@ -191,12 +221,13 @@ export class AuthService {
 
   // ── Verify OTP ─────────────────────────────────────────────────────────────
   async verifyOtp(email: string, otp: string): Promise<{ message: string }> {
-    const stored = await this.cache.get(`${OTP_CACHE_PREFIX}${email}`);
-    if (!stored) throw new BadRequestException('OTP expired or not requested');
-    if (!this.constantTimeEqual(otp, stored))
-      throw new BadRequestException('Invalid OTP');
-
-    await this.cache.del(`${OTP_CACHE_PREFIX}${email}`);
+    const normalizedEmail = email.toLowerCase().trim();
+    await this.assertValidOtp(normalizedEmail, otp);
+    await this.cache.set(
+      `${OTP_VERIFIED_CACHE_PREFIX}${normalizedEmail}`,
+      'true',
+      OTP_TTL_SECONDS,
+    );
     return { message: 'OTP verified successfully' };
   }
 
@@ -206,14 +237,17 @@ export class AuthService {
     otp: string,
     newPassword: string,
   ): Promise<{ message: string }> {
-    await this.verifyOtp(email, otp);
+    const normalizedEmail = email.toLowerCase().trim();
+    await this.assertValidOtp(normalizedEmail, otp);
 
-    const user = await this.users.findByEmail(email);
+    const user = await this.users.findByEmail(normalizedEmail);
     if (!user) throw new NotFoundException('User not found');
 
     const bcryptRounds = this.config.get<number>('app.bcryptRounds') ?? 12;
     const passwordHash = await bcrypt.hash(newPassword, bcryptRounds);
     await this.users.update(user.id, { passwordHash });
+    await this.cache.del(`${OTP_CACHE_PREFIX}${normalizedEmail}`);
+    await this.cache.del(`${OTP_VERIFIED_CACHE_PREFIX}${normalizedEmail}`);
 
     return { message: 'Password reset successfully' };
   }
@@ -259,6 +293,9 @@ export class AuthService {
     await this.companies.create(userId, {
       companyName: dto.companyName,
       location: dto.location,
+      city: dto.city,
+      country: dto.country,
+      timezone: dto.timezone,
       industry: dto.industry,
       websiteUrl: dto.website ?? '',
       description: dto.about ?? '',
@@ -278,11 +315,14 @@ export class AuthService {
   private setAuthCookie(res: Response, userId: string, role: UserRole): void {
     const payload: JwtPayload = { sub: userId, role };
     const token = this.jwt.sign(payload);
+    const sameSite =
+      this.config.get<'lax' | 'strict' | 'none'>('app.cookieSameSite') ??
+      'strict';
 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: this.config.get<string>('app.env') === 'production',
-      sameSite: 'strict',
+      secure: this.config.get<boolean>('app.cookieSecure') ?? false,
+      sameSite,
       path: '/',
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     });
@@ -290,13 +330,15 @@ export class AuthService {
 
   private toSafeUser(user: User): SafeUser {
     const ap = user.applicantProfile ?? null;
-    const company = user.companies?.[0] ?? null;
+    const company = user.company ?? null;
 
     return {
       id: user.id,
       fullName: user.fullName,
       email: user.email,
       role: user.role,
+      country: user.country ?? DEFAULT_COUNTRY,
+      timezone: user.timezone ?? DEFAULT_TIMEZONE,
       avatar: user.avatarUrl ?? null,
       phone: user.phone ?? null,
       bio: user.bio ?? null,
@@ -305,6 +347,11 @@ export class AuthService {
       hasCompletedOnboarding: user.hasCompletedOnboarding ?? false,
       onboardingCompletedAt: user.onboardingCompletedAt ?? null,
       onboardingRole: user.onboardingRole ?? null,
+      marketingConsent: user.marketingConsent ?? false,
+      termsAcceptedAt: user.termsAcceptedAt ?? null,
+      privacyAcceptedAt: user.privacyAcceptedAt ?? null,
+      deletionRequestedAt: user.deletionRequestedAt ?? null,
+      dataExportRequestedAt: user.dataExportRequestedAt ?? null,
 
       // ✅ Map entity field names — no invented fields
       applicantProfile: ap
@@ -329,11 +376,14 @@ export class AuthService {
         ? {
             id: company.id,
             companyName: company.companyName,
-            industry: company.industry,
-            location: company.location,
-            websiteUrl: company.website ?? null,
+            industry: company.industry ?? null,
+            location: company.location ?? null,
+            country: company.country ?? DEFAULT_COUNTRY,
+            city: company.city ?? null,
+            timezone: company.timezone ?? DEFAULT_TIMEZONE,
+            websiteUrl: company.websiteUrl ?? null,
             logoUrl: company.logoUrl ?? null,
-            description: company.description ?? null,
+            description: company.about ?? null,
             isVerified: company.isVerified ?? false,
           }
         : null,
@@ -347,5 +397,13 @@ export class AuthService {
       mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
     }
     return mismatch === 0;
+  }
+
+  private async assertValidOtp(email: string, otp: string): Promise<void> {
+    const stored = await this.cache.get(`${OTP_CACHE_PREFIX}${email}`);
+    if (!stored) throw new BadRequestException('OTP expired or not requested');
+    if (!this.constantTimeEqual(otp, stored)) {
+      throw new BadRequestException('Invalid OTP');
+    }
   }
 }

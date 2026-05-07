@@ -28,7 +28,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
   const subtitle =
     role === "applicant"
       ? (user?.applicantProfile?.jobTitle ?? "Applicant")
-      : (user?.companies?.companyName ?? "Employer");
+      : (user?.company?.companyName ?? "Employer");
 
   const profileHref = `/${role}/profile`;
   const messagesHref = `/${role}/messages`;

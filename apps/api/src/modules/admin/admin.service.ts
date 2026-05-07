@@ -5,9 +5,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, In, IsNull, Repository, SelectQueryBuilder } from 'typeorm';
 import {
   BillingEventType,
   ComplaintStatus,
@@ -16,9 +17,9 @@ import {
   SubscriptionPlan,
   SubscriptionStatus,
   SystemLogLevel,
-  UserRole,
   VerificationStatus,
 } from '../../common/enums/enums';
+import { UserRole } from '../../common/enums/user-role.enum';
 import { PLAN_PRICES } from '../../config/plan-limits.config';
 import { Application } from '../applications/entities/application.entity';
 import { BillingEvent } from '../billing/entities/billing-event.entity';
@@ -38,6 +39,7 @@ import {
 import {
   QueryAdminCompaniesDto,
   QueryAdminUsersDto,
+  QueryActivitiesDto,
   QueryComplaintsDto,
   QueryLogsDto,
   QueryTransactionsDto,
@@ -46,7 +48,23 @@ import { AdminActivity } from './entities/admin-activity.entity';
 import { Complaint } from './entities/complaint.entity';
 import { SystemLog } from './entities/system-log.entity';
 
-const ADMIN_ROLES = [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.SUPERVISOR];
+const ADMIN_ROLES: readonly UserRole[] = [
+  UserRole.SUPER_ADMIN,
+  UserRole.ADMIN,
+  UserRole.SUPERVISOR,
+] as const;
+const NORMAL_USER_ROLES: readonly UserRole[] = [
+  UserRole.APPLICANT,
+  UserRole.EMPLOYER,
+] as const;
+const SUPPORT_ASSIGNABLE_ROLES: readonly UserRole[] = [
+  UserRole.ADMIN,
+  UserRole.SUPERVISOR,
+] as const;
+const SUPERVISOR_STATUSES: readonly ComplaintStatus[] = [
+  ComplaintStatus.IN_PROGRESS,
+  ComplaintStatus.RESOLVED,
+] as const;
 
 @Injectable()
 export class AdminService {
@@ -70,9 +88,14 @@ export class AdminService {
     private readonly systemLogs: Repository<SystemLog>,
     @InjectRepository(AdminActivity)
     private readonly activities: Repository<AdminActivity>,
+    private readonly config: ConfigService,
   ) {}
 
-  async dashboard(adminId: string) {
+  async dashboard(adminId: string, adminRole: UserRole) {
+    if (adminRole === UserRole.SUPERVISOR) {
+      return this.supportDashboard(adminId);
+    }
+
     const [
       totalUsers,
       totalEmployers,
@@ -84,6 +107,7 @@ export class AdminService {
       openComplaints,
       recentActivity,
       recentErrors,
+      totalRevenue,
     ] = await Promise.all([
       this.users.count(),
       this.users.count({ where: { role: UserRole.EMPLOYER } }),
@@ -107,22 +131,80 @@ export class AdminService {
         order: { createdAt: 'DESC' },
         take: 6,
       }),
+      adminRole === UserRole.SUPER_ADMIN
+        ? this.totalRevenue()
+        : Promise.resolve(null),
     ]);
 
     await this.recordActivity(adminId, 'admin.dashboard.viewed');
 
     return {
+      role: adminRole,
       totalUsers,
       totalEmployers,
       totalApplicants,
       totalJobs,
       totalApplications,
-      totalRevenue: await this.totalRevenue(),
+      totalRevenue,
       activeSubscriptions,
       pendingVerifications,
       openComplaints,
       recentActivity: recentActivity.map((row) => this.mapActivity(row)),
       recentErrors,
+    };
+  }
+
+  private async supportDashboard(adminId: string) {
+    const [
+      openComplaints,
+      assignedComplaints,
+      unassignedComplaints,
+      resolvedComplaints,
+      recentComplaints,
+      recentActivity,
+    ] = await Promise.all([
+      this.complaints.count({
+        where: [
+          { status: ComplaintStatus.OPEN, assignedTo: IsNull() },
+          { status: ComplaintStatus.OPEN, assignedTo: adminId },
+        ],
+      }),
+      this.complaints.count({
+        where: {
+          assignedTo: adminId,
+          status: In([ComplaintStatus.OPEN, ComplaintStatus.IN_PROGRESS]),
+        },
+      }),
+      this.complaints.count({
+        where: { assignedTo: IsNull(), status: ComplaintStatus.OPEN },
+      }),
+      this.complaints.count({
+        where: { assignedTo: adminId, status: ComplaintStatus.RESOLVED },
+      }),
+      this.complaints.find({
+        where: [{ assignedTo: IsNull() }, { assignedTo: adminId }],
+        relations: ['user', 'assignee'],
+        order: { createdAt: 'DESC' },
+        take: 8,
+      }),
+      this.activities.find({
+        where: { adminId },
+        order: { createdAt: 'DESC' },
+        take: 8,
+        relations: ['admin'],
+      }),
+    ]);
+
+    await this.recordActivity(adminId, 'admin.support_dashboard.viewed');
+
+    return {
+      role: UserRole.SUPERVISOR,
+      openComplaints,
+      assignedComplaints,
+      unassignedComplaints,
+      resolvedComplaints,
+      recentComplaints: recentComplaints.map((row) => this.mapComplaint(row)),
+      recentActivity: recentActivity.map((row) => this.mapActivity(row)),
     };
   }
 
@@ -133,7 +215,8 @@ export class AdminService {
     const existing = await this.users.findOne({ where: { email: dto.email } });
     if (existing) throw new ConflictException('Email already exists');
 
-    const passwordHash = await bcrypt.hash(dto.password, 12);
+    const bcryptRounds = this.config.get<number>('app.bcryptRounds') ?? 12;
+    const passwordHash = await bcrypt.hash(dto.password, bcryptRounds);
     const user = await this.users.save(
       this.users.create({
         email: dto.email,
@@ -150,34 +233,52 @@ export class AdminService {
     return this.safeUser(user);
   }
 
-  async listUsers(query: QueryAdminUsersDto) {
+  async listAdminUsers(query: QueryAdminUsersDto) {
+    if (query.role && !this.isAdminRole(query.role)) {
+      throw new BadRequestException(
+        'Only admin staff roles can be listed here',
+      );
+    }
+
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const qb = this.users
+      .createQueryBuilder('user')
+      .where('user.role IN (:...roles)', {
+        roles: query.role ? [query.role] : [...ADMIN_ROLES],
+      });
+
+    this.applyUserFilters(qb, query);
+
+    const [rows, total] = await qb
+      .orderBy('user.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: rows.map((user) => this.safeUser(user)),
+      meta: { page, limit, total },
+    };
+  }
+
+  async listUsers(query: QueryAdminUsersDto, adminRole: UserRole) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const qb = this.users.createQueryBuilder('user');
-    if (query.search) {
-      qb.andWhere(
-        new Brackets((where) => {
-          where
-            .where('user.fullName ILIKE :search', {
-              search: `%${query.search}%`,
-            })
-            .orWhere('user.email ILIKE :search', {
-              search: `%${query.search}%`,
-            });
-        }),
-      );
+
+    if (adminRole === UserRole.ADMIN) {
+      if (query.role && !NORMAL_USER_ROLES.includes(query.role)) {
+        throw new ForbiddenException('Admins cannot access admin-team users');
+      }
+      qb.andWhere('user.role IN (:...roles)', {
+        roles: [...NORMAL_USER_ROLES],
+      });
     }
+
+    this.applyUserFilters(qb, query);
     if (query.role) qb.andWhere('user.role = :role', { role: query.role });
-    if (query.active !== undefined) {
-      qb.andWhere('user.isActive = :active', {
-        active: query.active === 'true',
-      });
-    }
-    if (query.banned !== undefined) {
-      qb.andWhere('user.isActive = :active', {
-        active: query.banned !== 'true',
-      });
-    }
+
     const [rows, total] = await qb
       .orderBy('user.createdAt', 'DESC')
       .skip((page - 1) * limit)
@@ -198,19 +299,63 @@ export class AdminService {
   ) {
     const user = await this.users.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
+
+    const originalRole = user.role;
+    const originalActive = user.isActive;
+
+    if (userId === adminId && dto.isActive === false) {
+      throw new ForbiddenException('You cannot deactivate your own account');
+    }
+    if (userId === adminId && dto.role) {
+      throw new ForbiddenException('You cannot change your own admin role');
+    }
     if (dto.role && adminRole !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only super admins can change roles');
     }
     if (dto.role && !Object.values(UserRole).includes(dto.role)) {
       throw new BadRequestException('Invalid role');
     }
+    if (adminRole === UserRole.ADMIN && this.isAdminRole(user.role)) {
+      throw new ForbiddenException('Admins cannot manage admin-team users');
+    }
+
     if (dto.isActive !== undefined) user.isActive = dto.isActive;
     if (dto.role) user.role = dto.role;
     const saved = await this.users.save(user);
-    await this.recordActivity(adminId, 'admin.user.updated', 'user', userId, {
-      isActive: dto.isActive,
-      role: dto.role,
-    });
+
+    const activityWrites: Promise<void>[] = [];
+    if (dto.role && dto.role !== originalRole) {
+      activityWrites.push(
+        this.recordActivity(
+          adminId,
+          'admin.user.role_changed',
+          'user',
+          userId,
+          {
+            from: originalRole,
+            to: dto.role,
+          },
+        ),
+      );
+    }
+    if (dto.isActive !== undefined && dto.isActive !== originalActive) {
+      activityWrites.push(
+        this.recordActivity(
+          adminId,
+          dto.isActive ? 'admin.user.unbanned' : 'admin.user.banned',
+          'user',
+          userId,
+          { role: saved.role },
+        ),
+      );
+    }
+    if (!activityWrites.length) {
+      activityWrites.push(
+        this.recordActivity(adminId, 'admin.user.updated', 'user', userId),
+      );
+    }
+    await Promise.all(activityWrites);
+
     return this.safeUser(saved);
   }
 
@@ -348,6 +493,18 @@ export class AdminService {
     };
   }
 
+  async listComplaintAssignees() {
+    const rows = await this.users.find({
+      where: {
+        role: In([...SUPPORT_ASSIGNABLE_ROLES]),
+        isActive: true,
+      },
+      order: { fullName: 'ASC' },
+    });
+
+    return { data: rows.map((user) => this.safeUser(user)) };
+  }
+
   async updateComplaint(
     adminId: string,
     adminRole: UserRole,
@@ -355,23 +512,99 @@ export class AdminService {
     dto: UpdateComplaintDto,
   ) {
     const complaint = await this.complaintForAdmin(id, adminId, adminRole);
+    const originalStatus = complaint.status;
+    const originalAssignedTo = complaint.assignedTo;
+    const originalAdminNote = complaint.adminNote;
+    const originalResponse = complaint.response;
+
+    if (adminRole === UserRole.SUPERVISOR) {
+      this.assertSupervisorComplaintUpdate(complaint, adminId, dto);
+    }
+
     if (dto.status) complaint.status = dto.status;
-    if (dto.assignedTo !== undefined) complaint.assignedTo = dto.assignedTo;
+    if (dto.assignedTo !== undefined) {
+      complaint.assignedTo =
+        adminRole === UserRole.SUPERVISOR
+          ? adminId
+          : await this.resolveComplaintAssignee(dto.assignedTo);
+    }
     if (dto.adminNote !== undefined) complaint.adminNote = dto.adminNote;
     if (dto.response !== undefined) complaint.response = dto.response;
     const saved = await this.complaints.save(complaint);
-    await this.recordActivity(
-      adminId,
-      'admin.complaint.updated',
-      'complaint',
-      id,
-      {
-        status: dto.status,
-        assignedTo: dto.assignedTo,
-        adminNote: dto.adminNote,
-        response: dto.response,
-      },
-    );
+
+    const activityWrites: Promise<void>[] = [];
+    if (
+      dto.assignedTo !== undefined &&
+      originalAssignedTo !== saved.assignedTo
+    ) {
+      activityWrites.push(
+        this.recordActivity(
+          adminId,
+          'admin.complaint.assigned',
+          'complaint',
+          id,
+          { from: originalAssignedTo, to: saved.assignedTo },
+        ),
+      );
+    }
+    if (dto.status && originalStatus !== saved.status) {
+      activityWrites.push(
+        this.recordActivity(
+          adminId,
+          'admin.complaint.status_changed',
+          'complaint',
+          id,
+          { from: originalStatus, to: saved.status },
+        ),
+      );
+      if (
+        saved.status === ComplaintStatus.RESOLVED &&
+        (saved.relatedJobId || saved.relatedCompanyId || saved.relatedUserId)
+      ) {
+        activityWrites.push(
+          this.recordActivity(
+            adminId,
+            'admin.report.resolved',
+            'complaint',
+            id,
+          ),
+        );
+      }
+    }
+    if (dto.adminNote !== undefined && originalAdminNote !== saved.adminNote) {
+      activityWrites.push(
+        this.recordActivity(
+          adminId,
+          'admin.complaint.note_saved',
+          'complaint',
+          id,
+          { hasInternalNote: Boolean(saved.adminNote) },
+        ),
+      );
+    }
+    if (dto.response !== undefined && originalResponse !== saved.response) {
+      activityWrites.push(
+        this.recordActivity(
+          adminId,
+          'admin.complaint.response_saved',
+          'complaint',
+          id,
+          { hasResponse: Boolean(saved.response) },
+        ),
+      );
+    }
+    if (!activityWrites.length) {
+      activityWrites.push(
+        this.recordActivity(
+          adminId,
+          'admin.complaint.updated',
+          'complaint',
+          id,
+        ),
+      );
+    }
+    await Promise.all(activityWrites);
+
     return this.mapComplaint(saved);
   }
 
@@ -437,6 +670,7 @@ export class AdminService {
         plan: sub.plan,
         status: sub.status,
         billingInterval: sub.billingInterval,
+        currency: sub.currency,
         trialEndAt: sub.trialEndAt,
         currentPeriodEnd: sub.currentPeriodEnd,
         user: sub.user ? this.safeUser(sub.user) : null,
@@ -445,7 +679,7 @@ export class AdminService {
     };
   }
 
-  async logs(query: QueryLogsDto) {
+  async logs(query: QueryLogsDto, adminId: string) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const qb = this.systemLogs.createQueryBuilder('log');
@@ -457,7 +691,33 @@ export class AdminService {
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
+    await this.recordActivity(adminId, 'admin.logs.viewed');
     return { data: rows, meta: { page, limit, total } };
+  }
+
+  async listActivities(query: QueryActivitiesDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const qb = this.activities
+      .createQueryBuilder('activity')
+      .leftJoinAndSelect('activity.admin', 'admin');
+
+    if (query.action) {
+      qb.andWhere('activity.action ILIKE :action', {
+        action: `%${query.action}%`,
+      });
+    }
+
+    const [rows, total] = await qb
+      .orderBy('activity.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: rows.map((row) => this.mapActivity(row)),
+      meta: { page, limit, total },
+    };
   }
 
   async suggestSupportReply(
@@ -674,10 +934,62 @@ export class AdminService {
     }));
   }
 
+  private applyUserFilters(
+    qb: SelectQueryBuilder<User>,
+    query: QueryAdminUsersDto,
+  ): void {
+    if (query.search) {
+      qb.andWhere(
+        new Brackets((where) => {
+          where
+            .where('user.fullName ILIKE :search', {
+              search: `%${query.search}%`,
+            })
+            .orWhere('user.email ILIKE :search', {
+              search: `%${query.search}%`,
+            });
+        }),
+      );
+    }
+    if (query.active !== undefined) {
+      qb.andWhere('user.isActive = :active', {
+        active: query.active === 'true',
+      });
+    }
+    if (query.banned !== undefined) {
+      qb.andWhere('user.isActive = :bannedActive', {
+        bannedActive: query.banned !== 'true',
+      });
+    }
+  }
+
+  private isAdminRole(role: UserRole): boolean {
+    return ADMIN_ROLES.includes(role);
+  }
+
   private async companyOrFail(companyId: string): Promise<Company> {
     const company = await this.companies.findOne({ where: { id: companyId } });
     if (!company) throw new NotFoundException('Company not found');
     return company;
+  }
+
+  private async resolveComplaintAssignee(
+    assignedTo: string | null,
+  ): Promise<string | null> {
+    if (assignedTo === null) return null;
+
+    const assignee = await this.users.findOne({
+      where: { id: assignedTo, isActive: true },
+    });
+    if (!assignee) {
+      throw new BadRequestException('Assignee not found');
+    }
+    if (!SUPPORT_ASSIGNABLE_ROLES.includes(assignee.role)) {
+      throw new BadRequestException(
+        'Complaints can only be assigned to admins or supervisors',
+      );
+    }
+    return assignee.id;
   }
 
   private async complaintForAdmin(
@@ -698,6 +1010,37 @@ export class AdminService {
       throw new ForbiddenException('Complaint is assigned to another admin');
     }
     return complaint;
+  }
+
+  private assertSupervisorComplaintUpdate(
+    complaint: Complaint,
+    adminId: string,
+    dto: UpdateComplaintDto,
+  ): void {
+    if (dto.assignedTo !== undefined && dto.assignedTo !== adminId) {
+      throw new ForbiddenException(
+        'Supervisors can only assign unassigned complaints to themselves',
+      );
+    }
+    if (dto.status && !SUPERVISOR_STATUSES.includes(dto.status)) {
+      throw new BadRequestException(
+        'Supervisors can only mark complaints in progress or resolved',
+      );
+    }
+
+    const willAssignToSelf =
+      complaint.assignedTo === null && dto.assignedTo === adminId;
+    const canEdit = complaint.assignedTo === adminId || willAssignToSelf;
+    const hasMutation =
+      dto.status !== undefined ||
+      dto.adminNote !== undefined ||
+      dto.response !== undefined;
+
+    if (hasMutation && !canEdit) {
+      throw new ForbiddenException(
+        'Assign the complaint to yourself before updating it',
+      );
+    }
   }
 
   private complaintRisk(complaint: Complaint): 'low' | 'medium' | 'high' {
@@ -769,11 +1112,15 @@ HiringFly Support`;
     return {
       id: complaint.id,
       type: complaint.type,
+      subject: complaint.subject,
       message: complaint.message,
       status: complaint.status,
       assignedTo: complaint.assignedTo,
       adminNote: complaint.adminNote,
       response: complaint.response,
+      relatedJobId: complaint.relatedJobId,
+      relatedCompanyId: complaint.relatedCompanyId,
+      relatedUserId: complaint.relatedUserId,
       createdAt: complaint.createdAt,
       updatedAt: complaint.updatedAt,
       user: complaint.user
@@ -789,6 +1136,7 @@ HiringFly Support`;
             id: complaint.assignee.id,
             name: complaint.assignee.fullName,
             email: complaint.assignee.email,
+            role: complaint.assignee.role,
           }
         : null,
     };

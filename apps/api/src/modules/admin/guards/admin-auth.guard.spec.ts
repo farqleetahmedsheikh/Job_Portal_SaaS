@@ -1,5 +1,5 @@
 import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
-import { UserRole } from '../../../common/enums/enums';
+import { UserRole } from '../../../common/enums/user-role.enum';
 import { AdminAuthGuard } from './admin-auth.guard';
 
 describe('AdminAuthGuard', () => {

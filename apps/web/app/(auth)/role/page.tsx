@@ -9,9 +9,9 @@ import styles from "../../styles/auth.module.css";
 export default function RoleSelectionPage() {
   const router = useRouter();
 
-  const handleRoleSelect = (role: "APPLICANT" | "EMPLOYER") => {
+  const handleRoleSelect = (role: "applicant" | "employer") => {
     // Redirect to Complete Profile page with selected role
-    router.push(`/complete-profile?role=${role.toLowerCase()}`);
+    router.push(`/complete-profile?role=${role}`);
   };
 
   return (
@@ -23,7 +23,7 @@ export default function RoleSelectionPage() {
         <div className={styles["role-grid"]}>
           <div
             className={styles["role-card"]}
-            onClick={() => handleRoleSelect("APPLICANT")}
+            onClick={() => handleRoleSelect("applicant")}
             style={{ cursor: "pointer" }}
           >
             <h3>Applicant</h3>
@@ -32,7 +32,7 @@ export default function RoleSelectionPage() {
 
           <div
             className={styles["role-card"]}
-            onClick={() => handleRoleSelect("EMPLOYER")}
+            onClick={() => handleRoleSelect("employer")}
             style={{ cursor: "pointer" }}
           >
             <h3>Employer</h3>

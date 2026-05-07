@@ -6,6 +6,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { api } from "../lib";
 import { API_BASE } from "../constants";
 import { useUser } from "../store/session.store";
+import { DEFAULT_COUNTRY, DEFAULT_CURRENCY } from "../lib/region";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 export interface BrowseJob {
@@ -18,6 +19,9 @@ export interface BrowseJob {
     isVerified?: boolean;
   };
   location: string;
+  country: string;
+  city: string | null;
+  currency: string;
   locationType: string;
   type: string;
   experienceLevel: string;
@@ -40,6 +44,9 @@ export interface BrowseFilters {
   types: Set<string>;
   modes: Set<string>;
   experience: Set<string>;
+  country: string;
+  city: string;
+  currency: string;
   salaryMin: string;
   salaryMax: string;
   matchedOnly: boolean; // ✅ new
@@ -52,6 +59,9 @@ const INIT_FILTERS: BrowseFilters = {
   types: new Set(),
   modes: new Set(),
   experience: new Set(),
+  country: DEFAULT_COUNTRY,
+  city: "",
+  currency: "",
   salaryMin: "",
   salaryMax: "",
   matchedOnly: true, // ✅ new
@@ -79,6 +89,7 @@ function computeMatch(
 // ── Hook ───────────────────────────────────────────────────────────────────────
 export function useBrowseJobs() {
   const user = useUser();
+  const defaultCountry = user?.country ?? DEFAULT_COUNTRY;
   const profileSkills = useMemo(
     () => user?.applicantProfile?.skills ?? [],
     [user],
@@ -106,7 +117,11 @@ export function useBrowseJobs() {
         params.set("page", String(p));
         params.set("limit", "20");
         if (f.search) params.set("q", f.search);
+        if (f.country) params.set("country", f.country);
+        if (f.city) params.set("city", f.city);
+        if (f.currency) params.set("currency", f.currency);
         if (f.salaryMin) params.set("salaryMin", f.salaryMin);
+        if (f.salaryMax) params.set("salaryMax", f.salaryMax);
         [...f.types].forEach((t) => params.append("type", t));
         [...f.modes].forEach((m) =>
           params.append("locationType", m.toLowerCase()),
@@ -159,6 +174,14 @@ export function useBrowseJobs() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    setFilters((prev) =>
+      prev.country === DEFAULT_COUNTRY && defaultCountry !== DEFAULT_COUNTRY
+        ? { ...prev, country: defaultCountry }
+        : prev,
+    );
+  }, [defaultCountry]);
+
   // ── Client-side sort by match (after fetch) ────────────────────────────────
   const jobs = useMemo(() => {
     let list = rawJobs;
@@ -203,10 +226,18 @@ export function useBrowseJobs() {
     [],
   );
 
+  const setRegionFilter = useCallback(
+    (key: "country" | "city" | "currency", val: string) => {
+      setFilters((p) => ({ ...p, [key]: val }));
+      setPage(1);
+    },
+    [],
+  );
+
   const resetFilters = useCallback(() => {
-    setFilters(INIT_FILTERS);
+    setFilters({ ...INIT_FILTERS, country: defaultCountry });
     setPage(1);
-  }, []);
+  }, [defaultCountry]);
 
   const activeChips = useMemo(
     () => [
@@ -225,7 +256,7 @@ export function useBrowseJobs() {
       ...(filters.salaryMin
         ? [
             {
-              label: `Min ${filters.salaryMin}k`,
+              label: `Min ${filters.salaryMin}`,
               clear: () => setSalary("salaryMin", ""),
             },
           ]
@@ -233,13 +264,37 @@ export function useBrowseJobs() {
       ...(filters.salaryMax
         ? [
             {
-              label: `Max ${filters.salaryMax}k`,
+              label: `Max ${filters.salaryMax}`,
               clear: () => setSalary("salaryMax", ""),
             },
           ]
         : []),
+      ...(filters.country && filters.country !== DEFAULT_COUNTRY
+        ? [
+            {
+              label: `Country ${filters.country}`,
+              clear: () => setRegionFilter("country", DEFAULT_COUNTRY),
+            },
+          ]
+        : []),
+      ...(filters.city
+        ? [
+            {
+              label: `City ${filters.city}`,
+              clear: () => setRegionFilter("city", ""),
+            },
+          ]
+        : []),
+      ...(filters.currency && filters.currency !== DEFAULT_CURRENCY
+        ? [
+            {
+              label: filters.currency,
+              clear: () => setRegionFilter("currency", ""),
+            },
+          ]
+        : []),
     ],
-    [filters, toggleSet, setSalary],
+    [filters, toggleSet, setSalary, setRegionFilter],
   );
 
   // ── Save / unsave ──────────────────────────────────────────────────────────
@@ -288,6 +343,7 @@ export function useBrowseJobs() {
     setSearch,
     toggleSet,
     setSalary,
+    setRegionFilter,
     resetFilters,
     activeChips,
     savedIds,

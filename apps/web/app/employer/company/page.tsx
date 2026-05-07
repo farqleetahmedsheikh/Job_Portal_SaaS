@@ -26,6 +26,7 @@ import { useCompany } from "../../hooks/useCompany";
 import { StatusBanners } from "../../components/ui/StatusBanners";
 import { ProfileHeader } from "../../components/ui/ProfileHeader";
 import { COMPANY_SIZES, INDUSTRIES } from "../../types/company.types";
+import { COUNTRIES, TIMEZONES, countryLabel } from "../../lib/region";
 import styles from "../styles/company.module.css";
 import Image from "next/image";
 
@@ -173,7 +174,6 @@ export default function CompanyPage() {
     removePerk,
     savePerks,
   } = useCompany();
-
 
   // ── Profile completeness ──────────────────────────────────────────────────
   const completeness = useMemo(
@@ -457,6 +457,68 @@ export default function CompanyPage() {
               editing={editing}
               onChange={handleChange}
             />
+
+            <Field
+              label="City"
+              icon={<MapPin size={11} />}
+              name="city"
+              value={form.city}
+              draftValue={draft.city}
+              editing={editing}
+              onChange={handleChange}
+            />
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="country">
+                <span className={styles.labelIcon}>
+                  <Globe size={11} />
+                </span>
+                Country
+              </label>
+              {editing ? (
+                <select
+                  id="country"
+                  name="country"
+                  className={styles.select}
+                  value={draft.country}
+                  onChange={handleChange}
+                >
+                  {COUNTRIES.map((country) => (
+                    <option key={country.code} value={country.code}>
+                      {country.label}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className={styles.value}>{countryLabel(form.country)}</div>
+              )}
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="timezone">
+                <span className={styles.labelIcon}>
+                  <Globe size={11} />
+                </span>
+                Timezone
+              </label>
+              {editing ? (
+                <select
+                  id="timezone"
+                  name="timezone"
+                  className={styles.select}
+                  value={draft.timezone}
+                  onChange={handleChange}
+                >
+                  {TIMEZONES.map((timezone) => (
+                    <option key={timezone.code} value={timezone.code}>
+                      {timezone.label}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className={styles.value}>{form.timezone}</div>
+              )}
+            </div>
 
             <Field
               label="Website"

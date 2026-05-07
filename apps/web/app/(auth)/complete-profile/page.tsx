@@ -8,9 +8,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { InputField } from "../../components/Auth/InputField";
 import { AuthForm } from "../../components/Auth/AuthForm";
-import { useUser } from "../../store/session.store";
+import { useSessionStore } from "../../store/session.store";
 import { api } from "../../lib";
 import { API_BASE } from "../../constants";
+import {
+  COUNTRIES,
+  DEFAULT_COUNTRY,
+  DEFAULT_TIMEZONE,
+  TIMEZONES,
+} from "../../lib/region";
+import { normalizeSessionUser, type RawSessionUser } from "../../lib/session";
 
 // ─── Schemas ──────────────────────────────────────────────
 const applicantSchema = z.object({
@@ -31,6 +38,9 @@ const applicantSchema = z.object({
 const employerSchema = z.object({
   companyName: z.string().min(2, "Company name is required"),
   location: z.string().min(2, "Location is required"),
+  city: z.string().optional(),
+  country: z.string().default(DEFAULT_COUNTRY),
+  timezone: z.string().default(DEFAULT_TIMEZONE),
   industry: z.string().min(2, "Industry is required"),
   website: z.string().url("Invalid URL").optional().or(z.literal("")),
   description: z.string().optional(),
@@ -42,7 +52,8 @@ type EmployerForm = z.infer<typeof employerSchema>;
 // ─── Page ─────────────────────────────────────────────────
 export default function CompleteProfilePage() {
   const router = useRouter();
-  const user = useUser(); // from session store — no localStorage
+  const { state, setUser } = useSessionStore();
+  const { user, isHydrated } = state;
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -51,8 +62,14 @@ export default function CompleteProfilePage() {
   });
   const employerForm = useForm<EmployerForm, unknown, EmployerForm>({
     resolver: zodResolver(employerSchema) as Resolver<EmployerForm>,
+    defaultValues: {
+      country: user?.country ?? DEFAULT_COUNTRY,
+      timezone: user?.timezone ?? DEFAULT_TIMEZONE,
+    },
   });
   useEffect(() => {
+    if (!isHydrated) return;
+
     if (!user) {
       router.replace("/login");
       return;
@@ -65,9 +82,9 @@ export default function CompleteProfilePage() {
           : "/employer/dashboard",
       );
     }
-  }, [router, user]);
+  }, [isHydrated, router, user]);
 
-  if (!user || user.isProfileComplete) {
+  if (!isHydrated || !user || user.isProfileComplete) {
     return null;
   }
 
@@ -75,19 +92,22 @@ export default function CompleteProfilePage() {
   const handleApplicantSubmit = async (data: ApplicantForm) => {
     setError(null);
     try {
-      await api(`${API_BASE}/auth/applicant-profile/${user.id}`, "POST", {
-        jobTitle: data.jobTitle,
-        experienceYears: data.experienceYears,
-        // ✅ send as array — DTO expects string[]
-        skills: data.skills
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean),
-        // ✅ send undefined not null/empty string — @IsOptional skips undefined
-        location: data.location?.trim() || undefined,
-        linkedinUrl: data.linkedinUrl?.trim() || undefined,
-        githubUrl: data.githubUrl?.trim() || undefined,
-      });
+      const updated = await api<RawSessionUser>(
+        `${API_BASE}/auth/applicant-profile/${user.id}`,
+        "POST",
+        {
+          jobTitle: data.jobTitle,
+          experienceYears: data.experienceYears,
+          skills: data.skills
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+          location: data.location?.trim() || undefined,
+          linkedinUrl: data.linkedinUrl?.trim() || undefined,
+          githubUrl: data.githubUrl?.trim() || undefined,
+        },
+      );
+      setUser(normalizeSessionUser(updated));
       setSuccess(true);
       setTimeout(() => router.replace("/applicant/dashboard"), 1200);
     } catch (err) {
@@ -99,13 +119,21 @@ export default function CompleteProfilePage() {
   const handleEmployerSubmit = async (data: EmployerForm) => {
     setError(null);
     try {
-      await api(`${API_BASE}/auth/employer-profile/${user.id}`, "POST", {
-        companyName: data.companyName,
-        location: data.location,
-        industry: data.industry,
-        website: data.website?.trim() || undefined, // ← undefined not null
-        description: data.description?.trim() || undefined, // ← undefined not null
-      });
+      const updated = await api<RawSessionUser>(
+        `${API_BASE}/auth/employer-profile/${user.id}`,
+        "POST",
+        {
+          companyName: data.companyName,
+          location: data.location,
+          city: data.city?.trim() || undefined,
+          country: data.country,
+          timezone: data.timezone,
+          industry: data.industry,
+          website: data.website?.trim() || undefined,
+          about: data.description?.trim() || undefined,
+        },
+      );
+      setUser(normalizeSessionUser(updated));
       setSuccess(true);
       setTimeout(() => router.push("/employer/dashboard"), 1200);
     } catch (err) {
@@ -215,6 +243,60 @@ export default function CompleteProfilePage() {
             register={employerForm.register("location")}
             error={employerForm.formState.errors.location}
           />
+          <InputField
+            label="City (optional)"
+            placeholder="Karachi"
+            register={employerForm.register("city")}
+            error={employerForm.formState.errors.city}
+          />
+          <div
+            style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr" }}
+          >
+            <label style={{ display: "grid", gap: 6, fontSize: 13 }}>
+              <span style={{ color: "var(--text-secondary)", fontWeight: 500 }}>
+                Country
+              </span>
+              <select
+                {...employerForm.register("country")}
+                style={{
+                  minHeight: 42,
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-sm)",
+                  background: "var(--surface)",
+                  color: "var(--text-primary)",
+                  padding: "0 12px",
+                }}
+              >
+                {COUNTRIES.map((country) => (
+                  <option key={country.code} value={country.code}>
+                    {country.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label style={{ display: "grid", gap: 6, fontSize: 13 }}>
+              <span style={{ color: "var(--text-secondary)", fontWeight: 500 }}>
+                Timezone
+              </span>
+              <select
+                {...employerForm.register("timezone")}
+                style={{
+                  minHeight: 42,
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-sm)",
+                  background: "var(--surface)",
+                  color: "var(--text-primary)",
+                  padding: "0 12px",
+                }}
+              >
+                {TIMEZONES.map((timezone) => (
+                  <option key={timezone.code} value={timezone.code}>
+                    {timezone.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
           <InputField
             label="Industry"
             placeholder="Software Development"

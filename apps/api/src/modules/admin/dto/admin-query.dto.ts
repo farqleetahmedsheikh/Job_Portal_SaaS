@@ -8,14 +8,15 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ComplaintStatus,
   ComplaintType,
   SystemLogLevel,
-  UserRole,
   VerificationStatus,
 } from '../../../common/enums/enums';
+import { UserRole } from '../../../common/enums/user-role.enum';
+import { normalizeUserRole } from '../../../common/utils/role.util';
 
 export class PaginationDto {
   @IsOptional()
@@ -39,6 +40,9 @@ export class QueryAdminUsersDto extends PaginationDto {
 
   @IsOptional()
   @IsEnum(UserRole)
+  @Transform(
+    ({ value }: { value: unknown }) => normalizeUserRole(value) ?? value,
+  )
   role?: UserRole;
 
   @IsOptional()
@@ -84,4 +88,10 @@ export class QueryTransactionsDto extends PaginationDto {
   @IsOptional()
   @IsIn(['recent', 'amount'])
   sort?: 'recent' | 'amount';
+}
+
+export class QueryActivitiesDto extends PaginationDto {
+  @IsOptional()
+  @IsString()
+  action?: string;
 }

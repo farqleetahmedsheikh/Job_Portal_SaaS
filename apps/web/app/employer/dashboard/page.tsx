@@ -96,9 +96,9 @@ export default function EmployerDashboardPage() {
     loading: billingLoading,
   } = useBilling();
 
-  const displayName = user?.companies?.companyName ?? user?.fullName ?? "there";
+  const displayName = user?.company?.companyName ?? user?.fullName ?? "there";
   const isVerified =
-    user?.companies?.isVerified ||
+    user?.company?.isVerified ||
     capabilities?.limits?.hasVerifiedBadge === true ||
     subscription?.verificationStatus === "verified";
 
@@ -134,10 +134,10 @@ export default function EmployerDashboardPage() {
   const hasUpcomingInterviews =
     data.stats.upcomingInterviews > 0 || data.interviews.length > 0;
   const companyProfileComplete = Boolean(
-    user?.companies?.companyName &&
-      user.companies.industry &&
-      user.companies.location &&
-      user.companies.description,
+    user?.company?.companyName &&
+      user.company.industry &&
+      user.company.location &&
+      user.company.description,
   );
 
   const plan = capabilities?.plan ?? subscription?.plan ?? "free";

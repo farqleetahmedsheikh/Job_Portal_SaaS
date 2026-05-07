@@ -16,6 +16,21 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Production Environment
+
+Set these before deploying the web app:
+
+```bash
+NEXT_PUBLIC_API_URL=https://api.example.com/api
+NEXT_PUBLIC_APP_URL=https://app.example.com
+NEXT_PUBLIC_SOCKET_URL=https://api.example.com
+```
+
+`NEXT_PUBLIC_API_URL` should include the REST `/api` prefix. Socket clients
+derive the server origin from `NEXT_PUBLIC_SOCKET_URL` when present, or from
+`NEXT_PUBLIC_API_URL` by removing the `/api` suffix. Payment public keys should
+only be added when a live provider integration is implemented.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load Inter, a custom Google Font.

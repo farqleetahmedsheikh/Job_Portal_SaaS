@@ -13,9 +13,13 @@ export interface Company {
   companyName: string;
   industry: string;
   location: string;
+  city: string | null;
+  country: string;
+  timezone: string;
   websiteUrl: string | null;
   logoUrl: string | null;
   coverUrl: string | null;
+  about?: string | null;
   description: string | null;
   tagline: string | null;
   culture: string | null;
@@ -32,6 +36,9 @@ export interface CompanyForm {
   companyName: string;
   industry: string;
   location: string;
+  city: string;
+  country: string;
+  timezone: string;
   websiteUrl: string;
   description: string;
   tagline: string;

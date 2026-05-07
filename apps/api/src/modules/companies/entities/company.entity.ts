@@ -7,15 +7,22 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
-  ManyToOne,
   OneToMany,
+  OneToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { CompanySize, VerificationStatus } from '../../../common/enums/enums';
+import { CountryCode, SupportedTimezone } from '../../../common/enums/enums';
 import { User } from '../../users/entities/user.entity';
 import { CompanyPerk } from './company-perk.entity';
 import { Job } from '../../jobs/entities/job.entity';
+import {
+  DEFAULT_COUNTRY,
+  DEFAULT_TIMEZONE,
+} from '../../../common/region/defaults';
 
+@Index(['country'])
 @Entity('companies')
 export class Company {
   @PrimaryGeneratedColumn('uuid')
@@ -47,6 +54,15 @@ export class Company {
 
   @Column({ length: 150, nullable: true })
   location!: string;
+
+  @Column({ type: 'varchar', length: 2, default: DEFAULT_COUNTRY })
+  country!: CountryCode;
+
+  @Column({ type: 'varchar', length: 120, nullable: true })
+  city!: string | null;
+
+  @Column({ type: 'varchar', length: 64, default: DEFAULT_TIMEZONE })
+  timezone!: SupportedTimezone;
 
   @Column({ name: 'founded_year', type: 'smallint', nullable: true })
   foundedYear?: number;
@@ -129,7 +145,7 @@ export class Company {
 
   // ── Relations ──
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @OneToOne(() => User, (u) => u.company, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'owner_id' })
   owner?: User;
 

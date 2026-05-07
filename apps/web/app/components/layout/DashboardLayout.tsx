@@ -5,6 +5,7 @@
 import { type ReactNode, useState } from "react";
 import type { User } from "../../types/user.types";
 import { OnboardingExperience } from "../onboarding/OnboardingExperience";
+import { FloatingSupportButton } from "../support/FloatingSupportButton";
 import { Navbar } from "./Navbar";
 import { Sidebar } from "./Sidebar";
 import styles from "../../styles/dashboard.module.css";
@@ -17,8 +18,6 @@ interface Props {
 export const DashboardLayout = ({ user, children }: Props) => {
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
-
-  void user;
 
   return (
     <div
@@ -42,6 +41,7 @@ export const DashboardLayout = ({ user, children }: Props) => {
         <main className={styles["dashboard-content"]}>{children}</main>
       </div>
       <OnboardingExperience />
+      <FloatingSupportButton user={user} />
     </div>
   );
 };

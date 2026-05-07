@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Application } from '../applications/entities/application.entity';
 import { Company } from '../companies/entities/company.entity';
 import { Interview } from '../interviews/entities/interview.entity';
-import { MailModule } from '../mail/mail.module';
+// import { MailModule } from '../mail/mail.module';
 import { MessagingModule } from '../messages/messages.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { AutomationController } from './automation.controller';
@@ -26,7 +26,7 @@ import { PipelineRule } from './entities/pipeline-rule.entity';
       Interview,
     ]),
     NotificationsModule,
-    MailModule,
+    // MailModule,
     MessagingModule,
   ],
   controllers: [AutomationController],

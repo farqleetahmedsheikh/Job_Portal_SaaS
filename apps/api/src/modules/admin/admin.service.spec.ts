@@ -1,9 +1,6 @@
 import { ForbiddenException } from '@nestjs/common';
-import {
-  ComplaintStatus,
-  ComplaintType,
-  UserRole,
-} from '../../common/enums/enums';
+import { ComplaintStatus, ComplaintType } from '../../common/enums/enums';
+import { UserRole } from '../../common/enums/user-role.enum';
 import { AdminService } from './admin.service';
 
 function repo(overrides: Record<string, unknown> = {}) {
@@ -34,6 +31,9 @@ describe('AdminService', () => {
     save: jest.fn((value: unknown): Promise<unknown> => Promise.resolve(value)),
     create: jest.fn((value: unknown): unknown => value),
   });
+  const config = {
+    get: jest.fn(() => 12),
+  };
 
   function service() {
     return new AdminService(
@@ -48,6 +48,7 @@ describe('AdminService', () => {
       complaints as never,
       systemLogs as never,
       activities as never,
+      config as never,
     );
   }
 

@@ -24,7 +24,7 @@ export function ProfileStrengthCard() {
   // Role-aware sub-label and CTA path
   const roleLabel = isApplicant
     ? (user?.applicantProfile?.jobTitle ?? "Applicant")
-    : (user?.companies?.companyName ?? "Employer"); // was: user.company (wrong field name)
+    : (user?.company?.companyName ?? "Employer");
 
   const profileHref = isApplicant ? "/applicant/profile" : "/employer/profile"; // was: hardcoded to applicant
 

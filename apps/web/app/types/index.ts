@@ -1,5 +1,7 @@
 /** @format */
 
+import type { CountryCode, SupportedTimezone } from "../lib/region";
+
 // ─── User ─────────────────────────────────────────────────
 export type UserRole =
   | "applicant"
@@ -13,6 +15,8 @@ export interface User {
   fullName: string;
   email: string;
   role: UserRole;
+  country?: CountryCode;
+  timezone?: SupportedTimezone;
   avatar?: string | null;
   phone?: string;
   location?: string;
@@ -31,6 +35,11 @@ export interface RegisterPayload {
   email: string;
   password: string;
   role: UserRole;
+  country?: CountryCode;
+  timezone?: SupportedTimezone;
+  termsAccepted: boolean;
+  privacyAccepted: boolean;
+  marketingConsent?: boolean;
 }
 
 export interface AuthResponse {
@@ -38,11 +47,24 @@ export interface AuthResponse {
   fullName: string;
   email: string;
   role: UserRole;
+  country?: CountryCode;
+  timezone?: SupportedTimezone;
   avatar: string | null;
+  phone?: string | null;
+  bio?: string | null;
   isProfileComplete: boolean;
+  isEmailVerified?: boolean;
   hasCompletedOnboarding?: boolean;
   onboardingCompletedAt?: string | null;
   onboardingRole?: "applicant" | "employer" | null;
+  marketingConsent?: boolean;
+  termsAcceptedAt?: string | null;
+  privacyAcceptedAt?: string | null;
+  deletionRequestedAt?: string | null;
+  dataExportRequestedAt?: string | null;
+  applicantProfile?: import("./user.types").SafeApplicantProfile | null;
+  company?: import("./user.types").SafeCompany | null;
+  companies?: import("./user.types").SafeCompany | null;
 }
 
 // ─── Job ──────────────────────────────────────────────────

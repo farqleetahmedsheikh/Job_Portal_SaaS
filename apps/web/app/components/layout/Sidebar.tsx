@@ -161,7 +161,7 @@ export function Sidebar({
   const subtitle =
     role === "applicant"
       ? (user?.applicantProfile?.jobTitle ?? "Applicant")
-      : (user?.companies?.companyName ?? "Employer");
+      : (user?.company?.companyName ?? "Employer");
 
   const sections = NAVIGATION[role];
   const profileHref = `/${role}/profile`;

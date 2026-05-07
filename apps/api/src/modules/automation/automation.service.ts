@@ -19,7 +19,7 @@ import { Application } from '../applications/entities/application.entity';
 import { LimitsService } from '../billing/limits.service';
 import { Company } from '../companies/entities/company.entity';
 import { Interview } from '../interviews/entities/interview.entity';
-import { MailService } from '../mail/mail.service';
+// import { MailService } from '../mail/mail.service';
 import { MessagingService } from '../messages/messages.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { UpdateAutomationSettingsDto } from './dto/update-automation-settings.dto';
@@ -51,7 +51,7 @@ export class AutomationService {
     private readonly interviewRepo: Repository<Interview>,
     private readonly limits: LimitsService,
     private readonly notifications: NotificationsService,
-    private readonly mail: MailService,
+    // private readonly mail: MailService,
     private readonly messaging: MessagingService,
   ) {}
 
@@ -129,12 +129,12 @@ export class AutomationService {
           'Application received',
           `Your application for ${app.job?.title ?? 'this role'} has been received.`,
         );
-        await this.mail.sendApplicationConfirmation({
-          to: app.applicant!.email,
-          candidateName: app.applicant!.fullName,
-          jobTitle: app.job!.title ?? 'this role',
-          company: app.job!.company!.companyName,
-        });
+        // await this.mail.sendApplicationConfirmation({
+        //   to: app.applicant!.email,
+        //   candidateName: app.applicant!.fullName,
+        //   jobTitle: app.job!.title ?? 'this role',
+        //   company: app.job!.company!.companyName,
+        // });
       },
       MessageType.SYSTEM,
       { applicationId: app.id, status: app.status },
@@ -371,15 +371,15 @@ export class AutomationService {
           : `Your interview for ${interview.job?.title ?? 'the role'} is coming up in about 24 hours.`,
       );
       if (interview.candidate?.email) {
-        await this.mail.sendInterviewReminder({
-          to: interview.candidate.email,
-          candidateName: interview.candidate.fullName,
-          jobTitle: interview.job?.title ?? 'the role',
-          company: interview.company?.companyName ?? 'the company',
-          scheduledAt: interview.scheduledAt,
-          meetLink: interview.meetLink ?? undefined,
-          reminderType,
-        });
+        // await this.mail.sendInterviewReminder({
+        //   to: interview.candidate.email,
+        //   candidateName: interview.candidate.fullName,
+        //   jobTitle: interview.job?.title ?? 'the role',
+        //   company: interview.company?.companyName ?? 'the company',
+        //   scheduledAt: interview.scheduledAt,
+        //   meetLink: interview.meetLink ?? undefined,
+        //   reminderType,
+        // });
       }
       await this.reminderRepo.save(
         this.reminderRepo.create({

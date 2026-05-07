@@ -5,9 +5,13 @@ import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSessionStore } from "../store/session.store";
 import { api } from "../lib";
-import type { SessionUser } from "../store/session.store";
 import type { LoginPayload, RegisterPayload, AuthResponse } from "../types";
 import { API_BASE } from "../constants";
+import { dashboardPathForRole } from "../lib/roles";
+import {
+  normalizeSessionUser,
+  type RawSessionUser,
+} from "../lib/session";
 
 export function useSession() {
   const { state, setUser, clearUser, setLoading, setHydrated } =
@@ -19,8 +23,8 @@ export function useSession() {
   const hydrate = useCallback(async () => {
     try {
       // /auth/me returns SafeUser directly
-      const me = await api<SessionUser>(`${API_BASE}/auth/me`);
-      setUser(me);
+      const me = await api<RawSessionUser>(`${API_BASE}/auth/me`);
+      setUser(normalizeSessionUser(me));
     } catch {
       clearUser(); // not logged in — that's fine
     } finally {
@@ -34,25 +38,19 @@ export function useSession() {
       setLoading(true);
       try {
         // Backend returns SafeUser directly — token is in httpOnly cookie
-        const user = await api<AuthResponse>(
+        const user = await api<AuthResponse & RawSessionUser>(
           `${API_BASE}/auth/login`,
           "POST",
           data,
         );
-        // user IS the safe user — no user.user nesting
-        setUser(user as SessionUser);
-        if (!user.isProfileComplete) {
+        const safeUser = normalizeSessionUser(user);
+        setUser(safeUser);
+        if (!safeUser.isProfileComplete) {
           router.replace("/complete-profile");
           return null;
         }
 
-        router.push(
-          ["admin", "super_admin", "supervisor"].includes(user.role)
-            ? "/admin/dashboard"
-            : user.role === "applicant"
-              ? "/applicant/dashboard"
-              : "/employer/dashboard",
-        );
+        router.push(dashboardPathForRole(safeUser.role));
         return null;
       } catch (err) {
         return err instanceof Error ? err.message : "Login failed";
@@ -69,13 +67,13 @@ export function useSession() {
       setLoading(true);
       try {
         // Backend returns SafeUser directly
-        const user = await api<AuthResponse>(
+        const user = await api<AuthResponse & RawSessionUser>(
           `${API_BASE}/auth/register`,
           "POST",
           data,
         );
 
-        setUser(user as SessionUser);
+        setUser(normalizeSessionUser(user));
 
         // After register → complete profile, not dashboard
         router.push("/complete-profile");

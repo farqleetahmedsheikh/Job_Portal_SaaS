@@ -19,10 +19,17 @@ import {
   X,
   Star,
   FileText,
+  Flag,
 } from "lucide-react";
 import { useJobDetail } from "../../../hooks/useJobDetail";
 import { useUser } from "../../../store/session.store";
-import { api, formatDate } from "../../../lib";
+import {
+  DEFAULT_CURRENCY,
+  api,
+  countryLabel,
+  formatDate,
+  formatMoney,
+} from "../../../lib";
 import styles from "../../styles/job-detail.module.css";
 import { API_BASE } from "../../../constants";
 
@@ -335,6 +342,10 @@ function Skeleton() {
 // ── Main View ─────────────────────────────────────────────────────────────────
 export function JobDetailView({ jobId }: { jobId: string }) {
   const user = useUser();
+  const [reportMessage, setReportMessage] = useState("");
+  const [reportStatus, setReportStatus] = useState<string | null>(null);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const [reporting, setReporting] = useState(false);
   const {
     job,
     loading,
@@ -368,20 +379,51 @@ export function JobDetailView({ jobId }: { jobId: string }) {
     : 0;
 
   const dl = daysLeft(job.expiresAt);
+  const currency = job.currency ?? job.salaryCurrency ?? DEFAULT_CURRENCY;
   const salary =
     job.salaryIsPublic && (job.salaryMin || job.salaryMax)
       ? job.salaryMin && job.salaryMax
-        ? `${job.salaryCurrency} ${job.salaryMin} – ${job.salaryMax}`
+        ? `${formatMoney(job.salaryMin, currency)} – ${formatMoney(job.salaryMax, currency)}`
         : job.salaryMin
-          ? `From ${job.salaryCurrency} ${(job.salaryMin / 1000).toFixed(0)}k`
-          : `Up to ${job.salaryCurrency} ${(job.salaryMax! / 1000).toFixed(0)}k`
+          ? `From ${formatMoney(job.salaryMin, currency)}`
+          : `Up to ${formatMoney(job.salaryMax, currency)}`
       : null;
+  const place = [job.city, countryLabel(job.country)]
+    .filter(Boolean)
+    .join(", ");
 
   const responsibilities = textToList(job.responsibilities);
   const requirements = textToList(job.requirements);
   const niceToHave = textToList(job.niceToHave);
   const benefits = textToList(job.benefits);
   const perks = job.company.perks?.map((p) => p.perk) ?? [];
+
+  const submitReport = async () => {
+    setReportError(null);
+    setReportStatus(null);
+    if (reportMessage.trim().length < 10) {
+      setReportError("Please add at least 10 characters.");
+      return;
+    }
+    setReporting(true);
+    try {
+      const result = await api<{ status: string }>(
+        `${API_BASE}/support/report-job`,
+        "POST",
+        {
+          relatedJobId: job.id,
+          subject: `Reported job: ${job.title}`,
+          message: reportMessage.trim(),
+        },
+      );
+      setReportStatus(result.status);
+      setReportMessage("");
+    } catch (err) {
+      setReportError(err instanceof Error ? err.message : "Report failed");
+    } finally {
+      setReporting(false);
+    }
+  };
 
   return (
     <div className={styles.page}>
@@ -423,7 +465,9 @@ export function JobDetailView({ jobId }: { jobId: string }) {
                       margin: 0,
                     }}
                   >
-                    {job.company.industry} · {job.company.location}
+                    {[job.company.industry, job.company.location]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </p>
                 </div>
 
@@ -486,7 +530,7 @@ export function JobDetailView({ jobId }: { jobId: string }) {
               <div className={styles.metaGrid}>
                 <div>
                   <p className={styles.metaLabel}>Location</p>
-                  <p className={styles.metaValue}>{job.location}</p>
+                  <p className={styles.metaValue}>{place || job.location}</p>
                 </div>
                 <div>
                   <p className={styles.metaLabel}>Posted</p>
@@ -716,6 +760,16 @@ export function JobDetailView({ jobId }: { jobId: string }) {
                   </div>
                 )}
                 <div className={styles.sidebarMetaRow}>
+                  <span className={styles.sidebarMetaLabel}>Country</span>
+                  <span className={styles.sidebarMetaVal}>
+                    {countryLabel(job.country)}
+                  </span>
+                </div>
+                <div className={styles.sidebarMetaRow}>
+                  <span className={styles.sidebarMetaLabel}>Timezone</span>
+                  <span className={styles.sidebarMetaVal}>{job.timezone}</span>
+                </div>
+                <div className={styles.sidebarMetaRow}>
                   <span className={styles.sidebarMetaLabel}>Views</span>
                   <span className={styles.sidebarMetaVal}>
                     {job.viewsCount}
@@ -751,6 +805,38 @@ export function JobDetailView({ jobId }: { jobId: string }) {
                     <Bookmark size={15} /> Save Job
                   </>
                 )}
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.card}>
+            <div className={styles.companyCard}>
+              <p className={styles.companyCardName}>
+                <Flag size={14} /> Report this job
+              </p>
+              <textarea
+                className={styles.textarea}
+                rows={4}
+                placeholder="Tell us what looks wrong or unsafe."
+                value={reportMessage}
+                onChange={(e) => setReportMessage(e.target.value)}
+              />
+              {reportError && (
+                <p style={{ color: "var(--status-danger)", fontSize: 12 }}>
+                  {reportError}
+                </p>
+              )}
+              {reportStatus && (
+                <p style={{ color: "var(--status-success)", fontSize: 12 }}>
+                  Report submitted. Ticket status: {reportStatus}
+                </p>
+              )}
+              <button
+                className={styles.btnGhost}
+                onClick={submitReport}
+                disabled={reporting}
+              >
+                {reporting ? "Submitting..." : "Submit report"}
               </button>
             </div>
           </div>

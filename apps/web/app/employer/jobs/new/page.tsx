@@ -29,6 +29,7 @@ import {
   NAV_SECTIONS,
   type SectionId,
 } from "../../../types/post-job.types";
+import { COUNTRIES, TIMEZONES } from "../../../lib/region";
 import styles from "../../styles/post-job.module.css";
 
 // ── Section wrapper ──────────────────────────────────────────────────────────
@@ -374,10 +375,46 @@ export default function PostJobPage() {
             <FormField label="Work Location" required error={errors.location}>
               <input
                 className={`${styles.input} ${errors.location ? styles.inputError : ""}`}
-                placeholder="e.g. San Francisco, CA or Remote"
+                placeholder="e.g. Karachi, Pakistan or Remote"
                 value={form.location}
                 onChange={setField("location")}
               />
+            </FormField>
+            <div className={styles.fieldRow}>
+              <FormField label="City">
+                <input
+                  className={styles.input}
+                  placeholder="Karachi"
+                  value={form.city}
+                  onChange={setField("city")}
+                />
+              </FormField>
+              <FormField label="Country">
+                <select
+                  className={styles.select}
+                  value={form.country}
+                  onChange={setField("country")}
+                >
+                  {COUNTRIES.map((country) => (
+                    <option key={country.code} value={country.code}>
+                      {country.label}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            </div>
+            <FormField label="Timezone">
+              <select
+                className={styles.select}
+                value={form.timezone}
+                onChange={setField("timezone")}
+              >
+                {TIMEZONES.map((timezone) => (
+                  <option key={timezone.code} value={timezone.code}>
+                    {timezone.label}
+                  </option>
+                ))}
+              </select>
             </FormField>
             <div className={styles.radioGroup}>
               {LOCATION_TYPES.map((o) => (

@@ -106,6 +106,28 @@ export enum SalaryCurrency {
   CAD = 'CAD',
   AUD = 'AUD',
   PKR = 'PKR',
+  INR = 'INR',
+  BDT = 'BDT',
+}
+
+export enum CountryCode {
+  PK = 'PK',
+  IN = 'IN',
+  BD = 'BD',
+}
+
+export enum CurrencyCode {
+  PKR = 'PKR',
+  INR = 'INR',
+  BDT = 'BDT',
+  USD = 'USD',
+}
+
+export enum SupportedTimezone {
+  ASIA_KARACHI = 'Asia/Karachi',
+  ASIA_KOLKATA = 'Asia/Kolkata',
+  ASIA_DHAKA = 'Asia/Dhaka',
+  UTC = 'UTC',
 }
 
 export enum NotifType {
@@ -171,6 +193,12 @@ export enum BillingEventType {
   DISPUTE = 'dispute',
 }
 
+export enum PaymentProviderType {
+  SAFEPAY = 'safepay',
+  MANUAL = 'manual',
+  STRIPE = 'stripe',
+}
+
 export enum AiMatcherTier {
   NONE = 'none',
   BASIC = 'basic',
@@ -206,6 +234,7 @@ export enum ComplaintType {
   EMPLOYER = 'employer',
   CANDIDATE = 'candidate',
   BUG = 'bug',
+  GENERAL = 'general',
 }
 
 export enum ComplaintStatus {

@@ -11,21 +11,34 @@ import {
   OneToMany,
   JoinColumn,
   Check,
+  Index,
 } from 'typeorm';
 import {
+  CountryCode,
+  CurrencyCode,
   JobType,
   LocationType,
   ExperienceLevel,
   JobStatus,
   SalaryCurrency,
+  SupportedTimezone,
 } from '../../../common/enums/enums';
 import { Company } from '../../companies/entities/company.entity';
 import { User } from '../../users/entities/user.entity';
 import { JobSkill } from './job-skill.entity';
 import { Application } from '../../applications/entities/application.entity';
 import { CodingTest } from '../../coding-tests/entities/coding-test.entity';
+import {
+  DEFAULT_COUNTRY,
+  DEFAULT_CURRENCY,
+  DEFAULT_TIMEZONE,
+} from '../../../common/region/defaults';
 
 @Entity('jobs')
+@Index(['country'])
+@Index(['city'])
+@Index(['currency'])
+@Index(['status'])
 @Check(
   `"salary_max" IS NULL OR "salary_min" IS NULL OR "salary_max" >= "salary_min"`,
 )
@@ -61,6 +74,18 @@ export class Job {
   @Column({ type: 'varchar', length: 150 })
   location?: string;
 
+  @Column({ type: 'varchar', length: 2, default: DEFAULT_COUNTRY })
+  country!: CountryCode;
+
+  @Column({ type: 'varchar', length: 120, nullable: true })
+  city!: string | null;
+
+  @Column({ type: 'varchar', length: 3, default: DEFAULT_CURRENCY })
+  currency!: CurrencyCode;
+
+  @Column({ type: 'varchar', length: 64, default: DEFAULT_TIMEZONE })
+  timezone!: SupportedTimezone;
+
   @Column({
     name: 'experience_level',
     type: 'enum',
@@ -94,7 +119,7 @@ export class Job {
     name: 'salary_currency',
     type: 'enum',
     enum: SalaryCurrency,
-    default: SalaryCurrency.USD,
+    default: SalaryCurrency.PKR,
   })
   salaryCurrency?: SalaryCurrency;
 

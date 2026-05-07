@@ -9,6 +9,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../../../common/decorators/roles.decorator';
 import { UserRole } from '../../../common/enums/user-role.enum';
+import { rolesMatch } from '../../../common/utils/role.util';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 
 @Injectable()
@@ -26,7 +27,7 @@ export class RolesGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user as JwtPayload;
 
-    if (!user || !requiredRoles.includes(user.role)) {
+    if (!user || !rolesMatch(user.role, requiredRoles)) {
       throw new ForbiddenException('Access denied');
     }
 

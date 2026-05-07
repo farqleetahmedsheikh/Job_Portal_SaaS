@@ -59,6 +59,9 @@ export class UsersController {
       fullName: dto.fullName,
       phone: dto.phone,
       bio: dto.bio,
+      country: dto.country,
+      timezone: dto.timezone,
+      marketingConsent: dto.marketingConsent,
     });
 
     // 2 — Update applicant profile fields if role matches

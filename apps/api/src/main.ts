@@ -13,8 +13,9 @@ async function bootstrap() {
 
   const config = app.get(ConfigService);
   const port = config.get<number>('app.port') ?? 9000;
-  const origin =
-    config.get<string>('app.frontendUrl') ?? 'http://localhost:3000';
+  const origin = config.get<string[]>('app.frontendUrls') ?? [
+    config.get<string>('app.frontendUrl') ?? 'http://localhost:3000',
+  ];
   const isProd = config.get<string>('app.env') === 'production';
 
   // ── Security headers ────────────────────────────────
@@ -25,7 +26,16 @@ async function bootstrap() {
 
   // ── CORS — credentials require exact origin, never * ─
   app.enableCors({
-    origin,
+    origin: (
+      requestOrigin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      if (!requestOrigin || origin.includes(requestOrigin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],

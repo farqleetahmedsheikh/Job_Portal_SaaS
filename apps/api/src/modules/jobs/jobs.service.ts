@@ -13,7 +13,13 @@ import { Repository, DataSource } from 'typeorm';
 import { Job } from './entities/job.entity';
 import { Company } from '../companies/entities/company.entity';
 import { Application } from '../applications/entities/application.entity';
-import { AppStatus, JobStatus, NotifType } from '../../common/enums/enums';
+import {
+  AppStatus,
+  CurrencyCode,
+  JobStatus,
+  NotifType,
+  SalaryCurrency,
+} from '../../common/enums/enums';
 import { JobSkill } from './entities/job-skill.entity';
 import { SavedJob } from './entities/saved-job.entity';
 import { CreateJobDto } from './dto/create-job.dto';
@@ -27,6 +33,11 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { assertJobStatusTransition } from './job-status.transitions';
 import { TERMINAL_APPLICATION_STATUSES } from '../applications/application-status.transitions';
 import { AutomationService } from '../automation/automation.service';
+import {
+  DEFAULT_COUNTRY,
+  currencyForCountry,
+  timezoneForCountry,
+} from '../../common/region/defaults';
 
 @Injectable()
 export class JobsService {
@@ -58,10 +69,22 @@ export class JobsService {
     await this.limitsService.consumeJobPostSlot(userId);
     const applicantCap = await this.limitsService.getApplicantCap(userId);
     // ─────────────────────────────────────────────────────────────────────────
+    const country = dto.country ?? company.country ?? DEFAULT_COUNTRY;
+    const currency =
+      dto.currency ??
+      this.currencyFromSalaryCurrency(dto.salaryCurrency) ??
+      currencyForCountry(country);
+    const timezone =
+      dto.timezone ?? company.timezone ?? timezoneForCountry(country);
 
     return this.dataSource.transaction(async (manager) => {
       const job = manager.create(Job, {
         ...dto,
+        country,
+        city: dto.city ?? company.city ?? null,
+        currency,
+        timezone,
+        salaryCurrency: dto.salaryCurrency ?? this.toSalaryCurrency(currency),
         companyId: company.id,
         postedById: userId,
         publishedAt: dto.status === JobStatus.ACTIVE ? new Date() : null,
@@ -84,6 +107,13 @@ export class JobsService {
   // ── Employer: Update ────────────────────────────────────────────────────────
   async update(jobId: string, userId: string, dto: UpdateJobDto): Promise<Job> {
     const job = await this.findOwnedOrFail(jobId, userId);
+    const nextCurrency =
+      dto.currency ?? this.currencyFromSalaryCurrency(dto.salaryCurrency);
+    if (nextCurrency) {
+      dto.currency = nextCurrency;
+      dto.salaryCurrency =
+        dto.salaryCurrency ?? this.toSalaryCurrency(nextCurrency);
+    }
 
     Object.assign(job, dto);
     const saved = await this.jobRepo.save(job);
@@ -223,6 +253,10 @@ export class JobsService {
       type,
       experienceLevel,
       salaryMin,
+      salaryMax,
+      country,
+      city,
+      currency,
       skills,
       companyId,
       page = 1,
@@ -258,12 +292,16 @@ export class JobsService {
       });
     if (location)
       qb.andWhere('j.location ILIKE :location', { location: `%${location}%` });
+    if (city) qb.andWhere('j.city ILIKE :city', { city: `%${city}%` });
+    if (country) qb.andWhere('j.country = :country', { country });
+    if (currency) qb.andWhere('j.currency = :currency', { currency });
     if (locationType)
       qb.andWhere('j.location_type = :locationType', { locationType });
     if (type) qb.andWhere('j.type = :type', { type });
     if (experienceLevel)
       qb.andWhere('j.experience_level = :experienceLevel', { experienceLevel });
     if (salaryMin) qb.andWhere('j.salary_max >= :salaryMin', { salaryMin });
+    if (salaryMax) qb.andWhere('j.salary_min <= :salaryMax', { salaryMax });
     if (companyId) qb.andWhere('j.company_id = :companyId', { companyId });
     if (skills?.length) qb.andWhere('j.skills @> :skills', { skills });
 
@@ -406,6 +444,22 @@ export class JobsService {
       throw new ForbiddenException('You do not own this job');
     return job;
   }
+
+  private currencyFromSalaryCurrency(
+    salaryCurrency?: SalaryCurrency,
+  ): CurrencyCode | undefined {
+    if (!salaryCurrency) return undefined;
+    return Object.values(CurrencyCode).includes(
+      salaryCurrency as unknown as CurrencyCode,
+    )
+      ? (salaryCurrency as unknown as CurrencyCode)
+      : undefined;
+  }
+
+  private toSalaryCurrency(currency: CurrencyCode): SalaryCurrency {
+    return currency as unknown as SalaryCurrency;
+  }
+
   // ── Employer: Job analytics (gated by plan) ──────────────────────────────
   async getJobAnalytics(jobId: string, userId: string) {
     await this.findOwnedOrFail(jobId, userId);

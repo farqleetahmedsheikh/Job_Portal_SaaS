@@ -1,5 +1,4 @@
 /** @format */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useCallback } from "react";
@@ -9,26 +8,22 @@ import {
   Eye,
   Palette,
   Globe,
-  Mail,
   Smartphone,
   Lock,
-  Trash2,
   ChevronRight,
   Check,
   Moon,
   Sun,
   Monitor,
-  Download,
   LogOut,
-  AlertTriangle,
   BriefcaseIcon,
   UserX,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useUser } from "../../store/session.store";
 import { useSessionStore } from "../../store/session.store";
 import styles from "../styles/setting.module.css";
 import { useTheme } from "../../components/theme/ThemeProvider";
+import { AccountPrivacyControls } from "../../components/account/AccountPrivacyControls";
 
 // ─── Types ────────────────────────────────────────────────
 type ThemeOption = "light" | "dark" | "system";
@@ -411,9 +406,7 @@ function SecuritySection() {
 // ─── Section: Account ─────────────────────────────────────
 function AccountSection() {
   const router = useRouter();
-  const user = useUser();
   const { clearUser } = useSessionStore();
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleLogout = useCallback(async () => {
     clearUser();
@@ -422,19 +415,8 @@ function AccountSection() {
 
   return (
     <>
-      <SectionCard title="Data & Export">
-        <ActionRow
-          label="Download your data"
-          description="Export all your profile data, applications, and activity"
-          icon={<Download size={15} />}
-          onClick={() => {}}
-        />
-        <ActionRow
-          label="Email preferences"
-          description="Manage your email subscriptions and preferences"
-          icon={<Mail size={15} />}
-          onClick={() => {}}
-        />
+      <SectionCard title="Privacy & Account Requests">
+        <AccountPrivacyControls />
       </SectionCard>
 
       <SectionCard title="Job Preferences">
@@ -447,58 +429,10 @@ function AccountSection() {
         />
       </SectionCard>
 
-      <SectionCard title="Danger Zone">
-        <ActionRow
-          label="Deactivate account"
-          description="Temporarily hide your profile and pause all notifications"
-          icon={<UserX size={15} />}
-          onClick={() => {}}
-          variant="warning"
-        />
-        <ActionRow
-          label="Delete account"
-          description="Permanently delete your account and all associated data"
-          icon={<Trash2 size={15} />}
-          onClick={() => setShowDeleteConfirm(true)}
-          variant="danger"
-        />
-      </SectionCard>
-
       {/* Logout */}
       <button className={styles["logout-btn"]} onClick={handleLogout}>
         <LogOut size={15} /> Sign out of HiringFly
       </button>
-
-      {/* Delete confirm modal */}
-      {showDeleteConfirm && (
-        <div
-          className={styles["modal-overlay"]}
-          onClick={() => setShowDeleteConfirm(false)}
-        >
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles["modal-icon"]}>
-              <AlertTriangle size={24} />
-            </div>
-            <h3 className={styles["modal-title"]}>Delete account?</h3>
-            <p className={styles["modal-body"]}>
-              This will permanently remove your account, profile, applications,
-              and all associated data. This action{" "}
-              <strong>cannot be undone</strong>.
-            </p>
-            <div className={styles["modal-actions"]}>
-              <button
-                className={`${styles.btn} ${styles["btn-ghost"]}`}
-                onClick={() => setShowDeleteConfirm(false)}
-              >
-                Cancel
-              </button>
-              <button className={`${styles.btn} ${styles["btn-danger"]}`}>
-                Yes, delete my account
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

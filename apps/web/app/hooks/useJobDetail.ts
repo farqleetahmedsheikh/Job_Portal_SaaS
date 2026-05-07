@@ -12,6 +12,10 @@ export interface JobDetail {
   type: string;
   locationType: string;
   location: string;
+  country: string;
+  city: string | null;
+  currency: string;
+  timezone: string;
   experienceLevel: string | null;
   salaryMin: number | null;
   salaryMax: number | null;
@@ -35,6 +39,9 @@ export interface JobDetail {
     companyName: string;
     industry: string;
     location: string;
+    country: string;
+    city: string | null;
+    timezone: string;
     website: string | null;
     logoUrl: string | null;
     description: string | null;

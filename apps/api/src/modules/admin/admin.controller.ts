@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import * as currentUserDecorator from '../../common/decorators/current-user.decorator';
-import { UserRole } from '../../common/enums/enums';
+import { UserRole } from '../../common/enums/user-role.enum';
 import {
   CreateAdminUserDto,
   RejectCompanyDto,
@@ -21,6 +21,7 @@ import {
 import {
   QueryAdminCompaniesDto,
   QueryAdminUsersDto,
+  QueryActivitiesDto,
   QueryComplaintsDto,
   QueryLogsDto,
   QueryTransactionsDto,
@@ -38,7 +39,7 @@ export class AdminController {
   dashboard(
     @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
   ) {
-    return this.admin.dashboard(user.sub);
+    return this.admin.dashboard(user.sub, user.role as UserRole);
   }
 
   @Post('users/admins')
@@ -50,10 +51,19 @@ export class AdminController {
     return this.admin.createAdmin(user.sub, dto);
   }
 
+  @Get('users/admins')
+  @AdminRoles(UserRole.SUPER_ADMIN)
+  adminUsers(@Query() query: QueryAdminUsersDto) {
+    return this.admin.listAdminUsers(query);
+  }
+
   @Get('users')
   @AdminRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  users(@Query() query: QueryAdminUsersDto) {
-    return this.admin.listUsers(query);
+  users(
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+    @Query() query: QueryAdminUsersDto,
+  ) {
+    return this.admin.listUsers(query, user.role as UserRole);
   }
 
   @Patch('users/:id')
@@ -99,6 +109,12 @@ export class AdminController {
     return this.admin.listComplaints(query, user.sub, user.role as UserRole);
   }
 
+  @Get('complaints/assignees')
+  @AdminRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  complaintAssignees() {
+    return this.admin.listComplaintAssignees();
+  }
+
   @Patch('complaints/:id')
   updateComplaint(
     @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
@@ -133,8 +149,17 @@ export class AdminController {
 
   @Get('logs')
   @AdminRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  logs(@Query() query: QueryLogsDto) {
-    return this.admin.logs(query);
+  logs(
+    @currentUserDecorator.CurrentUser() user: currentUserDecorator.JwtPayload,
+    @Query() query: QueryLogsDto,
+  ) {
+    return this.admin.logs(query, user.sub);
+  }
+
+  @Get('activities')
+  @AdminRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  activities(@Query() query: QueryActivitiesDto) {
+    return this.admin.listActivities(query);
   }
 
   @Get('revenue-insights')

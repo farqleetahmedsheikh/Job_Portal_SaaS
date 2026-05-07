@@ -12,11 +12,13 @@ import type {
   BillingInterval,
   SubscriptionPlan,
   AddonType,
+  PaymentOptions,
 } from "../types/billing.types";
 
 interface BillingState {
   subscription: Subscription | null;
   capabilities: PlanCapabilities | null;
+  paymentOptions: PaymentOptions | null;
   history: BillingEvent[];
   loading: boolean;
   error: string | null;
@@ -26,6 +28,7 @@ export function useBilling() {
   const [state, setState] = useState<BillingState>({
     subscription: null,
     capabilities: null,
+    paymentOptions: null,
     history: [],
     loading: true,
     error: null,
@@ -38,15 +41,18 @@ export function useBilling() {
   const refresh = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: null }));
     try {
-      const [subscription, history, capabilities] = await Promise.all([
-        api<Subscription>(`${API_BASE}/billing/subscription`, "GET"),
-        api<BillingEvent[]>(`${API_BASE}/billing/history`, "GET"),
-        api<PlanCapabilities>(`${API_BASE}/billing/capabilities`, "GET"),
-      ]);
+      const [subscription, history, capabilities, paymentOptions] =
+        await Promise.all([
+          api<Subscription>(`${API_BASE}/billing/subscription`, "GET"),
+          api<BillingEvent[]>(`${API_BASE}/billing/history`, "GET"),
+          api<PlanCapabilities>(`${API_BASE}/billing/capabilities`, "GET"),
+          api<PaymentOptions>(`${API_BASE}/billing/payment-options`, "GET"),
+        ]);
       setState({
         subscription,
         history,
         capabilities,
+        paymentOptions,
         loading: false,
         error: null,
       });
@@ -64,41 +70,47 @@ export function useBilling() {
   }, [refresh]);
 
   // ── Upgrade / downgrade ───────────────────────────────────────────────────
-  const checkout = useCallback(async (
-    plan: SubscriptionPlan,
-    billingInterval: BillingInterval = "monthly",
-  ) => {
-    setCheckoutLoading(true);
-    setCheckoutError(null);
-    try {
-      const { checkoutUrl } = await api<{ checkoutUrl: string }>(
-        `${API_BASE}/billing/checkout/${plan}`,
-        "POST",
-        { billingInterval },
-      );
-      window.location.href = checkoutUrl;
-    } catch (err) {
-      setCheckoutError(
-        err instanceof Error ? err.message : "Failed to start checkout",
-      );
-      setCheckoutLoading(false);
-    }
-  }, []);
+  const checkout = useCallback(
+    async (
+      plan: SubscriptionPlan,
+      billingInterval: BillingInterval = "monthly",
+    ) => {
+      setCheckoutLoading(true);
+      setCheckoutError(null);
+      try {
+        const { checkoutUrl } = await api<{ checkoutUrl: string }>(
+          `${API_BASE}/billing/checkout/${plan}`,
+          "POST",
+          { billingInterval },
+        );
+        window.location.href = checkoutUrl;
+      } catch (err) {
+        setCheckoutError(
+          err instanceof Error ? err.message : "Failed to start checkout",
+        );
+        setCheckoutLoading(false);
+      }
+    },
+    [],
+  );
 
-  const startTrial = useCallback(async (plan: SubscriptionPlan) => {
-    setCheckoutLoading(true);
-    setCheckoutError(null);
-    try {
-      await api<Subscription>(`${API_BASE}/billing/trial/${plan}`, "POST");
-      await refresh();
-    } catch (err) {
-      setCheckoutError(
-        err instanceof Error ? err.message : "Failed to start trial",
-      );
-    } finally {
-      setCheckoutLoading(false);
-    }
-  }, [refresh]);
+  const startTrial = useCallback(
+    async (plan: SubscriptionPlan) => {
+      setCheckoutLoading(true);
+      setCheckoutError(null);
+      try {
+        await api<Subscription>(`${API_BASE}/billing/trial/${plan}`, "POST");
+        await refresh();
+      } catch (err) {
+        setCheckoutError(
+          err instanceof Error ? err.message : "Failed to start trial",
+        );
+      } finally {
+        setCheckoutLoading(false);
+      }
+    },
+    [refresh],
+  );
 
   // ── Buy addon ─────────────────────────────────────────────────────────────
   const purchaseAddon = useCallback(async (type: AddonType, jobId?: string) => {

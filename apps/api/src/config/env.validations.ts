@@ -5,6 +5,7 @@ import {
   IsString,
   IsNotEmpty,
   IsOptional,
+  ValidateIf,
   Min,
   Max,
   MinLength,
@@ -29,6 +30,18 @@ class EnvironmentVariables {
   @IsString()
   @IsNotEmpty()
   FRONTEND_URL!: string;
+
+  @IsOptional()
+  @IsString()
+  FRONTEND_URLS?: string;
+
+  @IsOptional()
+  @IsString()
+  COOKIE_SAMESITE?: string;
+
+  @IsOptional()
+  @IsString()
+  COOKIE_SECURE?: string;
 
   // ── Database ──────────────────────────────────────────
   @IsString()
@@ -75,25 +88,45 @@ class EnvironmentVariables {
   THROTTLE_LIMIT!: number;
 
   // ── Mail ─────────────────────────────────────────────
+  @ValidateIf(
+    (env: { NODE_ENV?: Environment; MAIL_HOST?: string }) =>
+      env.NODE_ENV === Environment.Production || env.MAIL_HOST !== undefined,
+  )
   @IsString()
   @IsNotEmpty()
-  MAIL_HOST!: string;
+  MAIL_HOST?: string;
 
+  @ValidateIf(
+    (env: { NODE_ENV?: Environment; MAIL_HOST?: string }) =>
+      env.NODE_ENV === Environment.Production || env.MAIL_HOST !== undefined,
+  )
   @IsInt()
   @Min(1)
-  MAIL_PORT!: number;
+  MAIL_PORT?: number;
 
+  @ValidateIf(
+    (env: { NODE_ENV?: Environment; MAIL_HOST?: string }) =>
+      env.NODE_ENV === Environment.Production || env.MAIL_HOST !== undefined,
+  )
   @IsString()
   @IsNotEmpty()
-  MAIL_USER!: string;
+  MAIL_USER?: string;
 
+  @ValidateIf(
+    (env: { NODE_ENV?: Environment; MAIL_HOST?: string }) =>
+      env.NODE_ENV === Environment.Production || env.MAIL_HOST !== undefined,
+  )
   @IsString()
   @IsNotEmpty()
-  MAIL_PASSWORD!: string;
+  MAIL_PASSWORD?: string;
 
+  @ValidateIf(
+    (env: { NODE_ENV?: Environment; MAIL_HOST?: string }) =>
+      env.NODE_ENV === Environment.Production || env.MAIL_HOST !== undefined,
+  )
   @IsString()
   @IsNotEmpty()
-  MAIL_FROM!: string;
+  MAIL_FROM?: string;
 
   // ── Redis ─────────────────────────────────────────────
   @IsString()
@@ -107,6 +140,36 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional() // password is optional for local Redis
   REDIS_PASSWORD?: string;
+
+  // ── Payment providers ─────────────────────────────────
+  @IsOptional()
+  @IsString()
+  SAFEPAY_API_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  SAFEPAY_MERCHANT_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  SAFEPAY_WEBHOOK_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
+  STRIPE_SECRET_KEY?: string;
+
+  // ── Bootstrap seed ────────────────────────────────────
+  @IsOptional()
+  @IsString()
+  SUPER_ADMIN_EMAIL?: string;
+
+  @IsOptional()
+  @IsString()
+  SUPER_ADMIN_PASSWORD?: string;
+
+  @IsOptional()
+  @IsString()
+  SUPER_ADMIN_FULL_NAME?: string;
 }
 
 export function validate(config: Record<string, unknown>) {

@@ -1,5 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/require-await, @typescript-eslint/no-unused-vars */
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  ServiceUnavailableException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -9,6 +15,8 @@ import { BillingEvent } from './entities/billing-event.entity';
 import { AddonPurchase } from './entities/addon-purchase.entity';
 import { Subscription } from './entities/subscription.entity';
 import { Job } from '../jobs/entities/job.entity';
+import { Company } from '../companies/entities/company.entity';
+import { User } from '../users/entities/user.entity';
 
 import {
   BillingEventType,
@@ -16,6 +24,9 @@ import {
   BillingInterval,
   SubscriptionPlan,
   JobStatus,
+  CountryCode,
+  CurrencyCode,
+  PaymentProviderType,
 } from '../../common/enums/enums';
 import {
   ADDON_PRICES,
@@ -25,6 +36,21 @@ import {
 import { SubscriptionsService } from './subscriptions.service';
 import { VerificationService } from './verification.service';
 import { LimitsService } from './limits.service';
+import {
+  DEFAULT_COUNTRY,
+  DEFAULT_CURRENCY,
+  currencyForCountry,
+} from '../../common/region/defaults';
+import { SafepayProvider } from './providers/safepay.provider';
+import { StripeProvider } from './providers/stripe.provider';
+import { ManualPaymentProvider } from './providers/manual.provider';
+import { PaymentProvider } from './providers/payment-provider.interface';
+
+interface BillingPaymentContext {
+  country: CountryCode;
+  currency: CurrencyCode;
+  provider: PaymentProvider;
+}
 
 @Injectable()
 export class BillingService {
@@ -39,34 +65,41 @@ export class BillingService {
     private readonly subRepo: Repository<Subscription>,
     @InjectRepository(Job)
     private readonly jobRepo: Repository<Job>,
+    @InjectRepository(Company)
+    private readonly companyRepo: Repository<Company>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
     private readonly config: ConfigService,
     private readonly subscriptions: SubscriptionsService,
     private readonly verification: VerificationService,
     private readonly limits: LimitsService,
+    private readonly safepay: SafepayProvider,
+    private readonly stripe: StripeProvider,
+    private readonly manual: ManualPaymentProvider,
   ) {}
 
-  // ── Create checkout session (Safepay) ────────────────────────────────────
+  // ── Create checkout session ──────────────────────────────────────────────
   async createCheckout(
     userId: string,
     plan: SubscriptionPlan,
     billingInterval: BillingInterval = BillingInterval.MONTHLY,
-  ): Promise<{ checkoutUrl: string }> {
-    // TODO: Replace with real Safepay SDK call when integrated
-    // This is the shape Safepay expects
-    const payload = {
-      amount: getPlanPrice(plan, billingInterval) * 100, // in paisa
-      currency: 'PKR',
-      metadata: { userId, plan, billingInterval },
-      successUrl: `${this.config.get('APP_URL')}/billing/success`,
-      cancelUrl: `${this.config.get('APP_URL')}/billing/cancel`,
-    };
+  ): Promise<{ checkoutUrl: string; provider: PaymentProviderType }> {
+    const context = await this.resolvePaymentContext(userId);
+    this.assertProviderConfigured(context);
 
+    const amount = getPlanPrice(plan, billingInterval) * 100;
     this.logger.log(
-      `Creating checkout for user ${userId} plan ${plan} interval ${billingInterval}`,
+      `Checkout requested for user ${userId} plan ${plan} interval ${billingInterval} amount ${amount} ${context.currency} via ${context.provider.type}`,
     );
 
-    // Stub — replace with: const session = await safepay.checkout.create(payload)
-    return { checkoutUrl: `https://sandbox.safepay.pk/checkout?stub=true` };
+    return context.provider.createCheckout({
+      userId,
+      amountMinor: amount,
+      currency: context.currency,
+      country: context.country,
+      plan,
+      billingInterval,
+    });
   }
 
   // ── Purchase addon ────────────────────────────────────────────────────────
@@ -74,14 +107,23 @@ export class BillingService {
     userId: string,
     type: AddonType,
     jobId?: string,
-  ): Promise<{ checkoutUrl: string }> {
-    const payload = {
-      amount: ADDON_PRICES[type] * 100,
-      currency: 'PKR',
-      metadata: { userId, addonType: type, jobId },
-    };
+  ): Promise<{ checkoutUrl: string; provider: PaymentProviderType }> {
+    const context = await this.resolvePaymentContext(userId);
+    this.assertProviderConfigured(context);
 
-    return { checkoutUrl: `https://sandbox.safepay.pk/checkout?stub=addon` };
+    const amount = ADDON_PRICES[type] * 100;
+    this.logger.log(
+      `Addon checkout requested for user ${userId} type ${type} job ${jobId ?? 'none'} amount ${amount} ${context.currency} via ${context.provider.type}`,
+    );
+
+    return context.provider.createCheckout({
+      userId,
+      amountMinor: amount,
+      currency: context.currency,
+      country: context.country,
+      addonType: type,
+      jobId,
+    });
   }
 
   // ── Safepay webhook handler ───────────────────────────────────────────────
@@ -178,6 +220,7 @@ export class BillingService {
 
   async getCapabilities(userId: string) {
     const sub = await this.subscriptions.getOrCreate(userId);
+    const payment = await this.getPaymentOptions(userId);
     const limits = PLAN_LIMITS[sub.plan];
     const interviewUsage = await this.limits.getInterviewUsage(userId);
 
@@ -185,6 +228,8 @@ export class BillingService {
       plan: sub.plan,
       status: sub.status,
       billingInterval: sub.billingInterval,
+      currency: payment.currency,
+      paymentProvider: payment.provider,
       trialEndAt: sub.trialEndAt,
       currentPeriodStart: sub.currentPeriodStart,
       currentPeriodEnd: sub.currentPeriodEnd,
@@ -194,6 +239,21 @@ export class BillingService {
         jobPostsRemaining: sub.jobPostsRemaining,
         featuredSlotsRemaining: sub.featuredSlotsRemaining,
       },
+    };
+  }
+
+  async getPaymentOptions(userId: string) {
+    const context = await this.resolvePaymentContext(userId);
+    const configured = context.provider.isConfigured();
+    return {
+      country: context.country,
+      currency: context.currency,
+      provider: context.provider.type,
+      configured,
+      checkoutAvailable: false,
+      message: configured
+        ? `${context.provider.type} is configured, but live checkout wiring still needs provider-specific implementation.`
+        : this.providerUnavailableMessage(context),
     };
   }
 
@@ -253,5 +313,71 @@ export class BillingService {
     if (expected !== signature) {
       throw new BadRequestException('Invalid webhook signature');
     }
+  }
+
+  private async resolvePaymentContext(
+    userId: string,
+  ): Promise<BillingPaymentContext> {
+    const [sub, user, company] = await Promise.all([
+      this.subscriptions.getOrCreate(userId),
+      this.userRepo.findOne({ where: { id: userId } }),
+      this.companyRepo.findOne({ where: { ownerId: userId } }),
+    ]);
+    if (!user) throw new NotFoundException('User not found');
+
+    const country = company?.country ?? user.country ?? DEFAULT_COUNTRY;
+    const expectedCurrency = currencyForCountry(country);
+    const currency =
+      sub.currency && sub.currency !== DEFAULT_CURRENCY
+        ? sub.currency
+        : expectedCurrency;
+
+    if (sub.currency !== currency) {
+      sub.currency = currency;
+      await this.subRepo.save(sub);
+    }
+
+    return {
+      country,
+      currency,
+      provider: this.selectProvider(country, currency),
+    };
+  }
+
+  private selectProvider(
+    country: CountryCode,
+    currency: CurrencyCode,
+  ): PaymentProvider {
+    if (country === CountryCode.PK && currency === CurrencyCode.PKR) {
+      return this.safepay;
+    }
+    if (currency === CurrencyCode.USD) return this.stripe;
+    return this.manual;
+  }
+
+  private assertProviderConfigured(context: BillingPaymentContext): void {
+    if (context.provider.isConfigured()) return;
+    throw new ServiceUnavailableException(
+      this.providerUnavailableMessage(context),
+    );
+  }
+
+  private providerUnavailableMessage(context: BillingPaymentContext): string {
+    if (context.provider.type === PaymentProviderType.SAFEPAY) {
+      return `Payment provider not configured for ${context.country}/${context.currency}. Missing: ${this.missingSafepayConfig().join(', ')}`;
+    }
+    if (context.provider.type === PaymentProviderType.STRIPE) {
+      return `Payment provider not configured for ${context.country}/${context.currency}. Missing: STRIPE_SECRET_KEY`;
+    }
+    return `Payment provider not configured for ${context.country}/${context.currency}.`;
+  }
+
+  private missingSafepayConfig(): string[] {
+    const configEntries: Array<[string, string | undefined]> = [
+      ['SAFEPAY_API_KEY', this.config.get<string>('SAFEPAY_API_KEY')],
+      ['SAFEPAY_MERCHANT_ID', this.config.get<string>('SAFEPAY_MERCHANT_ID')],
+    ];
+
+    return configEntries.filter(([, value]) => !value).map(([key]) => key);
   }
 }

@@ -51,7 +51,7 @@ export function NotificationsDropdown({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [onClose]);
-
+  console.log(notifications);
   return (
     <div ref={ref} className={styles.notifDropdown}>
       {/* Header */}

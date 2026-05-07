@@ -9,10 +9,12 @@ import {
   IsUrl,
   IsBoolean,
   ValidateNested,
+  IsEnum,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { EducationDto } from 'src/modules/applicants/dto/education.dto';
 import { ExperienceDto } from 'src/modules/applicants/dto/experience.dto';
+import { CountryCode, SupportedTimezone } from 'src/common/enums/enums';
 
 export class UpdateUserProfileDto {
   // ── User table fields ──────────────────────────────────
@@ -30,6 +32,18 @@ export class UpdateUserProfileDto {
   @IsOptional()
   @MaxLength(500)
   bio?: string;
+
+  @IsEnum(CountryCode)
+  @IsOptional()
+  country?: CountryCode;
+
+  @IsEnum(SupportedTimezone)
+  @IsOptional()
+  timezone?: SupportedTimezone;
+
+  @IsBoolean()
+  @IsOptional()
+  marketingConsent?: boolean;
 
   // ── Applicant profile fields (ignored for employers) ───
   @IsString()

@@ -10,11 +10,13 @@ import {
 } from 'typeorm';
 import {
   BillingInterval,
+  CurrencyCode,
   SubscriptionPlan,
   SubscriptionStatus,
   VerificationStatus,
 } from '../../../common/enums/enums';
 import { User } from '../../users/entities/user.entity';
+import { DEFAULT_CURRENCY } from '../../../common/region/defaults';
 
 @Index(['userId', 'status'])
 @Entity('subscriptions')
@@ -46,6 +48,9 @@ export class Subscription {
     default: BillingInterval.MONTHLY,
   })
   billingInterval!: BillingInterval;
+
+  @Column({ type: 'varchar', length: 3, default: DEFAULT_CURRENCY })
+  currency!: CurrencyCode;
 
   @Column({ name: 'trial_start_at', type: 'timestamptz', nullable: true })
   trialStartAt?: Date | null;

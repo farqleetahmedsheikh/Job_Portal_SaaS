@@ -13,6 +13,8 @@ import {
   JobType,
   LocationType,
   ExperienceLevel,
+  CountryCode,
+  CurrencyCode,
 } from '../../../common/enums/enums';
 // ─── Browse / search query ────────────────────────────────────────────────────
 export class QueryJobsDto {
@@ -23,6 +25,18 @@ export class QueryJobsDto {
   @IsOptional()
   @IsString()
   location?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsEnum(CountryCode)
+  country?: CountryCode;
+
+  @IsOptional()
+  @IsEnum(CurrencyCode)
+  currency?: CurrencyCode;
 
   @IsOptional()
   @IsEnum(LocationType)
@@ -41,6 +55,12 @@ export class QueryJobsDto {
   @Min(0)
   @Type(() => Number)
   salaryMin?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
+  salaryMax?: number;
 
   @IsOptional()
   @IsArray()

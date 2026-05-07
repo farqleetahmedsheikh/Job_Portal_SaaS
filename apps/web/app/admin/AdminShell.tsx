@@ -16,17 +16,34 @@ import {
   Shield,
   Users,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useUser } from "../store/session.store";
+import type { User, UserRole } from "../types/user.types";
 import styles from "./admin.module.css";
 
-const nav = [
-  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "Users", href: "/admin/users", icon: Users },
-  { label: "Companies", href: "/admin/companies", icon: Building2 },
-  { label: "Complaints", href: "/admin/complaints", icon: LifeBuoy },
-  { label: "Billing", href: "/admin/transactions", icon: CreditCard },
-  { label: "Logs", href: "/admin/logs", icon: ScrollText },
-  { label: "Settings", href: "/admin/settings", icon: Settings },
+type AdminRole = Extract<UserRole, "super_admin" | "admin" | "supervisor">;
+
+const nav: {
+  label: string;
+  supervisorLabel?: string;
+  href: string;
+  icon: LucideIcon;
+  roles: AdminRole[];
+}[] = [
+  {
+    label: "Dashboard",
+    supervisorLabel: "Support Dashboard",
+    href: "/admin/dashboard",
+    icon: LayoutDashboard,
+    roles: ["super_admin", "admin", "supervisor"],
+  },
+  { label: "Admin Team", href: "/admin/team", icon: Shield, roles: ["super_admin"] },
+  { label: "Users", href: "/admin/users", icon: Users, roles: ["super_admin", "admin"] },
+  { label: "Companies", href: "/admin/companies", icon: Building2, roles: ["super_admin", "admin"] },
+  { label: "Complaints", href: "/admin/complaints", icon: LifeBuoy, roles: ["super_admin", "admin", "supervisor"] },
+  { label: "Billing", href: "/admin/transactions", icon: CreditCard, roles: ["super_admin", "admin"] },
+  { label: "Logs", href: "/admin/logs", icon: ScrollText, roles: ["super_admin", "admin"] },
+  { label: "Settings", href: "/admin/settings", icon: Settings, roles: ["super_admin"] },
 ];
 
 function roleLabel(role?: string | null) {
@@ -36,9 +53,54 @@ function roleLabel(role?: string | null) {
   return "Admin";
 }
 
-export function AdminShell({ children }: { children: ReactNode }) {
+function adminRole(role?: UserRole | null): AdminRole | null {
+  if (role === "super_admin" || role === "admin" || role === "supervisor") {
+    return role;
+  }
+  return null;
+}
+
+function canAccess(pathname: string, role: AdminRole | null) {
+  if (!role) return false;
+  return nav.some(
+    (item) =>
+      item.roles.includes(role) &&
+      (pathname === item.href || pathname.startsWith(item.href + "/")),
+  );
+}
+
+function NotAllowed() {
+  return (
+    <div className={styles.page}>
+      <div className={styles.panel}>
+        <div className={styles.panelHeader}>
+          <h2>Not allowed</h2>
+        </div>
+        <p className={styles.subtitle}>
+          Your admin role does not include access to this section.
+        </p>
+        <div className={styles.actions}>
+          <Link href="/admin/dashboard" className={styles.btn}>
+            Back to dashboard
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function AdminShell({
+  children,
+  currentUser,
+}: {
+  children: ReactNode;
+  currentUser: User;
+}) {
   const pathname = usePathname();
-  const user = useUser();
+  const user = useUser() ?? currentUser;
+  const role = adminRole(user.role);
+  const visibleNav = nav.filter((item) => role && item.roles.includes(role));
+  const allowed = canAccess(pathname, role);
 
   return (
     <div className={styles.shell}>
@@ -57,9 +119,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </div>
         </div>
         <nav className={styles.nav}>
-          {nav.map((item) => {
+          {visibleNav.map((item) => {
             const Icon = item.icon;
             const active = pathname === item.href || pathname.startsWith(item.href + "/");
+            const label = role === "supervisor" && item.supervisorLabel ? item.supervisorLabel : item.label;
             return (
               <Link
                 key={item.href}
@@ -67,7 +130,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 className={`${styles.navItem} ${active ? styles.navActive : ""}`}
               >
                 <Icon size={17} />
-                <span>{item.label}</span>
+                <span>{label}</span>
               </Link>
             );
           })}
@@ -89,7 +152,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <span className={styles.roleBadge}>{roleLabel(user?.role)}</span>
           </div>
         </header>
-        <main className={styles.content}>{children}</main>
+        <main className={styles.content}>{allowed ? children : <NotAllowed />}</main>
       </div>
     </div>
   );

@@ -272,6 +272,13 @@
   gap: 10px;
 }
 
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
 .input,
 .select,
 .textarea {
@@ -324,6 +331,15 @@
 
 .ghostBtn {
   cursor: pointer;
+}
+
+.btn:disabled,
+.ghostBtn:disabled,
+.input:disabled,
+.select:disabled,
+.textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
 }
 
 .danger {
@@ -421,7 +437,8 @@
   }
 
   .grid,
-  .twoCol {
+  .twoCol,
+  .formGrid {
     grid-template-columns: 1fr;
   }
 }
